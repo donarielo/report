@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporte de Ventas por Sucursal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>Reporte de Ventas por Sucursal</h1>
+        <p>
+          Registra los reportes de cada vendedor por sucursal y encargado para
+          consolidar resultados diarios.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Nuevo reporte</h2>
+        <form id="sales-form">
+          <div class="grid">
+            <label>
+              Sucursal
+              <input id="branch" name="branch" required placeholder="Ej: Centro" />
+            </label>
+            <label>
+              Encargado
+              <input id="manager" name="manager" required placeholder="Nombre del encargado" />
+            </label>
+            <label>
+              Vendedor
+              <input id="seller" name="seller" required placeholder="Nombre del vendedor" />
+            </label>
+            <label>
+              Fecha
+              <input id="date" name="date" type="date" required />
+            </label>
+            <label>
+              Ventas (MXN)
+              <input id="amount" name="amount" type="number" min="0" step="0.01" required placeholder="0.00" />
+            </label>
+          </div>
+          <label>
+            Comentarios
+            <textarea id="notes" name="notes" rows="2" placeholder="Observaciones del día"></textarea>
+          </label>
+
+          <div class="actions">
+            <button type="submit">Guardar reporte</button>
+            <button type="reset" class="secondary">Limpiar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Filtros y resumen</h2>
+        <div class="grid">
+          <label>
+            Filtrar por sucursal
+            <input id="filter-branch" placeholder="Todas" />
+          </label>
+          <label>
+            Filtrar por vendedor
+            <input id="filter-seller" placeholder="Todos" />
+          </label>
+          <label>
+            Desde
+            <input id="filter-from" type="date" />
+          </label>
+          <label>
+            Hasta
+            <input id="filter-to" type="date" />
+          </label>
+        </div>
+        <div class="summary" id="summary"></div>
+        <div class="actions">
+          <button id="export-csv" class="secondary" type="button">Exportar CSV</button>
+          <button id="clear-data" class="danger" type="button">Borrar todo</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Reportes registrados</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Sucursal</th>
+                <th>Encargado</th>
+                <th>Vendedor</th>
+                <th>Ventas</th>
+                <th>Comentarios</th>
+              </tr>
+            </thead>
+            <tbody id="report-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
