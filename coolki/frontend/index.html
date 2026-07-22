@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Demo del sistema</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: 'DM Sans', sans-serif; background: #F7F8FC; color: #16182B;
+    min-height: 100vh; display: flex; justify-content: center; padding: 50px 20px;
+  }
+  .wrap { max-width: 720px; width: 100%; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .brand-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; margin: 18px 0 6px; letter-spacing: -0.01em; }
+  p.sub { color: #6B6F85; font-size: 14px; margin: 0 0 30px; line-height: 1.5; }
+  .group-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: #6B6F85; font-weight: 600; margin: 26px 0 10px; }
+  .card {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    background: #fff; border: 1px solid #E7E9F5; border-radius: 16px; padding: 18px 20px;
+    margin-bottom: 10px; text-decoration: none; color: inherit;
+  }
+  .card:hover { border-color: #2454FF; }
+  .card-title { font-weight: 700; font-size: 15px; }
+  .card-desc { font-size: 12.5px; color: #6B6F85; margin-top: 3px; }
+  .arrow { color: #2454FF; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+  .footer { text-align: center; font-size: 11.5px; color: #6B6F85; margin-top: 34px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="brand-word">coolki</div>
+    </div>
+    <h1>Demo del sistema completo</h1>
+    <p class="sub">Recorrido de ventas: desde que una organización configura su caja, hasta que sus socios ahorran desde la app.</p>
+
+    <div class="group-label">Ventas — para presentar a organizaciones</div>
+    <a class="card" href="landing-empresas.html">
+      <div><div class="card-title">Landing para empresas</div><div class="card-desc">Propuesta de valor B2B: qué es COOLKI y cómo se vende a organizaciones</div></div>
+      <div class="arrow">→</div>
+    </a>
+    <a class="card" href="landing-socios.html">
+      <div><div class="card-title">Landing para socios (ejemplo)</div><div class="card-desc">Cómo vería esta página el equipo o comunidad de tu cliente</div></div>
+      <div class="arrow">→</div>
+    </a>
+
+    <div class="group-label">Producto — el recorrido real</div>
+    <a class="card" href="onboarding.html">
+      <div><div class="card-title">Configurar una caja nueva</div><div class="card-desc">Datos de la organización, conectar PayPhone, definir reglas</div></div>
+      <div class="arrow">→</div>
+    </a>
+    <a class="card" href="registro.html">
+      <div><div class="card-title">Registro de un socio</div><div class="card-desc">Crear cuenta y completar el aporte inicial</div></div>
+      <div class="arrow">→</div>
+    </a>
+    <a class="card" href="sistema.html">
+      <div><div class="card-title">Mi cuenta + Panel del administrador</div><div class="card-desc">Vista del socio y del administrador en un solo lugar</div></div>
+      <div class="arrow">→</div>
+    </a>
+
+    <div class="group-label">Marca</div>
+    <a class="card" href="brand/logo-board.html">
+      <div><div class="card-title">Identidad de marca</div><div class="card-desc">Ícono, wordmark y variaciones de COOLKI</div></div>
+      <div class="arrow">→</div>
+    </a>
+
+    <div class="footer">Software por CDH SOFT · Demo de ventas, no publicado como servicio real</div>
+  </div>
+</body>
+</html>

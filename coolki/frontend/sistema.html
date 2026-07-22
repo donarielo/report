@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Mi cuenta y panel de administrador</title>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-app, .coolki-app * { box-sizing: border-box; }
+
+.coolki-app {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --coral: #E14B4B;
+  --coral-soft: #FBE6E6;
+  --sun-soft: #FFF3D6;
+  --payphone: #5B2A8C;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; background: #fff; }
+.brand-lockup { display: flex; align-items: center; gap: 10px; }
+.brand-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
+.tabs { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+.tab-btn { border: none; background: transparent; padding: 8px 16px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.tab-btn.active { background: var(--brand); color: #fff; }
+
+.tab-panel { display: none; padding: 30px 20px; }
+.tab-panel.active { display: block; }
+
+/* ---------- SOCIO ---------- */
+.screen { width: 100%; max-width: 400px; margin: 0 auto; }
+.top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.greeting-eyebrow { font-size: 12.5px; color: var(--muted); }
+.greeting-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; margin-top: 2px; }
+.avatar { width: 42px; height: 42px; border-radius: 14px; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; }
+
+.balance-card { background: var(--brand); color: #fff; border-radius: 22px; padding: 26px 22px; margin-bottom: 16px; }
+.balance-label { font-size: 13px; opacity: 0.85; }
+.balance-figure { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 8px 0 6px; }
+.balance-sub { font-size: 12.5px; opacity: 0.85; margin-bottom: 18px; }
+.actions-row { display: flex; gap: 10px; }
+.action-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: none; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 14.5px; cursor: pointer; }
+.action-btn.deposit { background: #fff; color: var(--brand); }
+.action-btn.withdraw { background: rgba(255,255,255,0.16); color: #fff; }
+
+.panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.25s ease, margin 0.3s ease; }
+.panel.open { max-height: 320px; opacity: 1; margin-top: 16px; }
+.panel-inner { background: rgba(255,255,255,0.12); border: 1px dashed rgba(255,255,255,0.35); border-radius: 14px; padding: 16px; }
+.panel-title { font-weight: 600; font-size: 13.5px; margin-bottom: 12px; }
+.amount-chips { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.chip { padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); font-family: 'Space Grotesk', sans-serif; font-size: 13px; cursor: pointer; color: #fff; }
+.chip.selected { background: #fff; color: var(--brand); border-color: #fff; }
+.payphone-btn { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.payphone-mark { width: 18px; height: 18px; border-radius: 5px; background: #fff; color: var(--payphone); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; }
+.withdraw-note { font-size: 12px; opacity: 0.9; margin-bottom: 12px; line-height: 1.5; }
+.confirm-withdraw-btn { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: #fff; color: var(--coral); font-weight: 600; font-size: 14px; cursor: pointer; }
+.success-note { display: none; margin-top: 10px; font-size: 12.5px; font-weight: 600; align-items: center; gap: 6px; }
+.success-note.show { display: flex; }
+.success-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+
+.section { margin-top: 22px; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.section-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; }
+.section-tag { font-family: 'Space Grotesk', sans-serif; font-size: 12px; color: var(--mint); background: var(--mint-soft); padding: 3px 9px; border-radius: 20px; }
+.term-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+.term-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+.term-row b { color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+.bar-track { height: 6px; background: var(--bg); border-radius: 4px; margin: 12px 0 8px; overflow: hidden; }
+.bar-fill { height: 100%; width: 64%; background: var(--mint); border-radius: 4px; }
+.term-foot { font-size: 12px; color: var(--muted); }
+
+.ledger-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.ledger-row:last-child { border-bottom: none; }
+.ledger-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.ledger-icon.in { background: var(--mint-soft); }
+.ledger-icon.out { background: var(--coral-soft); }
+.ledger-mid { flex: 1; min-width: 0; }
+.ledger-desc { font-size: 13.5px; font-weight: 600; }
+.ledger-date { font-size: 11.5px; color: var(--muted); }
+.ledger-amt { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.ledger-amt.pos { color: var(--mint); }
+.ledger-amt.neg { color: var(--coral); }
+.footnote { margin-top: 22px; font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.5; }
+
+/* ---------- ADMIN ---------- */
+.admin-wrap { max-width: 980px; margin: 0 auto; }
+.admin-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+.admin-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; }
+.admin-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.export-btn { padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--brand); background: transparent; color: var(--brand); font-weight: 600; font-size: 13px; cursor: pointer; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
+.stat-label { font-size: 11.5px; color: var(--muted); }
+.stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; color: var(--ink); margin-top: 6px; }
+
+.admin-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+.admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; }
+.admin-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin: 0 0 14px; }
+
+table.socios { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.socios th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
+table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.status-pill { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; background: var(--mint-soft); color: var(--mint); font-weight: 600; }
+.status-pill.alert { background: var(--sun-soft); color: #B98424; }
+
+.request-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.request-row:last-child { border-bottom: none; }
+.request-info { font-size: 13px; }
+.request-info b { font-family: 'Space Grotesk', sans-serif; }
+.request-name { font-size: 11.5px; color: var(--muted); }
+.request-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.req-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+.req-btn.approve { background: var(--brand); color: #fff; }
+.req-btn.reject { background: transparent; color: var(--coral); border: 1px solid var(--coral); }
+.req-result { font-size: 11.5px; font-weight: 700; }
+.req-result.approved { color: var(--mint); }
+.req-result.rejected { color: var(--coral); }
+
+.settings-row { margin-bottom: 16px; }
+.settings-label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; display: block; }
+.settings-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); }
+.settings-input:disabled { color: var(--muted); }
+.save-btn { margin-top: 4px; padding: 10px 16px; border-radius: 10px; border: none; background: var(--brand); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
+.admin-note { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+@media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="coolki-app">
+  <div class="topbar">
+    <div class="brand-lockup">
+      <svg width="32" height="32" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="brand-word">coolki</div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('socio', this)">Vista del socio</button>
+      <button class="tab-btn" onclick="showTab('admin', this)">Panel del administrador</button>
+    </div>
+  </div>
+
+  <!-- SOCIO -->
+  <div class="tab-panel active" id="tab-socio">
+    <div class="screen">
+      <div class="top-row">
+        <div><div class="greeting-eyebrow">Hola de nuevo</div><div class="greeting-name">Rosa</div></div>
+        <div class="avatar">RQ</div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-label">Saldo disponible</div>
+        <div class="balance-figure" id="balanceFigure">$119.50</div>
+        <div class="balance-sub">Saldo total $124.50 · $5.00 congelado (aporte inicial)</div>
+        <div class="actions-row">
+          <button class="action-btn deposit" onclick="togglePanel('deposit')">Aportar</button>
+          <button class="action-btn withdraw" onclick="togglePanel('withdraw')">Retirar</button>
+        </div>
+
+        <div class="panel" id="panel-deposit">
+          <div class="panel-inner">
+            <div class="panel-title">¿Cuánto quieres aportar hoy?</div>
+            <div class="amount-chips" id="chips">
+              <div class="chip selected" onclick="selectChip(this, 10)">$10</div>
+              <div class="chip" onclick="selectChip(this, 20)">$20</div>
+              <div class="chip" onclick="selectChip(this, 50)">$50</div>
+              <div class="chip" onclick="selectChip(this, 100)">$100</div>
+            </div>
+            <button class="payphone-btn" onclick="pay()"><span class="payphone-mark">P</span> Pagar $<span id="payAmount">10</span> con PayPhone</button>
+            <div class="success-note" id="depositSuccess"><span class="success-dot"></span> Aporte acreditado a tu cuenta</div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-withdraw">
+          <div class="panel-inner">
+            <div class="panel-title">Solicitar retiro</div>
+            <div class="withdraw-note">Retiros disponibles desde $10.00. Se procesan en 1–2 días hábiles. Máximo disponible: $119.50.</div>
+            <button class="confirm-withdraw-btn" onclick="withdraw()">Solicitar retiro de $10.00</button>
+            <div class="success-note" id="withdrawSuccess"><span class="success-dot"></span> Solicitud enviada al administrador</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Ahorro a plazo fijo</div><div class="section-tag">5.0% anual</div></div>
+        <div class="term-card">
+          <div class="term-row"><span>Capital colocado</span><b>$80.00</b></div>
+          <div class="term-row"><span>Generado este año</span><b>+$4.85</b></div>
+          <div class="bar-track"><div class="bar-fill"></div></div>
+          <div class="term-foot">Vence el 30 de noviembre de 2026 · se renueva automáticamente</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Movimientos recientes</div></div>
+        <div class="term-card" style="padding: 6px 20px;">
+          <div class="ledger-row"><div class="ledger-icon in">↑</div><div class="ledger-mid"><div class="ledger-desc">Aporte</div><div class="ledger-date">15 jul 2026</div></div><div class="ledger-amt pos">+$20.00</div></div>
+          <div class="ledger-row"><div class="ledger-icon in">↑</div><div class="ledger-mid"><div class="ledger-desc">Interés acreditado</div><div class="ledger-date">10 jul 2026</div></div><div class="ledger-amt pos">+$0.38</div></div>
+          <div class="ledger-row"><div class="ledger-icon out">↓</div><div class="ledger-mid"><div class="ledger-desc">Retiro</div><div class="ledger-date">02 jul 2026</div></div><div class="ledger-amt neg">-$15.00</div></div>
+          <div class="ledger-row"><div class="ledger-icon in">↑</div><div class="ledger-mid"><div class="ledger-desc">Aporte</div><div class="ledger-date">28 jun 2026</div></div><div class="ledger-amt pos">+$25.00</div></div>
+        </div>
+      </div>
+      <div class="footnote">Vista de demostración. Los datos son de ejemplo.</div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="tab-panel" id="tab-admin">
+    <div class="admin-wrap">
+      <div class="admin-head">
+        <div><div class="admin-title">Panel del administrador</div><div class="admin-sub">coolki · resumen general</div></div>
+        <button class="export-btn">Exportar reporte SEPS</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Socios activos</div><div class="stat-value">86</div></div>
+        <div class="stat-card"><div class="stat-label">Total ahorrado</div><div class="stat-value">$9,240</div></div>
+        <div class="stat-card"><div class="stat-label">En plazo fijo</div><div class="stat-value">$5,180</div></div>
+        <div class="stat-card"><div class="stat-label">Retiros pendientes</div><div class="stat-value">3</div></div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3>Socios</h3>
+          <table class="socios">
+            <thead><tr><th>Nombre</th><th>Saldo</th><th>Último aporte</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Rosa Quinatoa</td><td>$124.50</td><td>15 jul</td><td><span class="status-pill">Al día</span></td></tr>
+              <tr><td>Manuel Cabascango</td><td>$310.00</td><td>14 jul</td><td><span class="status-pill">Al día</span></td></tr>
+              <tr><td>Elena Farinango</td><td>$45.00</td><td>02 jun</td><td><span class="status-pill alert">Inactivo 45d</span></td></tr>
+              <tr><td>José Lema</td><td>$780.20</td><td>16 jul</td><td><span class="status-pill">Al día</span></td></tr>
+              <tr><td>Carmen Tituaña</td><td>$92.30</td><td>10 jul</td><td><span class="status-pill">Al día</span></td></tr>
+            </tbody>
+          </table>
+
+          <h3 style="margin-top: 24px;">Solicitudes de retiro pendientes</h3>
+          <div id="requests">
+            <div class="request-row"><div class="request-info"><b>$25.00</b> <div class="request-name">Manuel Cabascango · solicitado 16 jul</div></div><div class="request-actions"><button class="req-btn approve" onclick="resolveRequest(this, 'approved')">Aprobar</button><button class="req-btn reject" onclick="resolveRequest(this, 'rejected')">Rechazar</button></div></div>
+            <div class="request-row"><div class="request-info"><b>$10.00</b> <div class="request-name">Rosa Quinatoa · solicitado 17 jul</div></div><div class="request-actions"><button class="req-btn approve" onclick="resolveRequest(this, 'approved')">Aprobar</button><button class="req-btn reject" onclick="resolveRequest(this, 'rejected')">Rechazar</button></div></div>
+            <div class="request-row"><div class="request-info"><b>$60.00</b> <div class="request-name">José Lema · solicitado 17 jul</div></div><div class="request-actions"><button class="req-btn approve" onclick="resolveRequest(this, 'approved')">Aprobar</button><button class="req-btn reject" onclick="resolveRequest(this, 'rejected')">Rechazar</button></div></div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Configuración</h3>
+          <div class="settings-row"><label class="settings-label">Tasa de plazo fijo anual</label><input class="settings-input" value="5.0%" /></div>
+          <div class="settings-row"><label class="settings-label">Aporte inicial (congelado)</label><input class="settings-input" value="$5.00" /></div>
+          <div class="settings-row"><label class="settings-label">Retiro mínimo</label><input class="settings-input" value="$10.00" /></div>
+          <div class="settings-row"><label class="settings-label">Cuenta PayPhone conectada</label><input class="settings-input" value="•••• •••• 8841" disabled /></div>
+          <button class="save-btn">Guardar cambios</button>
+          <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showTab(tab, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  let currentChipAmount = 10;
+  let balance = 119.50;
+  function togglePanel(which) {
+    const dep = document.getElementById('panel-deposit');
+    const wd = document.getElementById('panel-withdraw');
+    const target = which === 'deposit' ? dep : wd;
+    const other = which === 'deposit' ? wd : dep;
+    other.classList.remove('open');
+    target.classList.toggle('open');
+  }
+  function selectChip(el, amount) {
+    document.querySelectorAll('#chips .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    currentChipAmount = amount;
+    document.getElementById('payAmount').textContent = amount;
+    document.getElementById('depositSuccess').classList.remove('show');
+  }
+  function pay() {
+    balance += currentChipAmount;
+    document.getElementById('balanceFigure').textContent = '$' + balance.toFixed(2);
+    document.getElementById('depositSuccess').classList.add('show');
+  }
+  function withdraw() { document.getElementById('withdrawSuccess').classList.add('show'); }
+  function resolveRequest(btn, result) {
+    const row = btn.closest('.request-row');
+    row.querySelector('.request-actions').innerHTML = '<span class="req-result ' + result + '">' + (result === 'approved' ? 'Aprobado ✓' : 'Rechazado') + '</span>';
+  }
+</script>
+
+</body>
+</html>
