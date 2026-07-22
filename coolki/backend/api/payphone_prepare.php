@@ -2,11 +2,17 @@
 // Prepara una transacción antes de mostrar el widget de PayPhone.
 // La "Cajita de Pagos" (payment box) de PayPhone REQUIERE el token en el navegador para
 // renderizarse — es inherente a ese método de integración. Por eso aquí sí devolvemos el
-// token junto con el storeId y el ID de transacción propio.
+// token junto con el ID de transacción propio.
 // La seguridad NO depende de ocultar el token: el pago sólo se acredita en payphone_confirm.php,
 // que verifica el estado real contra PayPhone del lado del servidor (nunca confía en el frontend).
 // (Si quisieras que el token jamás salga al navegador, tendrías que usar el "Botón de pago por
 //  redirección" en lugar de la Cajita — es otro método de integración.)
+//
+// storeId: SOLO aplica si la organización maneja varias tiendas/sucursales dentro de una misma
+// cuenta de PayPhone (se obtiene en PayPhone Developer, sección "Lista de tiendas" de la empresa,
+// NO es el "Identificador" de la aplicación). Si la organización tiene una sola tienda, este campo
+// debe omitirse por completo — enviar cualquier valor ahí revienta el pago con el error de
+// PayPhone "La tienda asociada no existe".
 
 require_once __DIR__ . '/../includes/auth.php';
 $socioId = requireSocioAuth();
@@ -26,7 +32,7 @@ $stmt = $pdo->prepare("SELECT s.*, o.payphone_store_id, o.payphone_token, o.nomb
 $stmt->execute([$socioId]);
 $socio = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$socio['payphone_store_id'] || !$socio['payphone_token']) {
+if (!$socio['payphone_token']) {
     jsonResponse(['error' => 'Esta caja aún no ha conectado su cuenta de PayPhone.'], 400);
 }
 
@@ -40,7 +46,7 @@ $stmt = $pdo->prepare(
 $stmt->execute([$socioId, $tipo, $monto, $clientTransactionId]);
 
 jsonResponse([
-    'storeId' => $socio['payphone_store_id'],
+    'storeId' => $socio['payphone_store_id'] ?: null,   // null si la organización tiene una sola tienda
     'token' => $socio['payphone_token'],    // requerido por la Cajita de Pagos en el navegador
     'clientTransactionId' => $clientTransactionId,
     'amount' => round($monto * 100),        // PayPhone recibe montos en centavos
@@ -51,7 +57,6 @@ jsonResponse([
 ]);
 
 // Con estos datos, el frontend inicializa el widget "Cajita de Pagos" de PayPhone
-// (PPaymentButtonBox, script oficial v2.0) pasándole token, storeId, clientTransactionId,
-// amount, amountWithoutTax, currency y reference. El frontend fija su propia responseUrl
-// (la página de registro) para poder confirmar el pago y mostrar la pantalla correcta.
+// (PPaymentButtonBox, script oficial v2.0) pasándole token, clientTransactionId, amount,
+// amountWithoutTax, currency y reference — y storeId SOLO si viene presente (ver nota arriba).
 // Revisa la guía oficial (docs.payphone.app/cajita-de-pagos) si PayPhone actualiza su SDK.

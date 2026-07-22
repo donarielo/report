@@ -23,5 +23,6 @@ jsonResponse([
         'tasa_plazo_fijo' => $org['tasa_plazo_fijo'],
         'aprobacion_retiros' => $org['aprobacion_retiros'],
         'payphone_store_id' => $org['payphone_store_id'],
+        'payphone_conectado' => !empty($org['payphone_token']),
     ],
 ]);

@@ -559,7 +559,7 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify({ monto: currentChipAmount, tipo: 'aporte' })
       });
-      if (!data.token || !data.storeId) {
+      if (!data.token) {
         setError('errAporte', 'Esta caja aún no tiene configurado su pago con PayPhone.');
         return;
       }
@@ -569,18 +569,21 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
       }
       const responseUrl = location.origin + location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
       btn.classList.add('hidden');
-      new PPaymentButtonBox({
+      const ppConfig = {
         token: data.token,
         clientTransactionId: data.clientTransactionId,
         amount: data.amount,
         amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
         amountWithTax: 0, tax: 0, service: 0, tip: 0,
         currency: data.currency || 'USD',
-        storeId: data.storeId,
         reference: data.reference || 'Aporte',
         lang: 'es',
         responseUrl: responseUrl
-      }).render('pp-button-aporte');
+      };
+      // storeId solo aplica si la organización maneja varias tiendas en PayPhone; si no,
+      // se omite por completo (enviarlo vacío o incorrecto causa "La tienda asociada no existe").
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button-aporte');
     } catch (err) {
       setError('errAporte', err.message || NET_MSG);
       btn.classList.remove('hidden');
@@ -640,8 +643,12 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
     $('cfgTasa').value = adminOrgSettings.tasa_plazo_fijo != null ? adminOrgSettings.tasa_plazo_fijo : '';
     $('cfgAporte').value = adminOrgSettings.aporte_inicial != null ? adminOrgSettings.aporte_inicial : '';
     $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
-    const storeId = adminOrgSettings.payphone_store_id || '';
-    $('cfgPayphone').value = storeId ? ('•••• ' + storeId.slice(-4)) : 'No conectada';
+    if (adminOrgSettings.payphone_conectado) {
+      const storeId = adminOrgSettings.payphone_store_id || '';
+      $('cfgPayphone').value = storeId ? ('Conectada (tienda •••• ' + storeId.slice(-4) + ')') : 'Conectada';
+    } else {
+      $('cfgPayphone').value = 'No conectada';
+    }
   }
 
   async function loadAdminDashboard() {

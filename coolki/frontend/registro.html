@@ -267,7 +267,7 @@
   // Inicializa el widget "Cajita de Pagos" con los datos de prepare.php.
   // Nombres de parámetros según la doc oficial vigente (docs.payphone.app/cajita-de-pagos).
   function renderCajita(data) {
-    if (!data.token || !data.storeId) {
+    if (!data.token) {
       $('pp-status').classList.add('hidden');
       setError('err-aporte', 'Esta caja aún no tiene configurado su pago con PayPhone.');
       return;
@@ -286,7 +286,7 @@
     $('pp-status').classList.add('hidden');
     $('pp-button').innerHTML = '';
     try {
-      new PPaymentButtonBox({
+      const ppConfig = {
         token: data.token,
         clientTransactionId: data.clientTransactionId,
         amount: data.amount,                                   // en centavos
@@ -296,11 +296,14 @@
         service: 0,
         tip: 0,
         currency: data.currency || 'USD',
-        storeId: data.storeId,
         reference: data.reference || 'Aporte inicial',
         lang: 'es',
         responseUrl: responseUrl
-      }).render('pp-button');
+      };
+      // storeId solo aplica si la organización maneja varias tiendas en PayPhone; si no,
+      // se omite por completo (enviarlo vacío o incorrecto causa "La tienda asociada no existe").
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button');
     } catch (e) {
       setError('err-aporte', 'No se pudo iniciar el pago de PayPhone. Intenta de nuevo.');
     }
