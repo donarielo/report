@@ -9,7 +9,7 @@ define('DB_USER', 'u000000000_admin');    // tu usuario de MySQL
 define('DB_PASS', 'TU_CONTRASENA_AQUI');  // tu contraseña de MySQL
 
 // URL base de tu sitio (sin barra final) — se usa para armar los links que le compartes a tus socios
-define('SITE_URL', 'https://tudominio.com');
+define('SITE_URL', 'https://coolkiecuador.com');
 
 // Zona horaria de Ecuador, para que las fechas de vencimiento y reportes salgan correctas
 date_default_timezone_set('America/Guayaquil');
