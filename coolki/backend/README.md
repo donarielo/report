@@ -57,13 +57,20 @@ no permite configurar URLs de respuesta sin HTTPS.
 
 ## 8. Conectar el frontend
 
-`registro.html` **ya está conectado** al backend real (Paso 1 → `registro.php`, Paso 2 →
-`payphone_prepare.php` + Cajita de Pagos → `payphone_confirm.php`). Cosas que debes saber:
+`registro.html` y `sistema.html` **ya están conectados** al backend real:
 
-- **Slug de la organización:** no está hardcodeado. Se toma de la URL (`registro.html?org=coolki`)
-  o de `window.COOLKI_CONFIG.org`. Así el mismo archivo sirve para varios clientes.
+- `registro.html`: Paso 1 → `registro.php`, Paso 2 → `payphone_prepare.php` + Cajita de Pagos →
+  `payphone_confirm.php`.
+- `sistema.html`: pantalla de login (socio o administrador) → dashboard real del socio
+  (saldo, aportes recurrentes con PayPhone, retiros, plazo fijo) y panel real del administrador
+  (lista de socios, aprobar/rechazar retiros, editar configuración de la caja).
+
+Cosas que debes saber:
+
+- **Slug de la organización:** no está hardcodeado. Se toma de la URL (`?org=coolki`) o de
+  `window.COOLKI_CONFIG.org`. Así el mismo archivo sirve para varios clientes.
 - **Base de la API:** por defecto `/backend/api`. Si subes el backend a otra ruta o subdominio
-  (ej. `https://api.tudominio.com`), defínelo antes del `<script>` de `registro.html`:
+  (ej. `https://api.tudominio.com`), defínelo antes del `<script>` de cada HTML:
 
   ```html
   <script>window.COOLKI_CONFIG = { org: 'coolki', apiBase: 'https://api.tudominio.com/api' };</script>
@@ -71,19 +78,72 @@ no permite configurar URLs de respuesta sin HTTPS.
 
   Si frontend y backend quedan en dominios distintos, el backend debe habilitar **CORS con
   credenciales** (las llamadas usan `credentials: 'include'` para mantener la sesión PHP).
-- **Contraseña:** el Paso 1 ahora incluye un campo de contraseña (mínimo 8 caracteres), porque
-  `registro.php` la exige para poder crear el socio y permitir el login posterior.
+- **Contraseña:** el Paso 1 de `registro.html` incluye un campo de contraseña (mínimo 8
+  caracteres), porque `registro.php` la exige para poder crear el socio y permitir el login
+  posterior.
 
-Los demás HTML (`sistema.html`, etc.) todavía simulan con JavaScript de mentira; se conectan
-endpoint por endpoint igual que este cuando quieras.
+`onboarding.html`, `landing-empresas.html`, `landing-socios.html` e `index.html` siguen siendo
+solo material de venta/demo (no tienen ni necesitan backend): en este modelo, cada organización
+nueva se da de alta **manualmente** (insertando su fila en `organizaciones` y corriendo
+`setup_admin.php`), no por auto-registro público.
+
+## 9. Endpoints del backend (referencia completa)
+
+| Endpoint | Quién lo usa | Qué hace |
+|---|---|---|
+| `registro.php` | `registro.html` | Crea el socio (estado `pendiente_pago`) |
+| `login.php` | `sistema.html` | Login de socio |
+| `admin_login.php` | `sistema.html` | Login de administrador |
+| `logout.php` | `sistema.html` | Cierra sesión (socio o admin) |
+| `me.php` | `sistema.html` | Dashboard del socio: saldo, movimientos, plazos fijos, retiros pendientes |
+| `admin_me.php` | `sistema.html` | Restaura la sesión del admin al recargar |
+| `payphone_prepare.php` | `registro.html`, `sistema.html` | Prepara una transacción (`aporte_inicial` o `aporte`) |
+| `payphone_confirm.php` | PayPhone (URL de respuesta) | Confirma el pago server-to-server y acredita el saldo |
+| `solicitar_retiro.php` | `sistema.html` | El socio pide un retiro |
+| `crear_plazo_fijo.php` | `sistema.html` | El socio coloca saldo a plazo fijo |
+| `admin_listar_socios.php` | `sistema.html` | Lista de socios + saldo + total en plazo fijo (para el admin) |
+| `admin_listar_retiros.php` | `sistema.html` | Solicitudes de retiro pendientes (para el admin) |
+| `admin_resolver_retiro.php` | `sistema.html` | Aprobar / rechazar un retiro |
+| `admin_actualizar_organizacion.php` | `sistema.html` | Guarda tasa de plazo fijo, aporte inicial y retiro mínimo |
+
+## 10. Cron de intereses de plazo fijo
+
+`cron/acreditar_intereses.php` acumula el interés diario de cada plazo fijo y, al vencer,
+acredita lo generado al saldo disponible del socio y renueva el plazo un año más (mismo capital).
+
+En hPanel → **Avanzado → Tareas Cron**, crea una tarea que corra **una vez al día** con:
+
+```
+php /home/TU_USUARIO/domains/tudominio.com/public_html/backend/cron/acreditar_intereses.php
+```
+
+(ajusta la ruta exacta a donde subiste la carpeta `backend/` en tu hosting). Este script está
+protegido para que solo se ejecute por línea de comandos (cron), nunca abriéndolo desde el
+navegador.
+
+**Supuesto que asumí y debes validar con tu negocio:** el interés se calcula como
+`capital × tasa_anual / 100 / 365` cada día, y solo se acredita al saldo disponible del socio
+cuando el plazo cumple un año (no día a día). Si tu caja de ahorro maneja el interés distinto
+(otra fórmula, otra frecuencia de pago, retiro anticipado del capital), este script hay que
+ajustarlo — hoy no existe una forma de que el socio retire el capital de un plazo fijo antes de
+su vencimiento; eso se coordinaría manualmente con el administrador.
 
 ## Qué falta todavía (para ser 100% honestos)
 
-- **Cálculo automático de intereses de plazo fijo**: falta una tarea programada (cron job,
-  disponible en hPanel > Avanzado > Tareas Cron) que corra una vez al día y acredite intereses.
-- **Pago real del retiro al socio**: aprobar un retiro aquí solo descuenta el saldo interno;
-  el envío real del dinero (transferencia bancaria o pago PayPhone hacia el socio) lo haces
-  manualmente desde tu cuenta de PayPhone Business o tu banco, o se automatiza en una fase futura.
+- **Pago real del retiro al socio**: aprobar un retiro solo descuenta el saldo interno; el envío
+  real del dinero (transferencia bancaria o pago PayPhone hacia el socio) lo haces manualmente
+  desde tu cuenta de PayPhone Business o tu banco, o se automatiza en una fase futura.
+- **Retiro anticipado de un plazo fijo**: hoy el capital colocado a plazo fijo se renueva solo
+  cada año; no hay una acción para deshacerlo antes de tiempo desde la app.
+- **Exportar reporte SEPS**: el botón existe en el panel del administrador pero está deshabilitado
+  a propósito — generar un reporte regulatorio real es un desarrollo aparte, no algo que deba
+  fingirse.
+- **`aprobacion_retiros = 'automatica'`**: la columna existe en `organizaciones` pero hoy todos
+  los retiros siempre requieren acción manual del administrador; el modo automático no está
+  implementado.
 - **Multi-organización por subdominio**: aquí cada organización se identifica por un `slug`
   (ej. `coolki`); si quieres subdominios reales (`textiles-otavalo.coolki.app`) se configura
   aparte en Hostinger (subdominios apuntando a la misma carpeta del backend).
+- **Auto-registro de organizaciones nuevas**: `onboarding.html` sigue siendo una maqueta de venta;
+  dar de alta un cliente nuevo se hace manualmente (SQL + `setup_admin.php`), no hay un flujo
+  público para que una organización se autoconfigure.
