@@ -28,7 +28,16 @@ if (!$tx) {
     jsonResponse(['error' => 'Transacción no encontrada.'], 404);
 }
 if ($tx['estado'] !== 'pendiente') {
-    jsonResponse(['ok' => true, 'nota' => 'Esta transacción ya había sido procesada.']);
+    // Ya se había procesado antes (ej. el navegador recargó la página de confirmación).
+    // Igual devolvemos el resultado real guardado, para que el frontend muestre la pantalla
+    // correcta en vez de asumir que falló por no traer "aprobado".
+    jsonResponse([
+        'ok' => true,
+        'nota' => 'Esta transacción ya había sido procesada.',
+        'aprobado' => $tx['estado'] === 'confirmado',
+        'monto' => $tx['monto'],
+        'tipo' => $tx['tipo'],
+    ]);
 }
 
 // Llamada server-to-server a PayPhone para confirmar el estado real del pago.
@@ -87,4 +96,9 @@ try {
     jsonResponse(['error' => 'Error al procesar la confirmación.'], 500);
 }
 
-jsonResponse(['ok' => true, 'aprobado' => $aprobado]);
+jsonResponse([
+    'ok' => true,
+    'aprobado' => $aprobado,
+    'monto' => $tx['monto'],
+    'tipo' => $tx['tipo'],
+]);

@@ -598,15 +598,26 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
         '/payphone_confirm.php?id=' + encodeURIComponent(id) + '&clientTransactionId=' + encodeURIComponent(clientTransactionId),
         { method: 'GET', credentials: 'include' }
       );
-      if (data.aprobado === true) {
-        togglePanel('deposit');
-        $('depositSuccess').classList.add('show');
-      }
+      await mostrarResultadoAporte(data.aprobado === true);
     } catch (err) {
       // Si no se pudo verificar, simplemente no mostramos el aporte como acreditado.
     } finally {
       const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
       history.replaceState({}, '', clean);
+    }
+  }
+
+  // PayPhone regresa siempre a la "Url de respuesta" configurada a nivel de la aplicación
+  // (registro.html), sin importar desde dónde se inició el pago. registro.html reenvía aquí
+  // el resultado ya confirmado del lado del servidor cuando la transacción no era el aporte
+  // inicial (?pp_aprobado=1|0), para no volver a llamar a payphone_confirm.php dos veces.
+  async function mostrarResultadoAporte(aprobado) {
+    togglePanel('deposit');
+    if (aprobado) {
+      $('depositSuccess').classList.add('show');
+      await loadSocioDashboard(); // refresca el saldo con el aporte ya acreditado
+    } else {
+      setError('errAporte', 'El pago no se completó o fue rechazado. Intenta de nuevo.');
     }
   }
 
@@ -743,12 +754,19 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
   (async function init() {
     const returnId = PARAMS.get('id');
     const returnTxId = PARAMS.get('clientTransactionId');
+    const ppAprobado = PARAMS.get('pp_aprobado');
 
     // ¿Ya hay una sesión de socio activa?
     try {
       await apiFetch('/me.php', { credentials: 'include' });
       await enterSocioMode();
-      if (returnId && returnTxId) await confirmarAporteRetorno(returnId, returnTxId);
+      if (returnId && returnTxId) {
+        await confirmarAporteRetorno(returnId, returnTxId);
+      } else if (ppAprobado !== null) {
+        await mostrarResultadoAporte(ppAprobado === '1');
+        const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+        history.replaceState({}, '', clean);
+      }
       return;
     } catch (e) { /* no es socio, seguimos intentando */ }
 

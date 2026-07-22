@@ -124,21 +124,21 @@
       <div class="confirm-badge">🎉</div>
       <div class="confirm-title">Bienvenido a COOLKI</div>
       <div class="confirm-desc">Tu aporte inicial de <span id="paid-amount">$5.00</span> ya fue acreditado. Tu cuenta está activa — hora de empezar a ahorrar.</div>
-      <button class="btn-primary" onclick="resetFlow()">Ir a mi cuenta</button>
+      <button class="btn-primary" onclick="irACuenta()">Ir a mi cuenta</button>
     </div>
 
     <div class="card hidden" id="screen-confirm-pending">
       <div class="confirm-badge pending">⏳</div>
       <div class="confirm-title">Ya casi</div>
       <div class="confirm-desc">Creamos tu cuenta en COOLKI. Te escribimos apenas puedas completar tu aporte inicial de $5.00 y dejar todo activo.</div>
-      <button class="btn-primary" onclick="resetFlow()">Entendido</button>
+      <button class="btn-primary" onclick="irACuenta()">Entendido</button>
     </div>
 
     <div class="card hidden" id="screen-confirm-failed">
       <div class="confirm-badge pending">⚠️</div>
       <div class="confirm-title">No pudimos confirmar tu pago</div>
       <div class="confirm-desc" id="failed-desc">El pago no se completó o fue rechazado. Tu cuenta quedó creada; puedes intentar tu aporte inicial cuando quieras.</div>
-      <button class="btn-primary" onclick="resetFlow()">Volver a intentar</button>
+      <button class="btn-primary" onclick="volverAIntentarPago()">Volver a intentar</button>
     </div>
   </div>
 </div>
@@ -320,8 +320,24 @@
         '&clientTransactionId=' + encodeURIComponent(clientTransactionId),
         { method: 'GET', credentials: 'include' }
       );
+
+      // La "Url de respuesta" de PayPhone se configura a nivel de la aplicación (esta
+      // página), sin importar desde dónde se haya iniciado el pago. Si la transacción
+      // NO es el aporte inicial (ej. un aporte hecho desde sistema.html), reenviamos al
+      // socio a su cuenta en vez de mostrar las pantallas de registro.
+      if (data.tipo && data.tipo !== 'aporte_inicial') {
+        const url = new URL('sistema.html', location.href);
+        if (ORG_SLUG) url.searchParams.set('org', ORG_SLUG);
+        url.searchParams.set('pp_aprobado', data.aprobado ? '1' : '0');
+        location.href = url.toString();
+        return;
+      }
+
       if (data.aprobado === true) {
-        $('paid-amount').textContent = money(aporteInicial);
+        // Usamos el monto real que confirmó el servidor, no la variable local (que
+        // puede quedar desactualizada si esta página se cargó directo desde el
+        // redirect de PayPhone, sin pasar por el Paso 1 en esta misma sesión).
+        $('paid-amount').textContent = money(data.monto != null ? data.monto : aporteInicial);
         showOnly('screen-confirm-paid');
       } else {
         $('failed-desc').textContent = 'El pago no se completó o fue rechazado. Tu cuenta quedó creada; puedes intentar tu aporte inicial cuando quieras.';
@@ -345,12 +361,18 @@
     // El socio ya quedó creado en estado 'pendiente_pago' (default de la BD) en el Paso 1.
     showOnly('screen-confirm-pending');
   }
-  function resetFlow() {
-    ['reg-nombre','reg-cedula','reg-email','reg-celular','reg-password'].forEach(id => { $(id).value = ''; });
-    clearError('err-datos');
-    clearError('err-aporte');
-    $('dot2').classList.remove('done');
-    showOnly('screen-datos');
+
+  // El registro ya terminó (la cuenta existe): estos botones llevan al socio a su
+  // cuenta real, nunca de vuelta al formulario de registro.
+  function irACuenta() {
+    location.href = 'sistema.html' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+  }
+
+  // El aporte inicial falló: reintentamos el pago (Paso 2), no reiniciamos el registro
+  // completo — la cuenta del socio ya existe.
+  function volverAIntentarPago() {
+    showOnly('screen-aporte');
+    preparePago();
   }
 
   // ============ Arranque ============
