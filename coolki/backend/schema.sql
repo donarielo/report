@@ -13,6 +13,8 @@ CREATE TABLE organizaciones (
   retiro_minimo DECIMAL(10,2) DEFAULT 10.00,
   tasa_plazo_fijo DECIMAL(5,2) DEFAULT 5.00,
   aprobacion_retiros ENUM('manual','automatica') DEFAULT 'manual',
+  comision_deposito_pct DECIMAL(5,2) DEFAULT 5.00,  -- % de comisión sobre depósitos (no aplica al aporte inicial)
+  iva_pct DECIMAL(5,2) DEFAULT 15.00,               -- % de IVA, calculado sobre la comisión
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -45,7 +47,9 @@ CREATE TABLE transacciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   socio_id INT NOT NULL,
   tipo ENUM('aporte_inicial','aporte','retiro','interes') NOT NULL,
-  monto DECIMAL(10,2) NOT NULL,
+  monto DECIMAL(10,2) NOT NULL,              -- monto neto que se acredita al socio (sin comisión ni IVA)
+  comision DECIMAL(10,2) DEFAULT 0.00,       -- comisión cobrada encima del monto (0 en aporte_inicial)
+  iva DECIMAL(10,2) DEFAULT 0.00,            -- IVA calculado sobre la comisión
   payphone_transaction_id VARCHAR(100) NULL,
   payphone_client_transaction_id VARCHAR(20) NULL,
   estado ENUM('pendiente','confirmado','rechazado') DEFAULT 'pendiente',

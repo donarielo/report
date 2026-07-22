@@ -26,7 +26,8 @@ if ($monto <= 0) {
 }
 
 $pdo = getDB();
-$stmt = $pdo->prepare("SELECT s.*, o.payphone_store_id, o.payphone_token, o.nombre AS org_nombre
+$stmt = $pdo->prepare("SELECT s.*, o.payphone_store_id, o.payphone_token, o.nombre AS org_nombre,
+                               o.comision_deposito_pct, o.iva_pct
                         FROM socios s JOIN organizaciones o ON o.id = s.organizacion_id
                         WHERE s.id = ?");
 $stmt->execute([$socioId]);
@@ -36,24 +37,45 @@ if (!$socio['payphone_token']) {
     jsonResponse(['error' => 'Esta caja aún no ha conectado su cuenta de PayPhone.'], 400);
 }
 
+// Costo de transacción: SOLO se le suma al aporte recurrente ('aporte'), nunca al aporte
+// inicial (ese es un monto fijo operativo, no un ahorro). El socio paga monto + comisión + IVA
+// en PayPhone, pero se le acredita el monto COMPLETO que quiso ahorrar — la comisión y el IVA
+// no salen de sus ahorros.
+if ($tipo === 'aporte') {
+    $comisionPct = floatval($socio['comision_deposito_pct']);
+    $ivaPct = floatval($socio['iva_pct']);
+    $comision = round($monto * $comisionPct / 100, 2);
+    $iva = round($comision * $ivaPct / 100, 2);
+} else {
+    $comision = 0;
+    $iva = 0;
+}
+$montoACobrar = $monto + $comision + $iva;
+
 // clientTransactionId: PayPhone exige máximo 15 caracteres y que sea único
 $clientTransactionId = substr(uniqid(), -12) . rand(10, 99);
 
 $stmt = $pdo->prepare(
-    "INSERT INTO transacciones (socio_id, tipo, monto, payphone_client_transaction_id, estado)
-     VALUES (?, ?, ?, ?, 'pendiente')"
+    "INSERT INTO transacciones (socio_id, tipo, monto, comision, iva, payphone_client_transaction_id, estado)
+     VALUES (?, ?, ?, ?, ?, ?, 'pendiente')"
 );
-$stmt->execute([$socioId, $tipo, $monto, $clientTransactionId]);
+$stmt->execute([$socioId, $tipo, $monto, $comision, $iva, $clientTransactionId]);
 
 jsonResponse([
     'storeId' => $socio['payphone_store_id'] ?: null,   // null si la organización tiene una sola tienda
     'token' => $socio['payphone_token'],    // requerido por la Cajita de Pagos en el navegador
     'clientTransactionId' => $clientTransactionId,
-    'amount' => round($monto * 100),        // PayPhone recibe montos en centavos
-    'amountWithoutTax' => round($monto * 100),
+    'amount' => round($montoACobrar * 100),      // lo que realmente se cobra en PayPhone, en centavos
+    'amountWithoutTax' => round($montoACobrar * 100),
     'currency' => 'USD',
     'reference' => $socio['org_nombre'] . ' — ' . ucfirst(str_replace('_', ' ', $tipo)),
     'responseUrl' => SITE_URL . '/api/payphone_confirm.php',
+    // Desglose informativo para que el frontend muestre "ahorras X + comisión Y = total Z"
+    // antes de abrir el widget. El monto que se acredita al socio sigue siendo $monto (neto).
+    'montoNeto' => $monto,
+    'comision' => $comision,
+    'iva' => $iva,
+    'montoCobrado' => $montoACobrar,
 ]);
 
 // Con estos datos, el frontend inicializa el widget "Cajita de Pagos" de PayPhone

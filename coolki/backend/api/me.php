@@ -8,7 +8,7 @@ $pdo = getDB();
 
 $stmt = $pdo->prepare(
     "SELECT s.id, s.nombre, s.email, s.saldo_disponible, s.saldo_congelado, s.estado, s.created_at,
-            o.retiro_minimo, o.aporte_inicial, o.tasa_plazo_fijo
+            o.retiro_minimo, o.aporte_inicial, o.tasa_plazo_fijo, o.comision_deposito_pct, o.iva_pct
      FROM socios s JOIN organizaciones o ON o.id = s.organizacion_id
      WHERE s.id = ?"
 );
@@ -20,7 +20,7 @@ if (!$socio) {
 }
 
 $stmt = $pdo->prepare(
-    "SELECT tipo, monto, estado, created_at FROM transacciones
+    "SELECT tipo, monto, comision, iva, estado, created_at FROM transacciones
      WHERE socio_id = ? AND estado = 'confirmado' ORDER BY created_at DESC LIMIT 20"
 );
 $stmt->execute([$socioId]);

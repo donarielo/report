@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COOLKI — Mi cuenta y panel de administrador</title>
+<title>COOLKI — Mi cuenta</title>
+<!-- Config del frontend para esta caja. Si este archivo se reutiliza para otro cliente,
+     cambia 'org' aquí (o bórralo y siempre pasa ?org=slug en la URL). -->
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
 <!-- PayPhone · Cajita de Pagos (SDK oficial v2.0), usada para los aportes recurrentes -->
 <script src="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.js" type="module"></script>
 <link href="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.css" rel="stylesheet">
@@ -40,13 +43,11 @@
 .brand-lockup { display: flex; align-items: center; gap: 10px; }
 .brand-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
 .topbar-right { display: flex; align-items: center; gap: 14px; }
-.tabs { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
-.tab-btn { border: none; background: transparent; padding: 8px 16px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
-.tab-btn.active { background: var(--brand); color: #fff; }
+.topbar-label { font-size: 13px; color: var(--muted); font-weight: 600; }
 .logout-link { border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
-.tab-panel { display: none; padding: 30px 20px; }
-.tab-panel.active { display: block; }
+.app-body { display: none; padding: 30px 20px; }
+.app-body.active { display: block; }
 
 /* ---------- LOGIN GATE ---------- */
 .auth-wrap { min-height: 100vh; display: flex; justify-content: center; padding: 40px 16px; }
@@ -63,31 +64,32 @@
 .hidden { display: none; }
 
 /* ---------- SOCIO ---------- */
-.screen { width: 100%; max-width: 400px; margin: 0 auto; }
+.screen { width: 100%; max-width: 420px; margin: 0 auto; }
 .top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
 .greeting-eyebrow { font-size: 12.5px; color: var(--muted); }
 .greeting-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; margin-top: 2px; }
 .avatar { width: 42px; height: 42px; border-radius: 14px; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; }
 
-.balance-card { background: var(--brand); color: #fff; border-radius: 22px; padding: 26px 22px; margin-bottom: 16px; }
+.balance-card { background: var(--brand); color: #fff; border-radius: 22px; padding: 26px 22px; margin-bottom: 14px; }
 .balance-label { font-size: 13px; opacity: 0.85; }
-.balance-figure { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 8px 0 6px; }
-.balance-sub { font-size: 12.5px; opacity: 0.85; margin-bottom: 18px; }
+.balance-figure { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 8px 0 18px; }
 .actions-row { display: flex; gap: 10px; }
 .action-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: none; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 14.5px; cursor: pointer; }
 .action-btn.deposit { background: #fff; color: var(--brand); }
 .action-btn.withdraw { background: rgba(255,255,255,0.16); color: #fff; }
 
 .panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.25s ease, margin 0.3s ease; }
-.panel.open { max-height: 640px; opacity: 1; margin-top: 16px; }
+.panel.open { max-height: 720px; opacity: 1; margin-top: 16px; }
 .panel-inner { background: rgba(255,255,255,0.12); border: 1px dashed rgba(255,255,255,0.35); border-radius: 14px; padding: 16px; }
 .panel-title { font-weight: 600; font-size: 13.5px; margin-bottom: 12px; }
-.amount-chips { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.amount-chips { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); font-family: 'Space Grotesk', sans-serif; font-size: 13px; cursor: pointer; color: #fff; }
 .chip.selected { background: #fff; color: var(--brand); border-color: #fff; }
 .payphone-btn { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.payphone-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .payphone-mark { width: 18px; height: 18px; border-radius: 5px; background: #fff; color: var(--payphone); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; }
 .withdraw-note { font-size: 12px; opacity: 0.9; margin-bottom: 12px; line-height: 1.5; }
+.fee-breakdown { font-size: 12px; opacity: 0.95; margin: 2px 0 12px; line-height: 1.6; background: rgba(255,255,255,0.14); border-radius: 10px; padding: 8px 10px; }
 .confirm-withdraw-btn { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: #fff; color: var(--coral); font-weight: 600; font-size: 14px; cursor: pointer; }
 .success-note { display: none; margin-top: 10px; font-size: 12.5px; font-weight: 600; align-items: center; gap: 6px; }
 .success-note.show { display: flex; }
@@ -97,10 +99,19 @@
 .panel-error { font-size: 12px; color: #FFD9D9; margin-top: 8px; line-height: 1.5; }
 .pending-note { font-size: 12px; opacity: 0.9; margin-bottom: 10px; background: rgba(255,255,255,0.14); border-radius: 10px; padding: 8px 10px; }
 
-.section { margin-top: 22px; }
-.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+/* ---------- Resumen de fondos (separado del saldo disponible) ---------- */
+.funds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
+.fund-tile { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px; }
+.fund-tile.highlight { background: var(--brand-soft); border-color: var(--brand-soft); }
+.fund-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.fund-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; margin-top: 4px; }
+.fund-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+@media (max-width: 420px) { .funds-grid { grid-template-columns: 1fr 1fr; } .fund-tile.highlight { grid-column: 1 / -1; } }
+
+.section { margin-top: 26px; }
+.section-head { margin-bottom: 4px; }
 .section-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; }
-.section-tag { font-family: 'Space Grotesk', sans-serif; font-size: 12px; color: var(--mint); background: var(--mint-soft); padding: 3px 9px; border-radius: 20px; }
+.section-desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
 .term-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 10px; }
 .term-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
 .term-row b { color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
@@ -118,58 +129,11 @@
 .ledger-mid { flex: 1; min-width: 0; }
 .ledger-desc { font-size: 13.5px; font-weight: 600; }
 .ledger-date { font-size: 11.5px; color: var(--muted); }
+.ledger-fee { font-size: 11px; color: var(--muted); }
 .ledger-amt { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; white-space: nowrap; }
 .ledger-amt.pos { color: var(--mint); }
 .ledger-amt.neg { color: var(--coral); }
-.footnote { margin-top: 22px; font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.5; }
-
-/* ---------- ADMIN ---------- */
-.admin-wrap { max-width: 980px; margin: 0 auto; }
-.admin-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
-.admin-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; }
-.admin-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.export-btn { padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: not-allowed; }
-
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
-.stat-label { font-size: 11.5px; color: var(--muted); }
-.stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; color: var(--ink); margin-top: 6px; }
-
-.admin-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
-.admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; }
-.admin-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin: 0 0 14px; }
-
-table.socios { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.socios th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
-table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
-.status-pill { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; background: var(--mint-soft); color: var(--mint); font-weight: 600; }
-.status-pill.alert { background: var(--sun-soft); color: #B98424; }
-
-.request-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.request-row:last-child { border-bottom: none; }
-.request-info { font-size: 13px; }
-.request-info b { font-family: 'Space Grotesk', sans-serif; }
-.request-name { font-size: 11.5px; color: var(--muted); }
-.request-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.req-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
-.req-btn.approve { background: var(--brand); color: #fff; }
-.req-btn.reject { background: transparent; color: var(--coral); border: 1px solid var(--coral); }
-.req-result { font-size: 11.5px; font-weight: 700; }
-.req-result.approved { color: var(--mint); }
-.req-result.rejected { color: var(--coral); }
 .empty-note { font-size: 12.5px; color: var(--muted); padding: 10px 0; }
-
-.settings-row { margin-bottom: 16px; }
-.settings-label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; display: block; }
-.settings-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); }
-.settings-input:disabled { color: var(--muted); }
-.save-btn { margin-top: 4px; padding: 10px 16px; border-radius: 10px; border: none; background: var(--brand); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
-.admin-note { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
-.settings-msg { font-size: 12px; margin-top: 8px; }
-.settings-msg.ok { color: var(--mint); }
-.settings-msg.err { color: var(--coral); }
-
-@media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } }
 </style>
 
 <!-- ============ LOGIN GATE ============ -->
@@ -180,10 +144,6 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
         <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
         <div class="brand-word">coolki</div>
       </div>
-      <div class="tabs" style="margin-bottom: 18px;">
-        <button class="tab-btn active" id="roleTabSocio" onclick="switchAuthRole('socio')">Soy socio</button>
-        <button class="tab-btn" id="roleTabAdmin" onclick="switchAuthRole('admin')">Soy administrador</button>
-      </div>
 
       <div class="auth-card" id="authSocio">
         <div class="auth-title">Ingresa a tu cuenta</div>
@@ -193,20 +153,11 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
         <div id="errSocioLogin" class="auth-error hidden"></div>
         <button class="auth-btn" id="btnSocioLogin" onclick="loginSocio()">Entrar</button>
       </div>
-
-      <div class="auth-card hidden" id="authAdmin">
-        <div class="auth-title">Panel del administrador</div>
-        <div class="auth-desc">Ingresa con tu cuenta de administrador de esta caja.</div>
-        <div class="auth-field"><label>Correo electrónico</label><input id="adminEmail" type="email" placeholder="admin@tuorganizacion.com"></div>
-        <div class="auth-field"><label>Contraseña</label><input id="adminPassword" type="password" placeholder="Tu contraseña"></div>
-        <div id="errAdminLogin" class="auth-error hidden"></div>
-        <button class="auth-btn" id="btnAdminLogin" onclick="loginAdmin()">Entrar</button>
-      </div>
     </div>
   </div>
 </div>
 
-<!-- ============ APP (socio / admin) ============ -->
+<!-- ============ APP (socio) ============ -->
 <div class="coolki-app hidden" id="app">
   <div class="topbar">
     <div class="brand-lockup">
@@ -214,13 +165,12 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
       <div class="brand-word">coolki</div>
     </div>
     <div class="topbar-right">
-      <div class="tabs" id="appTabs"></div>
+      <span class="topbar-label">Mi cuenta</span>
       <button class="logout-link" onclick="logout()">Cerrar sesión</button>
     </div>
   </div>
 
-  <!-- SOCIO -->
-  <div class="tab-panel" id="tab-socio">
+  <div class="app-body active" id="app-body">
     <div class="screen">
       <div class="top-row">
         <div><div class="greeting-eyebrow">Hola de nuevo</div><div class="greeting-name" id="greetingName">—</div></div>
@@ -230,7 +180,6 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
       <div class="balance-card">
         <div class="balance-label">Saldo disponible</div>
         <div class="balance-figure" id="balanceFigure">$0.00</div>
-        <div class="balance-sub" id="balanceSub">—</div>
         <div class="actions-row">
           <button class="action-btn deposit" onclick="togglePanel('deposit')">Aportar</button>
           <button class="action-btn withdraw" onclick="togglePanel('withdraw')">Retirar</button>
@@ -238,14 +187,17 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
 
         <div class="panel" id="panel-deposit">
           <div class="panel-inner">
-            <div class="panel-title">¿Cuánto quieres aportar hoy?</div>
+            <div class="panel-title">¿Cuánto quieres ahorrar hoy?</div>
             <div class="amount-chips" id="chips">
               <div class="chip selected" onclick="selectChip(this, 10)">$10</div>
               <div class="chip" onclick="selectChip(this, 20)">$20</div>
               <div class="chip" onclick="selectChip(this, 50)">$50</div>
               <div class="chip" onclick="selectChip(this, 100)">$100</div>
+              <div class="chip" id="chipCustom" onclick="selectChip(this, 'custom')">Otro monto</div>
             </div>
-            <button class="payphone-btn" id="btnAportar" onclick="iniciarAporte()"><span class="payphone-mark">P</span> Pagar $<span id="payAmount">10</span> con PayPhone</button>
+            <input type="number" id="customAmount" class="hidden" placeholder="¿Cuánto quieres ahorrar?" step="0.01" min="1" oninput="onCustomAmountInput()">
+            <div id="feeBreakdown" class="fee-breakdown"></div>
+            <button class="payphone-btn" id="btnAportar" onclick="iniciarAporte()"><span class="payphone-mark">P</span> <span id="payBtnLabel">Pagar con PayPhone</span></button>
             <div id="pp-button-aporte" style="margin-top:10px;"></div>
             <div id="errAporte" class="panel-error hidden"></div>
             <div class="success-note" id="depositSuccess"><span class="success-dot"></span> Aporte acreditado a tu cuenta</div>
@@ -265,55 +217,34 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
         </div>
       </div>
 
+      <!-- Resumen: ahorros disponibles, congelado y plazo fijo, cada uno por separado -->
+      <div class="funds-grid">
+        <div class="fund-tile">
+          <div class="fund-label">Congelado</div>
+          <div class="fund-value" id="fundCongelado">$0.00</div>
+          <div class="fund-sub">Aporte inicial</div>
+        </div>
+        <div class="fund-tile">
+          <div class="fund-label">En plazo fijo</div>
+          <div class="fund-value" id="fundPlazoFijo">$0.00</div>
+          <div class="fund-sub">Ahorro a plazo</div>
+        </div>
+        <div class="fund-tile highlight">
+          <div class="fund-label">Total ahorrado</div>
+          <div class="fund-value" id="fundTotal">$0.00</div>
+        </div>
+      </div>
+
       <div class="section">
         <div class="section-head"><div class="section-title">Ahorro a plazo fijo</div></div>
+        <div class="section-desc">Este dinero gana interés y se renueva automáticamente cada año.</div>
         <div id="plazosFijosWrap"></div>
       </div>
 
       <div class="section">
-        <div class="section-head"><div class="section-title">Movimientos recientes</div></div>
+        <div class="section-head"><div class="section-title">Depósitos y movimientos</div></div>
+        <div class="section-desc">Historial de tus aportes, retiros e intereses acreditados.</div>
         <div class="term-card" style="padding: 6px 20px;" id="ledgerWrap"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADMIN -->
-  <div class="tab-panel" id="tab-admin">
-    <div class="admin-wrap">
-      <div class="admin-head">
-        <div><div class="admin-title">Panel del administrador</div><div class="admin-sub" id="adminOrgName">—</div></div>
-        <button class="export-btn" title="Próximamente" disabled>Exportar reporte SEPS</button>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Socios activos</div><div class="stat-value" id="statActivos">0</div></div>
-        <div class="stat-card"><div class="stat-label">Total ahorrado</div><div class="stat-value" id="statTotal">$0</div></div>
-        <div class="stat-card"><div class="stat-label">En plazo fijo</div><div class="stat-value" id="statPlazo">$0</div></div>
-        <div class="stat-card"><div class="stat-label">Retiros pendientes</div><div class="stat-value" id="statRetiros">0</div></div>
-      </div>
-
-      <div class="admin-grid">
-        <div class="admin-card">
-          <h3>Socios</h3>
-          <table class="socios">
-            <thead><tr><th>Nombre</th><th>Saldo</th><th>Último aporte</th><th>Estado</th></tr></thead>
-            <tbody id="sociosTableBody"></tbody>
-          </table>
-
-          <h3 style="margin-top: 24px;">Solicitudes de retiro pendientes</h3>
-          <div id="requests"></div>
-        </div>
-
-        <div class="admin-card">
-          <h3>Configuración</h3>
-          <div class="settings-row"><label class="settings-label">Tasa de plazo fijo anual (%)</label><input class="settings-input" id="cfgTasa" /></div>
-          <div class="settings-row"><label class="settings-label">Aporte inicial (congelado)</label><input class="settings-input" id="cfgAporte" /></div>
-          <div class="settings-row"><label class="settings-label">Retiro mínimo</label><input class="settings-input" id="cfgRetiro" /></div>
-          <div class="settings-row"><label class="settings-label">Cuenta PayPhone conectada</label><input class="settings-input" id="cfgPayphone" disabled /></div>
-          <button class="save-btn" onclick="guardarConfiguracion()">Guardar cambios</button>
-          <div id="settingsMsg" class="settings-msg hidden"></div>
-          <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software.</div>
-        </div>
       </div>
     </div>
   </div>
@@ -321,9 +252,9 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
 
 <script>
   /* ------------------------------------------------------------------
-     COOLKI · sistema.html conectado al backend real.
-     Igual que registro.html, el slug de la organización NO se hardcodea:
-     se toma de la URL (?org=coolki) o de window.COOLKI_CONFIG.
+     COOLKI · sistema.html (cuenta del socio) conectado al backend real.
+     El slug de la organización NO se hardcodea en la lógica: se toma de
+     la URL (?org=coolki) o de window.COOLKI_CONFIG (definido arriba).
   ------------------------------------------------------------------ */
   const CONFIG = window.COOLKI_CONFIG || {};
   const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
@@ -360,13 +291,6 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
   }
 
   // ============ Login gate ============
-  function switchAuthRole(role) {
-    $('roleTabSocio').classList.toggle('active', role === 'socio');
-    $('roleTabAdmin').classList.toggle('active', role === 'admin');
-    $('authSocio').classList.toggle('hidden', role !== 'socio');
-    $('authAdmin').classList.toggle('hidden', role !== 'admin');
-  }
-
   async function loginSocio() {
     clearError('errSocioLogin');
     if (!ORG_SLUG) { setError('errSocioLogin', 'Falta indicar la organización (?org=...) en el enlace.'); return; }
@@ -388,45 +312,17 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
     }
   }
 
-  async function loginAdmin() {
-    clearError('errAdminLogin');
-    if (!ORG_SLUG) { setError('errAdminLogin', 'Falta indicar la organización (?org=...) en el enlace.'); return; }
-    const email = $('adminEmail').value.trim();
-    const password = $('adminPassword').value;
-    if (!email || !password) { setError('errAdminLogin', 'Ingresa tu correo y contraseña.'); return; }
-
-    const btn = $('btnAdminLogin'); btn.disabled = true;
-    try {
-      const data = await apiFetch('/admin_login.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ organizacion: ORG_SLUG, email, password })
-      });
-      await enterAdminMode(data.organizacion);
-    } catch (err) {
-      setError('errAdminLogin', err.message || NET_MSG);
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
   async function logout() {
     try { await apiFetch('/logout.php', { method: 'POST', credentials: 'include' }); } catch (e) { /* seguimos igual */ }
     location.href = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
   }
 
-  function showApp(tabId, label) {
-    $('gate').classList.add('hidden');
-    $('app').classList.remove('hidden');
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    $(tabId).classList.add('active');
-    $('appTabs').innerHTML = '<button class="tab-btn active">' + label + '</button>';
-  }
-
   // ============ Modo socio ============
-  let socioState = { saldoDisponible: 0, retiroMinimo: 10 };
+  let socioState = { saldoDisponible: 0, retiroMinimo: 10, comisionPct: 0, ivaPct: 0 };
 
   async function enterSocioMode() {
-    showApp('tab-socio', 'Mi cuenta');
+    $('gate').classList.add('hidden');
+    $('app').classList.remove('hidden');
     await loadSocioDashboard();
   }
 
@@ -440,12 +336,18 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
     const s = data.socio;
     socioState.saldoDisponible = parseFloat(s.saldo_disponible) || 0;
     socioState.retiroMinimo = parseFloat(s.retiro_minimo) || 0;
+    socioState.comisionPct = parseFloat(s.comision_deposito_pct) || 0;
+    socioState.ivaPct = parseFloat(s.iva_pct) || 0;
 
     $('greetingName').textContent = s.nombre;
     $('avatarInitials').textContent = s.nombre.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
     $('balanceFigure').textContent = money(socioState.saldoDisponible);
-    const saldoTotal = socioState.saldoDisponible + parseFloat(s.saldo_congelado || 0);
-    $('balanceSub').textContent = 'Saldo total ' + money(saldoTotal) + ' · ' + money(s.saldo_congelado) + ' congelado (aporte inicial)';
+
+    const plazoTotal = (data.plazos_fijos || []).reduce((sum, p) => sum + parseFloat(p.capital), 0);
+    const saldoCongelado = parseFloat(s.saldo_congelado || 0);
+    $('fundCongelado').textContent = money(saldoCongelado);
+    $('fundPlazoFijo').textContent = money(plazoTotal);
+    $('fundTotal').textContent = money(socioState.saldoDisponible + saldoCongelado + plazoTotal);
 
     $('withdrawNote').textContent = 'Retiros disponibles desde ' + money(socioState.retiroMinimo) + '. Se procesan en 1–2 días hábiles. Máximo disponible: ' + money(socioState.saldoDisponible) + '.';
     $('withdrawAmount').setAttribute('min', socioState.retiroMinimo);
@@ -462,6 +364,7 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
 
     renderPlazosFijos(data.plazos_fijos, s.tasa_plazo_fijo);
     renderLedger(data.movimientos);
+    updateFeeBreakdown();
     return true;
   }
 
@@ -517,18 +420,20 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
       wrap.innerHTML = '<div class="empty-note">Aún no tienes movimientos.</div>';
       return;
     }
-    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Aporte', retiro: 'Retiro', interes: 'Interés acreditado' };
+    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado' };
     wrap.innerHTML = movimientos.map(m => {
       const isOut = m.tipo === 'retiro';
+      const recargo = parseFloat(m.comision || 0) + parseFloat(m.iva || 0);
+      const feeNote = recargo > 0 ? '<div class="ledger-fee">+ ' + money(recargo) + ' comisión/IVA pagados aparte</div>' : '';
       return '<div class="ledger-row">' +
         '<div class="ledger-icon ' + (isOut ? 'out' : 'in') + '">' + (isOut ? '↓' : '↑') + '</div>' +
-        '<div class="ledger-mid"><div class="ledger-desc">' + (labels[m.tipo] || m.tipo) + '</div><div class="ledger-date">' + formatDate(m.created_at) + '</div></div>' +
+        '<div class="ledger-mid"><div class="ledger-desc">' + (labels[m.tipo] || m.tipo) + '</div><div class="ledger-date">' + formatDate(m.created_at) + '</div>' + feeNote + '</div>' +
         '<div class="ledger-amt ' + (isOut ? 'neg' : 'pos') + '">' + (isOut ? '-' : '+') + money(m.monto) + '</div>' +
         '</div>';
     }).join('');
   }
 
-  // ---- Aportar (depósito recurrente vía PayPhone) ----
+  // ---- Aportar (depósito recurrente vía PayPhone), con monto libre y desglose de costo ----
   let currentChipAmount = 10;
   function togglePanel(which) {
     const dep = $('panel-deposit');
@@ -541,17 +446,54 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
   function selectChip(el, amount) {
     document.querySelectorAll('#chips .chip').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    currentChipAmount = amount;
-    $('payAmount').textContent = amount;
     $('depositSuccess').classList.remove('show');
     $('pp-button-aporte').innerHTML = '';
     clearError('errAporte');
     $('btnAportar').classList.remove('hidden');
+
+    if (amount === 'custom') {
+      $('customAmount').classList.remove('hidden');
+      $('customAmount').focus();
+      currentChipAmount = parseFloat($('customAmount').value) || 0;
+    } else {
+      $('customAmount').classList.add('hidden');
+      currentChipAmount = amount;
+    }
+    updateFeeBreakdown();
+  }
+  function onCustomAmountInput() {
+    currentChipAmount = parseFloat($('customAmount').value) || 0;
+    updateFeeBreakdown();
+  }
+
+  // Muestra, ANTES de pagar, cuánto se cobra realmente en PayPhone: el monto que el socio
+  // quiere ahorrar + comisión + IVA — para que nunca se lleve una sorpresa en el cobro.
+  function updateFeeBreakdown() {
+    const monto = currentChipAmount || 0;
+    const comision = Math.round(monto * socioState.comisionPct / 100 * 100) / 100;
+    const iva = Math.round(comision * socioState.ivaPct / 100 * 100) / 100;
+    const total = monto + comision + iva;
+    const btn = $('btnAportar');
+    if (monto <= 0) {
+      $('feeBreakdown').innerHTML = 'Ingresa un monto para ver el total a pagar.';
+      $('payBtnLabel').textContent = 'Pagar con PayPhone';
+      btn.disabled = true;
+      return;
+    }
+    $('feeBreakdown').innerHTML =
+      'Ahorras <b>' + money(monto) + '</b> + comisión ' + money(comision) + ' + IVA ' + money(iva) +
+      ' = <b>pagas ' + money(total) + '</b> en PayPhone. Tu cuenta se acredita con los ' + money(monto) + ' completos.';
+    $('payBtnLabel').textContent = 'Pagar ' + money(total) + ' con PayPhone';
+    btn.disabled = false;
   }
 
   async function iniciarAporte() {
     clearError('errAporte');
     $('pp-button-aporte').innerHTML = '';
+    if (!currentChipAmount || currentChipAmount <= 0) {
+      setError('errAporte', 'Ingresa un monto válido.');
+      return;
+    }
     const btn = $('btnAportar');
     btn.disabled = true;
     try {
@@ -639,124 +581,12 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
     }
   }
 
-  // ============ Modo administrador ============
-  let adminOrgSettings = {};
-
-  async function enterAdminMode(organizacion) {
-    adminOrgSettings = organizacion || {};
-    showApp('tab-admin', 'Panel del administrador');
-    $('adminOrgName').textContent = (adminOrgSettings.nombre || ORG_SLUG) + ' · resumen general';
-    fillSettingsForm();
-    await loadAdminDashboard();
-  }
-
-  function fillSettingsForm() {
-    $('cfgTasa').value = adminOrgSettings.tasa_plazo_fijo != null ? adminOrgSettings.tasa_plazo_fijo : '';
-    $('cfgAporte').value = adminOrgSettings.aporte_inicial != null ? adminOrgSettings.aporte_inicial : '';
-    $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
-    if (adminOrgSettings.payphone_conectado) {
-      const storeId = adminOrgSettings.payphone_store_id || '';
-      $('cfgPayphone').value = storeId ? ('Conectada (tienda •••• ' + storeId.slice(-4) + ')') : 'Conectada';
-    } else {
-      $('cfgPayphone').value = 'No conectada';
-    }
-  }
-
-  async function loadAdminDashboard() {
-    let socios = [], retiros = [];
-    try {
-      const [dSocios, dRetiros] = await Promise.all([
-        apiFetch('/admin_listar_socios.php', { credentials: 'include' }),
-        apiFetch('/admin_listar_retiros.php', { credentials: 'include' }),
-      ]);
-      socios = dSocios.socios || [];
-      retiros = dRetiros.retiros || [];
-    } catch (err) {
-      $('sociosTableBody').innerHTML = '<tr><td colspan="4" class="empty-note">' + (err.message || NET_MSG) + '</td></tr>';
-      return;
-    }
-
-    const activos = socios.filter(s => s.estado === 'activo').length;
-    const totalAhorrado = socios.reduce((sum, s) => sum + parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado) + parseFloat(s.plazo_fijo_total), 0);
-    const enPlazo = socios.reduce((sum, s) => sum + parseFloat(s.plazo_fijo_total), 0);
-    $('statActivos').textContent = activos;
-    $('statTotal').textContent = money(totalAhorrado);
-    $('statPlazo').textContent = money(enPlazo);
-    $('statRetiros').textContent = retiros.length;
-
-    $('sociosTableBody').innerHTML = socios.length ? socios.map(s => {
-      const saldo = parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado);
-      const pill = s.estado === 'activo'
-        ? '<span class="status-pill">Activo</span>'
-        : '<span class="status-pill alert">Pago pendiente</span>';
-      return '<tr><td>' + escapeHtml(s.nombre) + '</td><td>' + money(saldo) + '</td><td>' + formatDate(s.ultimo_aporte) + '</td><td>' + pill + '</td></tr>';
-    }).join('') : '<tr><td colspan="4" class="empty-note">Todavía no hay socios registrados.</td></tr>';
-
-    $('requests').innerHTML = retiros.length ? retiros.map(r =>
-      '<div class="request-row" id="req-' + r.id + '">' +
-        '<div class="request-info"><b>' + money(r.monto) + '</b> <div class="request-name">' + escapeHtml(r.socio_nombre) + ' · solicitado ' + formatDate(r.created_at) + '</div></div>' +
-        '<div class="request-actions">' +
-          '<button class="req-btn approve" onclick="resolveRequest(' + r.id + ', \'aprobar\')">Aprobar</button>' +
-          '<button class="req-btn reject" onclick="resolveRequest(' + r.id + ', \'rechazar\')">Rechazar</button>' +
-        '</div>' +
-      '</div>'
-    ).join('') : '<div class="empty-note">No hay solicitudes de retiro pendientes.</div>';
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
-  }
-
-  async function resolveRequest(id, accion) {
-    const row = $('req-' + id);
-    try {
-      await apiFetch('/admin_resolver_retiro.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ solicitud_id: id, accion })
-      });
-      if (row) {
-        row.querySelector('.request-actions').innerHTML =
-          '<span class="req-result ' + (accion === 'aprobar' ? 'approved' : 'rejected') + '">' + (accion === 'aprobar' ? 'Aprobado ✓' : 'Rechazado') + '</span>';
-      }
-      await loadAdminDashboard();
-    } catch (err) {
-      alert(err.message || NET_MSG);
-    }
-  }
-
-  async function guardarConfiguracion() {
-    const msg = $('settingsMsg');
-    msg.classList.add('hidden');
-    const tasa = parseFloat($('cfgTasa').value);
-    const aporte = parseFloat($('cfgAporte').value);
-    const retiro = parseFloat($('cfgRetiro').value);
-    if (isNaN(tasa) || isNaN(aporte) || isNaN(retiro) || tasa < 0 || aporte < 0 || retiro < 0) {
-      msg.textContent = 'Revisa que los tres valores sean números válidos.';
-      msg.className = 'settings-msg err';
-      return;
-    }
-    try {
-      await apiFetch('/admin_actualizar_organizacion.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ tasa_plazo_fijo: tasa, aporte_inicial: aporte, retiro_minimo: retiro })
-      });
-      msg.textContent = 'Cambios guardados.';
-      msg.className = 'settings-msg ok';
-    } catch (err) {
-      msg.textContent = err.message || NET_MSG;
-      msg.className = 'settings-msg err';
-    }
-  }
-
   // ============ Arranque: restaurar sesión si ya existe ============
   (async function init() {
     const returnId = PARAMS.get('id');
     const returnTxId = PARAMS.get('clientTransactionId');
     const ppAprobado = PARAMS.get('pp_aprobado');
 
-    // ¿Ya hay una sesión de socio activa?
     try {
       await apiFetch('/me.php', { credentials: 'include' });
       await enterSocioMode();
@@ -767,14 +597,6 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
         const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
         history.replaceState({}, '', clean);
       }
-      return;
-    } catch (e) { /* no es socio, seguimos intentando */ }
-
-    // ¿Ya hay una sesión de administrador activa?
-    try {
-      const data = await apiFetch('/admin_me.php', { credentials: 'include' });
-      await enterAdminMode(data.organizacion);
-      return;
     } catch (e) { /* no hay sesión: se queda en el gate */ }
   })();
 </script>

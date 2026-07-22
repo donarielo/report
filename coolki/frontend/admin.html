@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Panel del administrador</title>
+<!-- Config del frontend para esta caja. Si este archivo se reutiliza para otro cliente,
+     cambia 'org' aquí (o bórralo y siempre pasa ?org=slug en la URL). -->
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-admin, .coolki-admin * { box-sizing: border-box; }
+
+.coolki-admin {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --coral: #E14B4B;
+  --sun-soft: #FFF3D6;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; background: #fff; }
+.brand-lockup { display: flex; align-items: center; gap: 10px; }
+.brand-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.logout-link { border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+.app-body { display: none; padding: 30px 20px; }
+.app-body.active { display: block; }
+.hidden { display: none; }
+
+/* ---------- LOGIN GATE ---------- */
+.auth-wrap { min-height: 100vh; display: flex; justify-content: center; padding: 40px 16px; }
+.auth-screen { width: 100%; max-width: 380px; }
+.auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.auth-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; margin-bottom: 6px; }
+.auth-desc { font-size: 13.5px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.auth-field input { width: 100%; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); }
+.auth-field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.auth-btn { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.auth-error { font-size: 12.5px; color: var(--coral); line-height: 1.5; margin: 2px 0 14px; }
+
+/* ---------- ADMIN ---------- */
+.admin-wrap { max-width: 980px; margin: 0 auto; }
+.admin-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+.admin-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; }
+.admin-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.export-btn { padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: not-allowed; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
+.stat-label { font-size: 11.5px; color: var(--muted); }
+.stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; color: var(--ink); margin-top: 6px; }
+
+.admin-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+.admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; }
+.admin-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin: 0 0 14px; }
+
+table.socios { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.socios th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
+table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.status-pill { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; background: var(--mint-soft); color: var(--mint); font-weight: 600; }
+.status-pill.alert { background: var(--sun-soft); color: #B98424; }
+
+.request-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.request-row:last-child { border-bottom: none; }
+.request-info { font-size: 13px; }
+.request-info b { font-family: 'Space Grotesk', sans-serif; }
+.request-name { font-size: 11.5px; color: var(--muted); }
+.request-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.req-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+.req-btn.approve { background: var(--brand); color: #fff; }
+.req-btn.reject { background: transparent; color: var(--coral); border: 1px solid var(--coral); }
+.req-result { font-size: 11.5px; font-weight: 700; }
+.req-result.approved { color: var(--mint); }
+.req-result.rejected { color: var(--coral); }
+.empty-note { font-size: 12.5px; color: var(--muted); padding: 10px 0; }
+
+.settings-row { margin-bottom: 16px; }
+.settings-label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; display: block; }
+.settings-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); }
+.settings-input:disabled { color: var(--muted); }
+.settings-group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; margin: 18px 0 10px; }
+.settings-group-title:first-of-type { margin-top: 0; }
+.save-btn { margin-top: 4px; padding: 10px 16px; border-radius: 10px; border: none; background: var(--brand); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
+.admin-note { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.settings-msg { font-size: 12px; margin-top: 8px; }
+.settings-msg.ok { color: var(--mint); }
+.settings-msg.err { color: var(--coral); }
+
+@media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } }
+</style>
+
+<!-- ============ LOGIN GATE ============ -->
+<div class="coolki-admin" id="gate">
+  <div class="auth-wrap">
+    <div class="auth-screen">
+      <div class="brand-lockup" style="margin-bottom: 22px;">
+        <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+        <div class="brand-word">coolki</div>
+      </div>
+
+      <div class="auth-card" id="authAdmin">
+        <div class="auth-title">Panel del administrador</div>
+        <div class="auth-desc">Acceso exclusivo para administradores de esta caja de ahorro. Si eres socio, entra desde <code>sistema.html</code>.</div>
+        <div class="auth-field"><label>Correo electrónico</label><input id="adminEmail" type="email" placeholder="admin@tuorganizacion.com"></div>
+        <div class="auth-field"><label>Contraseña</label><input id="adminPassword" type="password" placeholder="Tu contraseña"></div>
+        <div id="errAdminLogin" class="auth-error hidden"></div>
+        <button class="auth-btn" id="btnAdminLogin" onclick="loginAdmin()">Entrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP (admin) ============ -->
+<div class="coolki-admin hidden" id="app">
+  <div class="topbar">
+    <div class="brand-lockup">
+      <svg width="32" height="32" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="brand-word">coolki</div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-label">Panel del administrador</span>
+      <button class="logout-link" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="app-body active">
+    <div class="admin-wrap">
+      <div class="admin-head">
+        <div><div class="admin-title">Panel del administrador</div><div class="admin-sub" id="adminOrgName">—</div></div>
+        <button class="export-btn" title="Próximamente" disabled>Exportar reporte SEPS</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Socios activos</div><div class="stat-value" id="statActivos">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total ahorrado</div><div class="stat-value" id="statTotal">$0</div></div>
+        <div class="stat-card"><div class="stat-label">En plazo fijo</div><div class="stat-value" id="statPlazo">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Retiros pendientes</div><div class="stat-value" id="statRetiros">0</div></div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3>Socios</h3>
+          <table class="socios">
+            <thead><tr><th>Nombre</th><th>Saldo</th><th>Último aporte</th><th>Estado</th></tr></thead>
+            <tbody id="sociosTableBody"></tbody>
+          </table>
+
+          <h3 style="margin-top: 24px;">Solicitudes de retiro pendientes</h3>
+          <div id="requests"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Configuración</h3>
+
+          <div class="settings-group-title">Reglas de ahorro</div>
+          <div class="settings-row"><label class="settings-label">Tasa de plazo fijo anual (%)</label><input class="settings-input" id="cfgTasa" /></div>
+          <div class="settings-row"><label class="settings-label">Aporte inicial (congelado)</label><input class="settings-input" id="cfgAporte" /></div>
+          <div class="settings-row"><label class="settings-label">Retiro mínimo</label><input class="settings-input" id="cfgRetiro" /></div>
+
+          <div class="settings-group-title">Costo de transacción en depósitos</div>
+          <div class="settings-row"><label class="settings-label">Comisión (%)</label><input class="settings-input" id="cfgComision" /></div>
+          <div class="settings-row"><label class="settings-label">IVA sobre la comisión (%)</label><input class="settings-input" id="cfgIva" /></div>
+
+          <div class="settings-group-title">Pagos</div>
+          <div class="settings-row"><label class="settings-label">Cuenta PayPhone conectada</label><input class="settings-input" id="cfgPayphone" disabled /></div>
+
+          <button class="save-btn" onclick="guardarConfiguracion()">Guardar cambios</button>
+          <div id="settingsMsg" class="settings-msg hidden"></div>
+          <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ------------------------------------------------------------------
+     COOLKI · admin.html — acceso separado del de los socios (sistema.html).
+     El slug de la organización se toma de ?org= o de window.COOLKI_CONFIG.
+  ------------------------------------------------------------------ */
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+
+  const $ = (id) => document.getElementById(id);
+  const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
+  function formatDate(str) {
+    if (!str) return '—';
+    const d = new Date(str.replace(' ', 'T'));
+    if (isNaN(d)) return '—';
+    return d.getDate() + ' ' + MESES[d.getMonth()];
+  }
+  function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  async function apiFetch(path, options) {
+    let res;
+    try {
+      res = await fetch(API_BASE + path, options);
+    } catch (e) {
+      throw { network: true, message: NET_MSG };
+    }
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      throw { network: false, status: res.status, message: data.error || ('Ocurrió un error (código ' + res.status + ').') };
+    }
+    return data;
+  }
+
+  // ============ Login gate ============
+  async function loginAdmin() {
+    clearError('errAdminLogin');
+    if (!ORG_SLUG) { setError('errAdminLogin', 'Falta indicar la organización (?org=...) en el enlace.'); return; }
+    const email = $('adminEmail').value.trim();
+    const password = $('adminPassword').value;
+    if (!email || !password) { setError('errAdminLogin', 'Ingresa tu correo y contraseña.'); return; }
+
+    const btn = $('btnAdminLogin'); btn.disabled = true;
+    try {
+      const data = await apiFetch('/admin_login.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ organizacion: ORG_SLUG, email, password })
+      });
+      await enterAdminMode(data.organizacion);
+    } catch (err) {
+      setError('errAdminLogin', err.message || NET_MSG);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function logout() {
+    try { await apiFetch('/logout.php', { method: 'POST', credentials: 'include' }); } catch (e) { /* seguimos igual */ }
+    location.href = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+  }
+
+  // ============ Modo administrador ============
+  let adminOrgSettings = {};
+
+  async function enterAdminMode(organizacion) {
+    adminOrgSettings = organizacion || {};
+    $('gate').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('adminOrgName').textContent = (adminOrgSettings.nombre || ORG_SLUG) + ' · resumen general';
+    fillSettingsForm();
+    await loadAdminDashboard();
+  }
+
+  function fillSettingsForm() {
+    $('cfgTasa').value = adminOrgSettings.tasa_plazo_fijo != null ? adminOrgSettings.tasa_plazo_fijo : '';
+    $('cfgAporte').value = adminOrgSettings.aporte_inicial != null ? adminOrgSettings.aporte_inicial : '';
+    $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
+    $('cfgComision').value = adminOrgSettings.comision_deposito_pct != null ? adminOrgSettings.comision_deposito_pct : '';
+    $('cfgIva').value = adminOrgSettings.iva_pct != null ? adminOrgSettings.iva_pct : '';
+    if (adminOrgSettings.payphone_conectado) {
+      const storeId = adminOrgSettings.payphone_store_id || '';
+      $('cfgPayphone').value = storeId ? ('Conectada (tienda •••• ' + storeId.slice(-4) + ')') : 'Conectada';
+    } else {
+      $('cfgPayphone').value = 'No conectada';
+    }
+  }
+
+  async function loadAdminDashboard() {
+    let socios = [], retiros = [];
+    try {
+      const [dSocios, dRetiros] = await Promise.all([
+        apiFetch('/admin_listar_socios.php', { credentials: 'include' }),
+        apiFetch('/admin_listar_retiros.php', { credentials: 'include' }),
+      ]);
+      socios = dSocios.socios || [];
+      retiros = dRetiros.retiros || [];
+    } catch (err) {
+      $('sociosTableBody').innerHTML = '<tr><td colspan="4" class="empty-note">' + (err.message || NET_MSG) + '</td></tr>';
+      return;
+    }
+
+    const activos = socios.filter(s => s.estado === 'activo').length;
+    const totalAhorrado = socios.reduce((sum, s) => sum + parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado) + parseFloat(s.plazo_fijo_total), 0);
+    const enPlazo = socios.reduce((sum, s) => sum + parseFloat(s.plazo_fijo_total), 0);
+    $('statActivos').textContent = activos;
+    $('statTotal').textContent = money(totalAhorrado);
+    $('statPlazo').textContent = money(enPlazo);
+    $('statRetiros').textContent = retiros.length;
+
+    $('sociosTableBody').innerHTML = socios.length ? socios.map(s => {
+      const saldo = parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado);
+      const pill = s.estado === 'activo'
+        ? '<span class="status-pill">Activo</span>'
+        : '<span class="status-pill alert">Pago pendiente</span>';
+      return '<tr><td>' + escapeHtml(s.nombre) + '</td><td>' + money(saldo) + '</td><td>' + formatDate(s.ultimo_aporte) + '</td><td>' + pill + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty-note">Todavía no hay socios registrados.</td></tr>';
+
+    $('requests').innerHTML = retiros.length ? retiros.map(r =>
+      '<div class="request-row" id="req-' + r.id + '">' +
+        '<div class="request-info"><b>' + money(r.monto) + '</b> <div class="request-name">' + escapeHtml(r.socio_nombre) + ' · solicitado ' + formatDate(r.created_at) + '</div></div>' +
+        '<div class="request-actions">' +
+          '<button class="req-btn approve" onclick="resolveRequest(' + r.id + ', \'aprobar\')">Aprobar</button>' +
+          '<button class="req-btn reject" onclick="resolveRequest(' + r.id + ', \'rechazar\')">Rechazar</button>' +
+        '</div>' +
+      '</div>'
+    ).join('') : '<div class="empty-note">No hay solicitudes de retiro pendientes.</div>';
+  }
+
+  async function resolveRequest(id, accion) {
+    const row = $('req-' + id);
+    try {
+      await apiFetch('/admin_resolver_retiro.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ solicitud_id: id, accion })
+      });
+      if (row) {
+        row.querySelector('.request-actions').innerHTML =
+          '<span class="req-result ' + (accion === 'aprobar' ? 'approved' : 'rejected') + '">' + (accion === 'aprobar' ? 'Aprobado ✓' : 'Rechazado') + '</span>';
+      }
+      await loadAdminDashboard();
+    } catch (err) {
+      alert(err.message || NET_MSG);
+    }
+  }
+
+  async function guardarConfiguracion() {
+    const msg = $('settingsMsg');
+    msg.classList.add('hidden');
+    const tasa = parseFloat($('cfgTasa').value);
+    const aporte = parseFloat($('cfgAporte').value);
+    const retiro = parseFloat($('cfgRetiro').value);
+    const comision = parseFloat($('cfgComision').value);
+    const iva = parseFloat($('cfgIva').value);
+    if ([tasa, aporte, retiro, comision, iva].some(v => isNaN(v) || v < 0)) {
+      msg.textContent = 'Revisa que todos los valores sean números válidos.';
+      msg.className = 'settings-msg err';
+      return;
+    }
+    try {
+      await apiFetch('/admin_actualizar_organizacion.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          tasa_plazo_fijo: tasa, aporte_inicial: aporte, retiro_minimo: retiro,
+          comision_deposito_pct: comision, iva_pct: iva,
+        })
+      });
+      adminOrgSettings.tasa_plazo_fijo = tasa;
+      adminOrgSettings.aporte_inicial = aporte;
+      adminOrgSettings.retiro_minimo = retiro;
+      adminOrgSettings.comision_deposito_pct = comision;
+      adminOrgSettings.iva_pct = iva;
+      msg.textContent = 'Cambios guardados.';
+      msg.className = 'settings-msg ok';
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+    }
+  }
+
+  // ============ Arranque: restaurar sesión si ya existe ============
+  (async function init() {
+    try {
+      const data = await apiFetch('/admin_me.php', { credentials: 'include' });
+      await enterAdminMode(data.organizacion);
+    } catch (e) { /* no hay sesión: se queda en el gate */ }
+  })();
+</script>
+
+</body>
+</html>

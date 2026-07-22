@@ -21,6 +21,8 @@ jsonResponse([
         'aporte_inicial' => $org['aporte_inicial'],
         'retiro_minimo' => $org['retiro_minimo'],
         'tasa_plazo_fijo' => $org['tasa_plazo_fijo'],
+        'comision_deposito_pct' => $org['comision_deposito_pct'],
+        'iva_pct' => $org['iva_pct'],
         'aprobacion_retiros' => $org['aprobacion_retiros'],
         'payphone_store_id' => $org['payphone_store_id'],
         'payphone_conectado' => !empty($org['payphone_token']),
