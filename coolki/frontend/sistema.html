@@ -112,6 +112,9 @@
 .panel-error { font-size: 12px; color: #FFD9D9; margin-top: 8px; line-height: 1.5; }
 .pending-note { font-size: 12px; opacity: 0.9; margin-bottom: 10px; background: rgba(255,255,255,0.14); border-radius: 10px; padding: 8px 10px; }
 
+.activation-banner { background: var(--sun-soft); border-radius: 16px; padding: 16px 18px; margin-bottom: 16px; font-size: 13px; color: #7A4E0C; line-height: 1.5; }
+.activation-btn { margin-top: 10px; padding: 10px 16px; border: none; border-radius: 10px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+
 /* ---------- Resumen de fondos (separado del saldo disponible) ---------- */
 .funds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
 .fund-tile { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px; }
@@ -191,6 +194,14 @@
       <div class="top-row">
         <div><div class="greeting-eyebrow">Hola de nuevo</div><div class="greeting-name" id="greetingName">—</div></div>
         <div class="avatar" id="avatarInitials">--</div>
+      </div>
+
+      <div id="activationBanner" class="activation-banner hidden">
+        <div style="font-weight:700;margin-bottom:4px;">Completa tu aporte inicial</div>
+        <div id="activationText">Te falta pagar tu aporte inicial para activar tu cuenta.</div>
+        <button class="activation-btn" id="btnAporteInicial" onclick="iniciarAporteInicial()">Pagar ahora</button>
+        <div id="pp-button-inicial" style="margin-top:10px;"></div>
+        <div id="errAporteInicial" class="profile-msg err hidden" style="margin-top:8px;"></div>
       </div>
 
       <div class="balance-card">
@@ -355,7 +366,7 @@
   }
 
   // ============ Modo socio ============
-  let socioState = { saldoDisponible: 0, retiroMinimo: 10, comisionPct: 0, ivaPct: 0 };
+  let socioState = { saldoDisponible: 0, retiroMinimo: 10, comisionPct: 0, ivaPct: 0, aporteInicial: 0 };
 
   async function enterSocioMode() {
     $('gate').classList.add('hidden');
@@ -382,6 +393,14 @@
     socioState.retiroMinimo = parseFloat(s.retiro_minimo) || 0;
     socioState.comisionPct = parseFloat(s.comision_deposito_pct) || 0;
     socioState.ivaPct = parseFloat(s.iva_pct) || 0;
+    socioState.aporteInicial = parseFloat(s.aporte_inicial) || 0;
+
+    if (s.estado === 'pendiente_pago') {
+      $('activationText').textContent = 'Te falta pagar tu aporte inicial de ' + money(socioState.aporteInicial) + ' para activar tu cuenta.';
+      $('activationBanner').classList.remove('hidden');
+    } else {
+      $('activationBanner').classList.add('hidden');
+    }
 
     $('greetingName').textContent = s.nombre;
     $('avatarInitials').textContent = s.nombre.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
@@ -577,6 +596,51 @@
       new PPaymentButtonBox(ppConfig).render('pp-button-aporte');
     } catch (err) {
       setError('errAporte', err.message || NET_MSG);
+      btn.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Completar el aporte inicial desde aquí, para un socio que se registró pero nunca
+  // terminó (o abandonó) ese pago en registro.html. PayPhone de todos modos regresa a
+  // registro.html (así está configurada la Url de respuesta de la app), que mostrará su
+  // propia pantalla de bienvenida — desde ahí "Ir a mi cuenta" ya trae de vuelta aquí.
+  async function iniciarAporteInicial() {
+    clearError('errAporteInicial');
+    $('pp-button-inicial').innerHTML = '';
+    const btn = $('btnAporteInicial');
+    btn.disabled = true;
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto: socioState.aporteInicial, tipo: 'aporte_inicial' })
+      });
+      if (!data.token) {
+        setError('errAporteInicial', 'Esta caja aún no tiene configurado su pago con PayPhone.');
+        return;
+      }
+      if (typeof PPaymentButtonBox === 'undefined') {
+        setError('errAporteInicial', 'No se pudo cargar el componente de pago de PayPhone. Recarga la página.');
+        return;
+      }
+      const responseUrl = location.origin + '/registro.html' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      btn.classList.add('hidden');
+      const ppConfig = {
+        token: data.token,
+        clientTransactionId: data.clientTransactionId,
+        amount: data.amount,
+        amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD',
+        reference: data.reference || 'Aporte inicial',
+        lang: 'es',
+        responseUrl: responseUrl
+      };
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button-inicial');
+    } catch (err) {
+      setError('errAporteInicial', err.message || NET_MSG);
       btn.classList.remove('hidden');
     } finally {
       btn.disabled = false;

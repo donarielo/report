@@ -379,13 +379,33 @@
   }
 
   // ============ Arranque ============
-  (function init() {
+  (async function init() {
     const returnId = PARAMS.get('id');
     const returnTxId = PARAMS.get('clientTransactionId');
     if (returnId && returnTxId) {
       // Volvimos desde PayPhone: confirmar y mostrar el resultado real.
-      confirmarRetorno(returnId, returnTxId);
+      await confirmarRetorno(returnId, returnTxId);
+      return;
     }
+
+    // ¿Ya existe una sesión de un socio que se registró antes pero nunca completó
+    // (o abandonó) el pago del aporte inicial? Lo llevamos directo al Paso 2 en vez
+    // de mostrarle el formulario de registro de nuevo (su cuenta ya existe).
+    try {
+      const data = await apiFetch('/me.php', { credentials: 'include' });
+      if (data.socio && data.socio.estado === 'pendiente_pago') {
+        aporteInicial = parseFloat(data.socio.aporte_inicial) || aporteInicial;
+        $('hero-amount').textContent = money(aporteInicial);
+        $('desc-amount').textContent = money(aporteInicial);
+        hide('screen-datos');
+        show('screen-aporte');
+        $('dot2').classList.add('done');
+        preparePago();
+      } else if (data.socio && data.socio.estado === 'activo') {
+        // Ya está activo: no tiene nada que hacer aquí, lo mandamos a su cuenta.
+        location.href = 'sistema.html' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      }
+    } catch (e) { /* no hay sesión: se queda en el Paso 1 normal */ }
   })();
 </script>
 
