@@ -7,7 +7,7 @@ $socioId = requireSocioAuth();
 $pdo = getDB();
 
 $stmt = $pdo->prepare(
-    "SELECT s.id, s.nombre, s.email, s.saldo_disponible, s.saldo_congelado, s.estado, s.created_at,
+    "SELECT s.id, s.nombre, s.cedula, s.email, s.celular, s.saldo_disponible, s.saldo_congelado, s.estado, s.created_at,
             o.retiro_minimo, o.aporte_inicial, o.tasa_plazo_fijo, o.comision_deposito_pct, o.iva_pct
      FROM socios s JOIN organizaciones o ON o.id = s.organizacion_id
      WHERE s.id = ?"

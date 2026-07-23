@@ -32,6 +32,12 @@ try {
         $stmt->execute([$solicitud['monto'], $solicitud['socio_id']]);
         $stmt = $pdo->prepare("UPDATE solicitudes_retiro SET estado = 'aprobado', resuelto_at = NOW() WHERE id = ?");
         $stmt->execute([$solicitudId]);
+        // Se deja registro en transacciones para que el retiro aparezca en el historial
+        // del socio y del administrador (antes no quedaba registrado en ningún lado).
+        $stmt = $pdo->prepare(
+            "INSERT INTO transacciones (socio_id, tipo, monto, estado) VALUES (?, 'retiro', ?, 'confirmado')"
+        );
+        $stmt->execute([$solicitud['socio_id'], $solicitud['monto']]);
         // Nota: aprobar aquí solo actualiza el saldo interno. El envío real del dinero
         // al socio (transferencia o pago PayPhone hacia su cuenta) se hace aparte, desde
         // tu cuenta de PayPhone Business o tu banco — este sistema todavía no lo automatiza.

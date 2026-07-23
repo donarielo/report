@@ -45,6 +45,19 @@
 .topbar-right { display: flex; align-items: center; gap: 14px; }
 .topbar-label { font-size: 13px; color: var(--muted); font-weight: 600; }
 .logout-link { border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.tabs { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+.tab-btn { border: none; background: transparent; padding: 8px 16px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.tab-btn.active { background: var(--brand); color: #fff; }
+
+.profile-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px; }
+.profile-field { margin-bottom: 14px; }
+.profile-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.profile-field input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); }
+.profile-field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.profile-save-btn { width: 100%; padding: 13px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14.5px; cursor: pointer; margin-top: 4px; }
+.profile-msg { font-size: 12.5px; margin-top: 10px; }
+.profile-msg.ok { color: var(--mint); }
+.profile-msg.err { color: var(--coral); }
 
 .app-body { display: none; padding: 30px 20px; }
 .app-body.active { display: block; }
@@ -165,12 +178,15 @@
       <div class="brand-word">coolki</div>
     </div>
     <div class="topbar-right">
-      <span class="topbar-label">Mi cuenta</span>
+      <div class="tabs">
+        <button class="tab-btn active" id="tabBtnCuenta" onclick="showSocioTab('cuenta')">Mi cuenta</button>
+        <button class="tab-btn" id="tabBtnPerfil" onclick="showSocioTab('perfil')">Mi perfil</button>
+      </div>
       <button class="logout-link" onclick="logout()">Cerrar sesión</button>
     </div>
   </div>
 
-  <div class="app-body active" id="app-body">
+  <div class="app-body active" id="body-cuenta">
     <div class="screen">
       <div class="top-row">
         <div><div class="greeting-eyebrow">Hola de nuevo</div><div class="greeting-name" id="greetingName">—</div></div>
@@ -245,6 +261,27 @@
         <div class="section-head"><div class="section-title">Depósitos y movimientos</div></div>
         <div class="section-desc">Historial de tus aportes, retiros e intereses acreditados.</div>
         <div class="term-card" style="padding: 6px 20px;" id="ledgerWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body" id="body-perfil">
+    <div class="screen">
+      <div class="section-head"><div class="section-title">Mi perfil</div></div>
+      <div class="section-desc">Revisa y actualiza tus datos personales.</div>
+      <div class="profile-card">
+        <div class="profile-field"><label>Nombre completo</label><input id="perfilNombre" type="text"></div>
+        <div class="profile-field"><label>Cédula</label><input id="perfilCedula" type="text"></div>
+        <div class="profile-field"><label>Correo electrónico</label><input id="perfilEmail" type="email"></div>
+        <div class="profile-field"><label>Celular</label><input id="perfilCelular" type="text"></div>
+
+        <div class="section-desc" style="margin-top: 18px;">Cambiar contraseña (opcional — déjalo en blanco si no quieres cambiarla)</div>
+        <div class="profile-field"><label>Contraseña actual</label><input id="perfilPasswordActual" type="password" placeholder="Solo si vas a cambiarla"></div>
+        <div class="profile-field"><label>Nueva contraseña</label><input id="perfilPasswordNueva" type="password" placeholder="Mínimo 8 caracteres"></div>
+
+        <div id="errPerfil" class="profile-msg err hidden"></div>
+        <button class="profile-save-btn" onclick="guardarPerfil()">Guardar cambios</button>
+        <div id="perfilMsg" class="profile-msg hidden"></div>
       </div>
     </div>
   </div>
@@ -326,6 +363,13 @@
     await loadSocioDashboard();
   }
 
+  function showSocioTab(tab) {
+    $('tabBtnCuenta').classList.toggle('active', tab === 'cuenta');
+    $('tabBtnPerfil').classList.toggle('active', tab === 'perfil');
+    $('body-cuenta').classList.toggle('active', tab === 'cuenta');
+    $('body-perfil').classList.toggle('active', tab === 'perfil');
+  }
+
   async function loadSocioDashboard() {
     let data;
     try {
@@ -365,6 +409,11 @@
     renderPlazosFijos(data.plazos_fijos, s.tasa_plazo_fijo);
     renderLedger(data.movimientos);
     updateFeeBreakdown();
+
+    $('perfilNombre').value = s.nombre || '';
+    $('perfilCedula').value = s.cedula || '';
+    $('perfilEmail').value = s.email || '';
+    $('perfilCelular').value = s.celular || '';
     return true;
   }
 
@@ -420,9 +469,9 @@
       wrap.innerHTML = '<div class="empty-note">Aún no tienes movimientos.</div>';
       return;
     }
-    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado' };
+    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento' };
     wrap.innerHTML = movimientos.map(m => {
-      const isOut = m.tipo === 'retiro';
+      const isOut = (m.tipo === 'retiro' || m.tipo === 'comision_admin');
       const recargo = parseFloat(m.comision || 0) + parseFloat(m.iva || 0);
       const feeNote = recargo > 0 ? '<div class="ledger-fee">+ ' + money(recargo) + ' comisión/IVA pagados aparte</div>' : '';
       return '<div class="ledger-row">' +
@@ -578,6 +627,47 @@
       await loadSocioDashboard();
     } catch (err) {
       setError('errRetiro', err.message || NET_MSG);
+    }
+  }
+
+  // ---- Mi perfil ----
+  async function guardarPerfil() {
+    clearError('errPerfil');
+    $('perfilMsg').classList.add('hidden');
+
+    const nombre = $('perfilNombre').value.trim();
+    const cedula = $('perfilCedula').value.trim();
+    const email = $('perfilEmail').value.trim();
+    const celular = $('perfilCelular').value.trim();
+    const passwordActual = $('perfilPasswordActual').value;
+    const passwordNueva = $('perfilPasswordNueva').value;
+
+    if (!nombre || !cedula || !email) {
+      setError('errPerfil', 'Nombre, cédula y correo son obligatorios.');
+      return;
+    }
+    if (passwordNueva && passwordNueva.length < 8) {
+      setError('errPerfil', 'La nueva contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    try {
+      await apiFetch('/actualizar_perfil.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          nombre, cedula, email, celular,
+          password_actual: passwordActual, password_nueva: passwordNueva,
+        })
+      });
+      $('perfilPasswordActual').value = '';
+      $('perfilPasswordNueva').value = '';
+      const msg = $('perfilMsg');
+      msg.textContent = 'Tus datos se guardaron correctamente.';
+      msg.className = 'profile-msg ok';
+      msg.classList.remove('hidden');
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errPerfil', err.message || NET_MSG);
     }
   }
 

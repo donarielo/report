@@ -77,8 +77,31 @@
 table.socios { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.socios th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
 table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+table.socios tbody tr { cursor: pointer; }
+table.socios tbody tr:hover { background: var(--bg); }
 .status-pill { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; background: var(--mint-soft); color: var(--mint); font-weight: 600; }
 .status-pill.alert { background: var(--sun-soft); color: #B98424; }
+
+.admin-grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; margin-top: 20px; }
+.tx-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.tx-row:last-child { border-bottom: none; }
+.tx-desc { font-size: 13px; font-weight: 600; }
+.tx-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.tx-amt { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+.tx-amt.pos { color: var(--mint); }
+.tx-amt.neg { color: var(--coral); }
+.tx-list { max-height: 420px; overflow-y: auto; }
+
+.mant-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+
+/* ---------- Modal detalle de socio ---------- */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(22,24,43,0.5); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 18px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 26px; position: relative; }
+.modal-close { position: absolute; top: 16px; right: 18px; border: none; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); }
+.modal-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; font-size: 13px; }
+.modal-info-label { color: var(--muted); font-size: 11px; }
+.modal-section-title { font-weight: 700; font-size: 13px; margin: 16px 0 8px; }
 
 .request-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .request-row:last-child { border-bottom: none; }
@@ -189,7 +212,30 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
           <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula.</div>
         </div>
       </div>
+
+      <div class="admin-grid-2">
+        <div class="admin-card">
+          <h3>Historial de transacciones</h3>
+          <div class="tx-list" id="txWrap"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Cobro a todas las cuentas</h3>
+          <div class="mant-desc">Cobra un monto fijo (ej. comisión de mantenimiento) a todos los socios, descontado de su saldo disponible. Si un socio no tiene saldo suficiente, se le cobra solo lo que tiene — nunca queda en negativo. Queda registrado en el historial de cada socio.</div>
+          <div class="settings-row"><label class="settings-label">Monto a cobrar por socio</label><input class="settings-input" id="mantMonto" type="number" step="0.01" placeholder="0.25"></div>
+          <button class="save-btn" style="background: var(--coral);" onclick="cobrarMantenimiento()">Cobrar a todas las cuentas</button>
+          <div id="mantMsg" class="settings-msg hidden"></div>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- ============ Modal: detalle de socio ============ -->
+<div class="modal-overlay" id="modalOverlay" onclick="if (event.target === this) cerrarModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()">&times;</button>
+    <div id="modalBody"><div class="empty-note">Cargando…</div></div>
   </div>
 </div>
 
@@ -274,6 +320,7 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
     $('adminOrgName').textContent = (adminOrgSettings.nombre || ORG_SLUG) + ' · resumen general';
     fillSettingsForm();
     await loadAdminDashboard();
+    await loadTransacciones();
   }
 
   function fillSettingsForm() {
@@ -317,7 +364,7 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
       const pill = s.estado === 'activo'
         ? '<span class="status-pill">Activo</span>'
         : '<span class="status-pill alert">Pago pendiente</span>';
-      return '<tr><td>' + escapeHtml(s.nombre) + '</td><td>' + money(saldo) + '</td><td>' + formatDate(s.ultimo_aporte) + '</td><td>' + pill + '</td></tr>';
+      return '<tr onclick="verDetalleSocio(' + s.id + ')"><td>' + escapeHtml(s.nombre) + '</td><td>' + money(saldo) + '</td><td>' + formatDate(s.ultimo_aporte) + '</td><td>' + pill + '</td></tr>';
     }).join('') : '<tr><td colspan="4" class="empty-note">Todavía no hay socios registrados.</td></tr>';
 
     $('requests').innerHTML = retiros.length ? retiros.map(r =>
@@ -376,6 +423,121 @@ table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
       adminOrgSettings.iva_pct = iva;
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+    }
+  }
+
+  // ============ Historial global de transacciones ============
+  const TX_LABELS = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento' };
+
+  async function loadTransacciones() {
+    const wrap = $('txWrap');
+    try {
+      const data = await apiFetch('/admin_listar_transacciones.php', { credentials: 'include' });
+      const txs = data.transacciones || [];
+      wrap.innerHTML = txs.length ? txs.map(t => renderTxRow(t, true)).join('') : '<div class="empty-note">Todavía no hay transacciones.</div>';
+    } catch (err) {
+      wrap.innerHTML = '<div class="empty-note">' + (err.message || NET_MSG) + '</div>';
+    }
+  }
+
+  function renderTxRow(t, conSocio) {
+    const isOut = (t.tipo === 'retiro' || t.tipo === 'comision_admin');
+    const sub = (conSocio ? escapeHtml(t.socio_nombre) + ' · ' : '') + formatDate(t.created_at);
+    return '<div class="tx-row">' +
+      '<div><div class="tx-desc">' + (TX_LABELS[t.tipo] || t.tipo) + '</div><div class="tx-sub">' + sub + '</div></div>' +
+      '<div class="tx-amt ' + (isOut ? 'neg' : 'pos') + '">' + (isOut ? '-' : '+') + money(t.monto) + '</div>' +
+    '</div>';
+  }
+
+  // ============ Detalle de un socio (modal) ============
+  async function verDetalleSocio(id) {
+    $('modalOverlay').classList.add('show');
+    $('modalBody').innerHTML = '<div class="empty-note">Cargando…</div>';
+    try {
+      const data = await apiFetch('/admin_detalle_socio.php?socio_id=' + encodeURIComponent(id), { credentials: 'include' });
+      renderSocioModal(data);
+    } catch (err) {
+      $('modalBody').innerHTML = '<div class="empty-note">' + (err.message || NET_MSG) + '</div>';
+    }
+  }
+
+  function cerrarModal() {
+    $('modalOverlay').classList.remove('show');
+  }
+
+  function renderSocioModal(data) {
+    const s = data.socio;
+    const pill = s.estado === 'activo'
+      ? '<span class="status-pill">Activo</span>'
+      : '<span class="status-pill alert">Pago pendiente</span>';
+
+    let html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;padding-right:24px;">' +
+      '<div><div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:19px;">' + escapeHtml(s.nombre) + '</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">Socio desde ' + formatDate(s.created_at) + '</div></div>' + pill +
+    '</div>';
+
+    html += '<div class="modal-info-grid">' +
+      '<div><div class="modal-info-label">Cédula</div><div>' + escapeHtml(s.cedula) + '</div></div>' +
+      '<div><div class="modal-info-label">Correo</div><div>' + escapeHtml(s.email) + '</div></div>' +
+      '<div><div class="modal-info-label">Celular</div><div>' + escapeHtml(s.celular || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Saldo disponible</div><div>' + money(s.saldo_disponible) + '</div></div>' +
+      '<div><div class="modal-info-label">Congelado (aporte inicial)</div><div>' + money(s.saldo_congelado) + '</div></div>' +
+    '</div>';
+
+    if (data.plazos_fijos && data.plazos_fijos.length) {
+      html += '<div class="modal-section-title">Plazos fijos</div>';
+      html += data.plazos_fijos.map(p =>
+        '<div class="tx-row"><div><div class="tx-desc">' + money(p.capital) + ' al ' + p.tasa_anual + '% anual</div>' +
+        '<div class="tx-sub">Vence ' + formatDate(p.fecha_vencimiento) + '</div></div>' +
+        '<div class="tx-amt pos">+' + money(p.generado) + '</div></div>'
+      ).join('');
+    }
+
+    html += '<div class="modal-section-title">Historial de transacciones</div>';
+    html += (data.transacciones && data.transacciones.length)
+      ? data.transacciones.map(t => renderTxRow(t, false)).join('')
+      : '<div class="empty-note">Sin transacciones.</div>';
+
+    if (data.solicitudes_retiro && data.solicitudes_retiro.length) {
+      html += '<div class="modal-section-title">Solicitudes de retiro</div>';
+      html += data.solicitudes_retiro.map(r =>
+        '<div class="tx-row"><div><div class="tx-desc">' + money(r.monto) + '</div>' +
+        '<div class="tx-sub">' + formatDate(r.created_at) + '</div></div>' +
+        '<div class="tx-amt">' + r.estado + '</div></div>'
+      ).join('');
+    }
+
+    $('modalBody').innerHTML = html;
+  }
+
+  // ============ Cobro a todas las cuentas ============
+  async function cobrarMantenimiento() {
+    const msg = $('mantMsg');
+    msg.classList.add('hidden');
+    const monto = parseFloat($('mantMonto').value);
+    if (!monto || monto <= 0) {
+      msg.textContent = 'Ingresa un monto válido.';
+      msg.className = 'settings-msg err';
+      return;
+    }
+    const ok = confirm('¿Seguro que quieres cobrar ' + money(monto) + ' a TODAS las cuentas de socios? Esta acción no se puede deshacer.');
+    if (!ok) return;
+
+    try {
+      const data = await apiFetch('/admin_cobrar_mantenimiento.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto })
+      });
+      msg.textContent = 'Se cobró a ' + data.socios_cobrados + ' de ' + data.total_socios + ' socios' +
+        (data.cobros_parciales ? ' (' + data.cobros_parciales + ' con cobro parcial por saldo insuficiente)' : '') +
+        (data.socios_sin_saldo ? ', ' + data.socios_sin_saldo + ' sin saldo disponible' : '') + '.';
+      msg.className = 'settings-msg ok';
+      $('mantMonto').value = '';
+      await loadAdminDashboard();
+      await loadTransacciones();
     } catch (err) {
       msg.textContent = err.message || NET_MSG;
       msg.className = 'settings-msg err';

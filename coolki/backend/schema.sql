@@ -46,7 +46,7 @@ CREATE TABLE socios (
 CREATE TABLE transacciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   socio_id INT NOT NULL,
-  tipo ENUM('aporte_inicial','aporte','retiro','interes') NOT NULL,
+  tipo ENUM('aporte_inicial','aporte','retiro','interes','comision_admin') NOT NULL,
   monto DECIMAL(10,2) NOT NULL,              -- monto neto que se acredita al socio (sin comisión ni IVA)
   comision DECIMAL(10,2) DEFAULT 0.00,       -- comisión cobrada encima del monto (0 en aporte_inicial)
   iva DECIMAL(10,2) DEFAULT 0.00,            -- IVA calculado sobre la comisión
