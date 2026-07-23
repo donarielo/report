@@ -94,6 +94,12 @@ table.socios tbody tr:hover { background: var(--bg); }
 
 .mant-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
 
+.credito-request { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.credito-request-context { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin: 6px 0 10px; }
+.credito-msg-input { width: 100%; min-height: 60px; border-radius: 10px; border: 1px solid var(--border); padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; margin-bottom: 10px; resize: vertical; }
+.credito-hist-row { border-bottom: 1px solid var(--border); padding: 10px 0; font-size: 13px; }
+.credito-hist-row:last-child { border-bottom: none; }
+
 /* ---------- Modal detalle de socio ---------- */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(22,24,43,0.5); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
 .modal-overlay.show { display: flex; }
@@ -204,12 +210,35 @@ table.socios tbody tr:hover { background: var(--bg); }
           <div class="settings-row"><label class="settings-label">Comisión (%)</label><input class="settings-input" id="cfgComision" /></div>
           <div class="settings-row"><label class="settings-label">IVA sobre la comisión (%)</label><input class="settings-input" id="cfgIva" /></div>
 
+          <div class="settings-group-title">Reglas de crédito</div>
+          <div class="settings-row"><label class="settings-label">Tasa efectiva anual (%)</label><input class="settings-input" id="cfgCreditoTasa" /></div>
+          <div class="settings-row"><label class="settings-label">Cupo sugerido inicial</label><input class="settings-input" id="cfgCreditoBase" /></div>
+          <div class="settings-row"><label class="settings-label">Incremento por crédito pagado a tiempo</label><input class="settings-input" id="cfgCreditoIncremento" /></div>
+          <div class="settings-row"><label class="settings-label">Cupo sugerido máximo</label><input class="settings-input" id="cfgCreditoMax" /></div>
+          <div class="settings-row"><label class="settings-label">Plazo mínimo (meses)</label><input class="settings-input" id="cfgCreditoPlazoMin" /></div>
+          <div class="settings-row"><label class="settings-label">Plazo máximo (meses)</label><input class="settings-input" id="cfgCreditoPlazoMax" /></div>
+
           <div class="settings-group-title">Pagos</div>
           <div class="settings-row"><label class="settings-label">Cuenta PayPhone conectada</label><input class="settings-input" id="cfgPayphone" disabled /></div>
 
           <button class="save-btn" onclick="guardarConfiguracion()">Guardar cambios</button>
           <div id="settingsMsg" class="settings-msg hidden"></div>
-          <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula.</div>
+          <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula. La tasa máxima legal vigente para microcrédito minorista en Ecuador (Banco Central) es 28.23% anual — verifícala periódicamente, el BCE la actualiza.</div>
+        </div>
+      </div>
+
+      <div class="admin-grid-2">
+        <div class="admin-card">
+          <h3>Solicitudes de crédito</h3>
+          <div id="creditosPendientesWrap"></div>
+
+          <h3 style="margin-top: 24px;">Historial de créditos</h3>
+          <div id="creditosHistorialWrap"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Sobre los créditos</h3>
+          <div class="mant-desc">Cada solicitud muestra el saldo, la antigüedad y el cupo sugerido del socio. Tú decides el monto, el plazo y escribes el mensaje que el socio va a ver explicando tu decisión — aprobado o no.</div>
         </div>
       </div>
 
@@ -321,6 +350,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     fillSettingsForm();
     await loadAdminDashboard();
     await loadTransacciones();
+    await loadCreditos();
   }
 
   function fillSettingsForm() {
@@ -329,6 +359,12 @@ table.socios tbody tr:hover { background: var(--bg); }
     $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
     $('cfgComision').value = adminOrgSettings.comision_deposito_pct != null ? adminOrgSettings.comision_deposito_pct : '';
     $('cfgIva').value = adminOrgSettings.iva_pct != null ? adminOrgSettings.iva_pct : '';
+    $('cfgCreditoTasa').value = adminOrgSettings.credito_tasa_anual != null ? adminOrgSettings.credito_tasa_anual : '';
+    $('cfgCreditoBase').value = adminOrgSettings.credito_limite_base != null ? adminOrgSettings.credito_limite_base : '';
+    $('cfgCreditoIncremento').value = adminOrgSettings.credito_incremento_por_pago != null ? adminOrgSettings.credito_incremento_por_pago : '';
+    $('cfgCreditoMax').value = adminOrgSettings.credito_limite_maximo != null ? adminOrgSettings.credito_limite_maximo : '';
+    $('cfgCreditoPlazoMin').value = adminOrgSettings.credito_plazo_min_meses != null ? adminOrgSettings.credito_plazo_min_meses : '';
+    $('cfgCreditoPlazoMax').value = adminOrgSettings.credito_plazo_max_meses != null ? adminOrgSettings.credito_plazo_max_meses : '';
     if (adminOrgSettings.payphone_conectado) {
       const storeId = adminOrgSettings.payphone_store_id || '';
       $('cfgPayphone').value = storeId ? ('Conectada (tienda •••• ' + storeId.slice(-4) + ')') : 'Conectada';
@@ -403,8 +439,20 @@ table.socios tbody tr:hover { background: var(--bg); }
     const retiro = parseFloat($('cfgRetiro').value);
     const comision = parseFloat($('cfgComision').value);
     const iva = parseFloat($('cfgIva').value);
-    if ([tasa, aporte, retiro, comision, iva].some(v => isNaN(v) || v < 0)) {
+    const creditoTasa = parseFloat($('cfgCreditoTasa').value);
+    const creditoBase = parseFloat($('cfgCreditoBase').value);
+    const creditoIncremento = parseFloat($('cfgCreditoIncremento').value);
+    const creditoMax = parseFloat($('cfgCreditoMax').value);
+    const creditoPlazoMin = parseInt($('cfgCreditoPlazoMin').value);
+    const creditoPlazoMax = parseInt($('cfgCreditoPlazoMax').value);
+    const valores = [tasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax];
+    if (valores.some(v => isNaN(v) || v < 0)) {
       msg.textContent = 'Revisa que todos los valores sean números válidos.';
+      msg.className = 'settings-msg err';
+      return;
+    }
+    if (creditoPlazoMax < creditoPlazoMin) {
+      msg.textContent = 'El plazo máximo de crédito no puede ser menor que el mínimo.';
       msg.className = 'settings-msg err';
       return;
     }
@@ -414,13 +462,18 @@ table.socios tbody tr:hover { background: var(--bg); }
         body: JSON.stringify({
           tasa_plazo_fijo: tasa, aporte_inicial: aporte, retiro_minimo: retiro,
           comision_deposito_pct: comision, iva_pct: iva,
+          credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
+          credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
+          credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
         })
       });
-      adminOrgSettings.tasa_plazo_fijo = tasa;
-      adminOrgSettings.aporte_inicial = aporte;
-      adminOrgSettings.retiro_minimo = retiro;
-      adminOrgSettings.comision_deposito_pct = comision;
-      adminOrgSettings.iva_pct = iva;
+      Object.assign(adminOrgSettings, {
+        tasa_plazo_fijo: tasa, aporte_inicial: aporte, retiro_minimo: retiro,
+        comision_deposito_pct: comision, iva_pct: iva,
+        credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
+        credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
+        credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
+      });
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';
     } catch (err) {
@@ -430,7 +483,7 @@ table.socios tbody tr:hover { background: var(--bg); }
   }
 
   // ============ Historial global de transacciones ============
-  const TX_LABELS = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento' };
+  const TX_LABELS = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento', credito_desembolso: 'Desembolso de crédito', pago_credito: 'Pago de cuota de crédito' };
 
   async function loadTransacciones() {
     const wrap = $('txWrap');
@@ -444,12 +497,86 @@ table.socios tbody tr:hover { background: var(--bg); }
   }
 
   function renderTxRow(t, conSocio) {
-    const isOut = (t.tipo === 'retiro' || t.tipo === 'comision_admin');
+    const isOut = (t.tipo === 'retiro' || t.tipo === 'comision_admin' || t.tipo === 'pago_credito');
     const sub = (conSocio ? escapeHtml(t.socio_nombre) + ' · ' : '') + formatDate(t.created_at);
     return '<div class="tx-row">' +
       '<div><div class="tx-desc">' + (TX_LABELS[t.tipo] || t.tipo) + '</div><div class="tx-sub">' + sub + '</div></div>' +
       '<div class="tx-amt ' + (isOut ? 'neg' : 'pos') + '">' + (isOut ? '-' : '+') + money(t.monto) + '</div>' +
     '</div>';
+  }
+
+  // ============ Créditos ============
+  const CREDITO_ESTADO_LABELS = { pendiente: 'En revisión', rechazado: 'Rechazado', activo: 'Activo', pagado: 'Pagado' };
+
+  async function loadCreditos() {
+    const wrapPend = $('creditosPendientesWrap');
+    const wrapHist = $('creditosHistorialWrap');
+    let creditos = [];
+    try {
+      const data = await apiFetch('/admin_listar_creditos.php', { credentials: 'include' });
+      creditos = data.creditos || [];
+    } catch (err) {
+      wrapPend.innerHTML = '<div class="empty-note">' + (err.message || NET_MSG) + '</div>';
+      wrapHist.innerHTML = '';
+      return;
+    }
+
+    const pendientes = creditos.filter(c => c.estado === 'pendiente');
+    const resto = creditos.filter(c => c.estado !== 'pendiente');
+
+    wrapPend.innerHTML = pendientes.length ? pendientes.map(renderCreditoPendiente).join('')
+      : '<div class="empty-note">No hay solicitudes de crédito pendientes.</div>';
+
+    wrapHist.innerHTML = resto.length ? resto.map(c => {
+      const mora = Number(c.en_mora) === 1 ? ' · tuvo atraso' : '';
+      return '<div class="credito-hist-row">' +
+        '<div style="display:flex; justify-content:space-between;"><span>' + escapeHtml(c.socio_nombre) + ' — ' + money(c.monto) + ' a ' + c.plazo_meses + ' meses</span><b>' + (CREDITO_ESTADO_LABELS[c.estado] || c.estado) + '</b></div>' +
+        '<div class="request-name">' + formatDate(c.resuelto_at || c.created_at) + mora + '</div>' +
+      '</div>';
+    }).join('') : '<div class="empty-note">Todavía no hay créditos resueltos.</div>';
+  }
+
+  function renderCreditoPendiente(c) {
+    const saldo = parseFloat(c.saldo_disponible) + parseFloat(c.saldo_congelado);
+    const desde = new Date(c.socio_desde.replace(' ', 'T'));
+    const diasAntiguedad = Math.max(0, Math.floor((Date.now() - desde.getTime()) / 86400000));
+    return '<div class="credito-request" id="credito-' + c.id + '">' +
+      '<div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">' +
+        '<div><b>' + money(c.monto) + '</b> a ' + c.plazo_meses + ' meses · cuota estimada ' + money(c.cuota_mensual) + '/mes</div>' +
+        '<div class="request-name">' + escapeHtml(c.socio_nombre) + '</div>' +
+      '</div>' +
+      '<div class="credito-request-context">' +
+        'Saldo actual: ' + money(saldo) + ' · Socio desde ' + formatDate(c.socio_desde) + ' (' + diasAntiguedad + ' días) · Cupo sugerido: ' + money(c.cupo_sugerido) +
+      '</div>' +
+      '<textarea class="credito-msg-input" id="msgCredito' + c.id + '" placeholder="Mensaje para el socio (obligatorio): explica por qué se aprueba o rechaza"></textarea>' +
+      '<div id="errCredito' + c.id + '" class="settings-msg err hidden"></div>' +
+      '<div class="request-actions">' +
+        '<button class="req-btn approve" onclick="resolverCredito(' + c.id + ', \'aprobar\')">Aprobar</button>' +
+        '<button class="req-btn reject" onclick="resolverCredito(' + c.id + ', \'rechazar\')">Rechazar</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function resolverCredito(id, accion) {
+    const errId = 'errCredito' + id;
+    $(errId).classList.add('hidden');
+    const mensaje = $('msgCredito' + id).value.trim();
+    if (!mensaje) {
+      $(errId).textContent = 'Escribe un mensaje explicando la decisión.';
+      $(errId).classList.remove('hidden');
+      return;
+    }
+    try {
+      await apiFetch('/admin_resolver_credito.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ credito_id: id, accion, mensaje })
+      });
+      await loadCreditos();
+      await loadAdminDashboard();
+    } catch (err) {
+      $(errId).textContent = err.message || NET_MSG;
+      $(errId).classList.remove('hidden');
+    }
   }
 
   // ============ Detalle de un socio (modal) ============
@@ -508,6 +635,17 @@ table.socios tbody tr:hover { background: var(--bg); }
         '<div class="tx-sub">' + formatDate(r.created_at) + '</div></div>' +
         '<div class="tx-amt">' + r.estado + '</div></div>'
       ).join('');
+    }
+
+    if (data.creditos && data.creditos.length) {
+      html += '<div class="modal-section-title">Créditos</div>';
+      html += data.creditos.map(c => {
+        const mora = Number(c.en_mora) === 1 ? ' · tuvo atraso' : '';
+        const mensaje = c.mensaje_admin ? '<div class="credito-request-context">"' + escapeHtml(c.mensaje_admin) + '"</div>' : '';
+        return '<div class="tx-row"><div><div class="tx-desc">' + money(c.monto) + ' a ' + c.plazo_meses + ' meses</div>' +
+          '<div class="tx-sub">' + formatDate(c.created_at) + mora + '</div>' + mensaje + '</div>' +
+          '<div class="tx-amt">' + (CREDITO_ESTADO_LABELS[c.estado] || c.estado) + '</div></div>';
+      }).join('');
     }
 
     $('modalBody').innerHTML = html;

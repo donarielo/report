@@ -42,10 +42,18 @@ $stmt = $pdo->prepare(
 $stmt->execute([$socioId]);
 $solicitudesRetiro = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$stmt = $pdo->prepare(
+    "SELECT id, monto, plazo_meses, tasa_anual, cuota_mensual, estado, en_mora, mensaje_admin, created_at, resuelto_at
+     FROM creditos WHERE socio_id = ? ORDER BY created_at DESC"
+);
+$stmt->execute([$socioId]);
+$creditos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 jsonResponse([
     'ok' => true,
     'socio' => $socio,
     'transacciones' => $transacciones,
     'plazos_fijos' => $plazosFijos,
     'solicitudes_retiro' => $solicitudesRetiro,
+    'creditos' => $creditos,
 ]);

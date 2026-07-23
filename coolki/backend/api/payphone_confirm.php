@@ -37,6 +37,7 @@ if ($tx['estado'] !== 'pendiente') {
         'aprobado' => $tx['estado'] === 'confirmado',
         'monto' => $tx['monto'],
         'tipo' => $tx['tipo'],
+        'credito_cuota_id' => $tx['credito_cuota_id'],
     ]);
 }
 
@@ -80,6 +81,22 @@ try {
                 "UPDATE socios SET saldo_congelado = saldo_congelado + ?, estado = 'activo' WHERE id = ?"
             );
             $stmt->execute([$tx['monto'], $tx['socio_id']]);
+        } elseif ($tx['tipo'] === 'pago_credito') {
+            // El pago de una cuota es dinero externo (vía PayPhone), no sale del saldo
+            // disponible del socio — solo se marca la cuota como pagada.
+            $stmt = $pdo->prepare("UPDATE credito_cuotas SET estado = 'pagada', pagado_at = NOW() WHERE id = ?");
+            $stmt->execute([$tx['credito_cuota_id']]);
+
+            $stmt = $pdo->prepare("SELECT credito_id FROM credito_cuotas WHERE id = ?");
+            $stmt->execute([$tx['credito_cuota_id']]);
+            $creditoId = $stmt->fetchColumn();
+
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM credito_cuotas WHERE credito_id = ? AND estado != 'pagada'");
+            $stmt->execute([$creditoId]);
+            if ((int) $stmt->fetchColumn() === 0) {
+                $stmt = $pdo->prepare("UPDATE creditos SET estado = 'pagado' WHERE id = ?");
+                $stmt->execute([$creditoId]);
+            }
         } else {
             $stmt = $pdo->prepare(
                 "UPDATE socios SET saldo_disponible = saldo_disponible + ? WHERE id = ?"
@@ -101,4 +118,5 @@ jsonResponse([
     'aprobado' => $aprobado,
     'monto' => $tx['monto'],
     'tipo' => $tx['tipo'],
+    'credito_cuota_id' => $tx['credito_cuota_id'],
 ]);

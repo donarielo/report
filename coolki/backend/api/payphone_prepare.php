@@ -19,13 +19,35 @@ $socioId = requireSocioAuth();
 
 $in = jsonInput();
 $monto = floatval($in['monto'] ?? 0);
-$tipo = $in['tipo'] ?? 'aporte'; // 'aporte_inicial' o 'aporte'
+$tipo = $in['tipo'] ?? 'aporte'; // 'aporte_inicial', 'aporte' o 'pago_credito'
+$cuotaId = intval($in['cuota_id'] ?? 0);
+
+$pdo = getDB();
+
+// Para el pago de una cuota de crédito, el monto SIEMPRE se toma de la base de datos
+// (nunca de lo que mande el navegador) — así el socio no puede alterar cuánto paga.
+$cuota = null;
+if ($tipo === 'pago_credito') {
+    if (!$cuotaId) {
+        jsonResponse(['error' => 'Falta indicar qué cuota se va a pagar.'], 400);
+    }
+    $stmt = $pdo->prepare(
+        "SELECT cc.* FROM credito_cuotas cc
+         JOIN creditos c ON c.id = cc.credito_id
+         WHERE cc.id = ? AND c.socio_id = ? AND cc.estado IN ('pendiente', 'vencida')"
+    );
+    $stmt->execute([$cuotaId, $socioId]);
+    $cuota = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$cuota) {
+        jsonResponse(['error' => 'Cuota no encontrada o ya pagada.'], 404);
+    }
+    $monto = floatval($cuota['monto_cuota']);
+}
 
 if ($monto <= 0) {
     jsonResponse(['error' => 'Monto inválido.'], 400);
 }
 
-$pdo = getDB();
 $stmt = $pdo->prepare("SELECT s.*, o.payphone_store_id, o.payphone_token, o.nombre AS org_nombre,
                                o.comision_deposito_pct, o.iva_pct
                         FROM socios s JOIN organizaciones o ON o.id = s.organizacion_id
@@ -56,10 +78,10 @@ $montoACobrar = $monto + $comision + $iva;
 $clientTransactionId = substr(uniqid(), -12) . rand(10, 99);
 
 $stmt = $pdo->prepare(
-    "INSERT INTO transacciones (socio_id, tipo, monto, comision, iva, payphone_client_transaction_id, estado)
-     VALUES (?, ?, ?, ?, ?, ?, 'pendiente')"
+    "INSERT INTO transacciones (socio_id, tipo, monto, comision, iva, credito_cuota_id, payphone_client_transaction_id, estado)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'pendiente')"
 );
-$stmt->execute([$socioId, $tipo, $monto, $comision, $iva, $clientTransactionId]);
+$stmt->execute([$socioId, $tipo, $monto, $comision, $iva, $cuota ? $cuotaId : null, $clientTransactionId]);
 
 jsonResponse([
     'storeId' => $socio['payphone_store_id'] ?: null,   // null si la organización tiene una sola tienda

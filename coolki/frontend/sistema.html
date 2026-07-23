@@ -59,6 +59,20 @@
 .profile-msg.ok { color: var(--mint); }
 .profile-msg.err { color: var(--coral); }
 
+.credito-calc { font-size: 12.5px; color: var(--ink); background: var(--brand-soft); border-radius: 10px; padding: 10px 12px; margin: 10px 0 14px; line-height: 1.6; }
+.credito-calc b { font-family: 'Space Grotesk', sans-serif; }
+.credito-select { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); margin-bottom: 10px; }
+.cuota-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cuota-row:last-child { border-bottom: none; }
+.cuota-info { color: var(--muted); font-size: 12px; }
+.cuota-estado { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
+.cuota-estado.pendiente { background: var(--brand-soft); color: var(--brand); }
+.cuota-estado.pagada { background: var(--mint-soft); color: var(--mint); }
+.cuota-estado.vencida { background: var(--sun-soft); color: #B98424; }
+.cuota-pay-btn { padding: 6px 12px; border-radius: 8px; border: none; background: var(--payphone); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+.credito-mensaje { font-size: 12.5px; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+.mora-banner { background: var(--coral-soft); color: var(--coral); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; }
+
 .app-body { display: none; padding: 30px 20px; }
 .app-body.active { display: block; }
 
@@ -183,6 +197,7 @@
     <div class="topbar-right">
       <div class="tabs">
         <button class="tab-btn active" id="tabBtnCuenta" onclick="showSocioTab('cuenta')">Mi cuenta</button>
+        <button class="tab-btn" id="tabBtnCreditos" onclick="showSocioTab('creditos')">Créditos</button>
         <button class="tab-btn" id="tabBtnPerfil" onclick="showSocioTab('perfil')">Mi perfil</button>
       </div>
       <button class="logout-link" onclick="logout()">Cerrar sesión</button>
@@ -276,6 +291,36 @@
     </div>
   </div>
 
+  <div class="app-body" id="body-creditos">
+    <div class="screen">
+      <div class="section-head"><div class="section-title">Créditos</div></div>
+      <div class="section-desc">Microcréditos a cuota fija mensual. El administrador revisa cada solicitud.</div>
+
+      <div id="creditoSolicitudWrap">
+        <div class="term-card">
+          <div class="term-row"><span>Cupo sugerido para ti</span><b id="creditoCupo">$0.00</b></div>
+          <div class="term-foot" style="margin-bottom: 14px;">Puedes pedir un monto distinto — es solo una guía, el administrador decide cada solicitud.</div>
+          <div class="profile-field"><label>Monto a solicitar</label><input id="creditoMonto" type="number" step="0.01" placeholder="100.00" oninput="actualizarCalculadoraCredito()"></div>
+          <div class="profile-field">
+            <label>Plazo</label>
+            <select id="creditoPlazo" class="credito-select" onchange="actualizarCalculadoraCredito()"></select>
+          </div>
+          <div id="creditoCalculadora" class="credito-calc">Ingresa un monto y elige un plazo para ver tu cuota mensual.</div>
+          <div id="errCredito" class="profile-msg err hidden"></div>
+          <button class="profile-save-btn" onclick="solicitarCredito()">Solicitar crédito</button>
+          <div id="creditoMsg" class="profile-msg hidden"></div>
+        </div>
+      </div>
+
+      <div id="creditoActivoWrap" class="hidden"></div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Historial de créditos</div></div>
+        <div id="creditoHistorialWrap"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-body" id="body-perfil">
     <div class="screen">
       <div class="section-head"><div class="section-title">Mi perfil</div></div>
@@ -322,6 +367,11 @@
   }
   function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
   function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
 
   async function apiFetch(path, options) {
     let res;
@@ -366,7 +416,10 @@
   }
 
   // ============ Modo socio ============
-  let socioState = { saldoDisponible: 0, retiroMinimo: 10, comisionPct: 0, ivaPct: 0, aporteInicial: 0 };
+  let socioState = {
+    saldoDisponible: 0, retiroMinimo: 10, comisionPct: 0, ivaPct: 0, aporteInicial: 0,
+    creditoTasaAnual: 0, creditoPlazoMin: 1, creditoPlazoMax: 6, creditoLimiteMaximo: 0,
+  };
 
   async function enterSocioMode() {
     $('gate').classList.add('hidden');
@@ -376,8 +429,10 @@
 
   function showSocioTab(tab) {
     $('tabBtnCuenta').classList.toggle('active', tab === 'cuenta');
+    $('tabBtnCreditos').classList.toggle('active', tab === 'creditos');
     $('tabBtnPerfil').classList.toggle('active', tab === 'perfil');
     $('body-cuenta').classList.toggle('active', tab === 'cuenta');
+    $('body-creditos').classList.toggle('active', tab === 'creditos');
     $('body-perfil').classList.toggle('active', tab === 'perfil');
   }
 
@@ -394,6 +449,10 @@
     socioState.comisionPct = parseFloat(s.comision_deposito_pct) || 0;
     socioState.ivaPct = parseFloat(s.iva_pct) || 0;
     socioState.aporteInicial = parseFloat(s.aporte_inicial) || 0;
+    socioState.creditoTasaAnual = parseFloat(s.credito_tasa_anual) || 0;
+    socioState.creditoPlazoMin = parseInt(s.credito_plazo_min_meses) || 1;
+    socioState.creditoPlazoMax = parseInt(s.credito_plazo_max_meses) || 6;
+    socioState.creditoLimiteMaximo = parseFloat(s.credito_limite_maximo) || 0;
 
     if (s.estado === 'pendiente_pago') {
       $('activationText').textContent = 'Te falta pagar tu aporte inicial de ' + money(socioState.aporteInicial) + ' para activar tu cuenta.';
@@ -428,6 +487,7 @@
     renderPlazosFijos(data.plazos_fijos, s.tasa_plazo_fijo);
     renderLedger(data.movimientos);
     updateFeeBreakdown();
+    renderCreditos(data);
 
     $('perfilNombre').value = s.nombre || '';
     $('perfilCedula').value = s.cedula || '';
@@ -488,9 +548,9 @@
       wrap.innerHTML = '<div class="empty-note">Aún no tienes movimientos.</div>';
       return;
     }
-    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento' };
+    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento', credito_desembolso: 'Desembolso de crédito', pago_credito: 'Pago de cuota de crédito' };
     wrap.innerHTML = movimientos.map(m => {
-      const isOut = (m.tipo === 'retiro' || m.tipo === 'comision_admin');
+      const isOut = (m.tipo === 'retiro' || m.tipo === 'comision_admin' || m.tipo === 'pago_credito');
       const recargo = parseFloat(m.comision || 0) + parseFloat(m.iva || 0);
       const feeNote = recargo > 0 ? '<div class="ledger-fee">+ ' + money(recargo) + ' comisión/IVA pagados aparte</div>' : '';
       return '<div class="ledger-row">' +
@@ -498,6 +558,165 @@
         '<div class="ledger-mid"><div class="ledger-desc">' + (labels[m.tipo] || m.tipo) + '</div><div class="ledger-date">' + formatDate(m.created_at) + '</div>' + feeNote + '</div>' +
         '<div class="ledger-amt ' + (isOut ? 'neg' : 'pos') + '">' + (isOut ? '-' : '+') + money(m.monto) + '</div>' +
         '</div>';
+    }).join('');
+  }
+
+  // ---- Créditos ----
+  const CUOTA_LABELS = { pendiente: 'Pendiente', pagada: 'Pagada', vencida: 'Vencida' };
+
+  function renderCreditos(data) {
+    $('creditoCupo').textContent = money(data.cupo_sugerido || 0);
+    poblarPlazoCredito();
+
+    const activo = data.credito_actual;
+    if (activo) {
+      $('creditoSolicitudWrap').classList.add('hidden');
+      $('creditoActivoWrap').classList.remove('hidden');
+      renderCreditoActivo(activo, data.cuotas_credito || []);
+    } else {
+      $('creditoSolicitudWrap').classList.remove('hidden');
+      $('creditoActivoWrap').classList.add('hidden');
+    }
+
+    renderCreditoHistorial(data.historial_creditos || [], activo ? activo.id : null);
+  }
+
+  function poblarPlazoCredito() {
+    const sel = $('creditoPlazo');
+    if (sel.options.length) return;
+    for (let m = socioState.creditoPlazoMin; m <= socioState.creditoPlazoMax; m++) {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m + (m === 1 ? ' mes' : ' meses');
+      sel.appendChild(opt);
+    }
+  }
+
+  function actualizarCalculadoraCredito() {
+    const monto = parseFloat($('creditoMonto').value) || 0;
+    const plazo = parseInt($('creditoPlazo').value) || socioState.creditoPlazoMin;
+    const calc = $('creditoCalculadora');
+    if (monto <= 0) {
+      calc.textContent = 'Ingresa un monto y elige un plazo para ver tu cuota mensual.';
+      return;
+    }
+    const tasaMensual = Math.pow(1 + socioState.creditoTasaAnual / 100, 1 / 12) - 1;
+    let cuota;
+    if (tasaMensual <= 0) {
+      cuota = monto / plazo;
+    } else {
+      const factor = Math.pow(1 + tasaMensual, plazo);
+      cuota = monto * (tasaMensual * factor) / (factor - 1);
+    }
+    cuota = Math.round(cuota * 100) / 100;
+    calc.innerHTML = 'Cuota mensual estimada: <b>' + money(cuota) + '</b> durante ' + plazo + (plazo === 1 ? ' mes' : ' meses') +
+      ' · Total a pagar: <b>' + money(cuota * plazo) + '</b> (tasa ' + socioState.creditoTasaAnual + '% anual)';
+  }
+
+  async function solicitarCredito() {
+    clearError('errCredito');
+    $('creditoMsg').classList.add('hidden');
+    const monto = parseFloat($('creditoMonto').value);
+    const plazo = parseInt($('creditoPlazo').value);
+    if (!monto || monto <= 0) { setError('errCredito', 'Ingresa un monto válido.'); return; }
+    try {
+      await apiFetch('/solicitar_credito.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto, plazo_meses: plazo })
+      });
+      $('creditoMonto').value = '';
+      await loadSocioDashboard();
+      const msg = $('creditoMsg');
+      msg.textContent = 'Tu solicitud fue enviada. Te avisaremos cuando el administrador la revise.';
+      msg.className = 'profile-msg ok';
+      msg.classList.remove('hidden');
+    } catch (err) {
+      setError('errCredito', err.message || NET_MSG);
+    }
+  }
+
+  function renderCreditoActivo(credito, cuotas) {
+    const wrap = $('creditoActivoWrap');
+    let html = '<div class="term-card">';
+    if (Number(credito.en_mora) === 1) {
+      html += '<div class="mora-banner">Tienes una cuota vencida. Ponte al día para no afectar tu cupo de crédito futuro.</div>';
+    }
+    if (credito.estado === 'pendiente') {
+      html += '<div class="term-row"><span>Solicitaste</span><b>' + money(credito.monto) + ' a ' + credito.plazo_meses + ' meses</b></div>' +
+        '<div class="term-row"><span>Cuota estimada</span><b>' + money(credito.cuota_mensual) + '/mes</b></div>' +
+        '<div class="term-foot">Tu solicitud está en revisión por el administrador.</div>';
+    } else {
+      html += '<div class="term-row"><span>Crédito activo</span><b>' + money(credito.monto) + ' a ' + credito.plazo_meses + ' meses</b></div>' +
+        '<div class="term-row"><span>Cuota mensual</span><b>' + money(credito.cuota_mensual) + '</b></div>' +
+        '<div class="term-row"><span>Tasa</span><b>' + credito.tasa_anual + '% anual</b></div>';
+      if (credito.mensaje_admin) {
+        html += '<div class="credito-mensaje">"' + escapeHtml(credito.mensaje_admin) + '"</div>';
+      }
+      html += '<div style="margin-top: 12px;">' + cuotas.map(renderCuotaRow).join('') + '</div>';
+    }
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function renderCuotaRow(c) {
+    const puedePagar = c.estado === 'pendiente' || c.estado === 'vencida';
+    return '<div class="cuota-row">' +
+      '<div><div>Cuota ' + c.numero_cuota + '</div><div class="cuota-info">Vence ' + formatDate(c.fecha_vencimiento) + '</div></div>' +
+      '<div style="display:flex; align-items:center; gap:8px;">' +
+        '<b>' + money(c.monto_cuota) + '</b>' +
+        '<span class="cuota-estado ' + c.estado + '">' + (CUOTA_LABELS[c.estado] || c.estado) + '</span>' +
+        (puedePagar ? '<button class="cuota-pay-btn" id="pagoCuota' + c.id + '" onclick="pagarCuota(' + c.id + ')">Pagar</button>' : '') +
+      '</div>' +
+    '</div>' +
+    (puedePagar ? '<div id="ppCuota' + c.id + '"></div><div id="errCuota' + c.id + '" class="profile-msg err hidden"></div>' : '');
+  }
+
+  async function pagarCuota(cuotaId) {
+    const btn = $('pagoCuota' + cuotaId);
+    const errId = 'errCuota' + cuotaId;
+    clearError(errId);
+    btn.disabled = true;
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tipo: 'pago_credito', cuota_id: cuotaId })
+      });
+      if (!data.token) { setError(errId, 'Esta caja aún no tiene configurado su pago con PayPhone.'); return; }
+      if (typeof PPaymentButtonBox === 'undefined') { setError(errId, 'No se pudo cargar el componente de pago. Recarga la página.'); return; }
+      const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      btn.classList.add('hidden');
+      const ppConfig = {
+        token: data.token, clientTransactionId: data.clientTransactionId,
+        amount: data.amount, amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD', reference: data.reference || 'Pago de cuota',
+        lang: 'es', responseUrl: responseUrl
+      };
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('ppCuota' + cuotaId);
+    } catch (err) {
+      setError(errId, err.message || NET_MSG);
+      btn.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderCreditoHistorial(historial, idActivo) {
+    const wrap = $('creditoHistorialWrap');
+    const previos = historial.filter(c => c.id !== idActivo);
+    if (!previos.length) {
+      wrap.innerHTML = '<div class="empty-note">Aún no tienes créditos anteriores.</div>';
+      return;
+    }
+    const estadoLabels = { pendiente: 'En revisión', rechazado: 'Rechazado', activo: 'Activo', pagado: 'Pagado' };
+    wrap.innerHTML = previos.map(c => {
+      const mensaje = c.mensaje_admin ? '<div class="credito-mensaje">"' + escapeHtml(c.mensaje_admin) + '"</div>' : '';
+      return '<div class="term-card" style="margin-bottom:10px;">' +
+        '<div class="term-row"><span>' + money(c.monto) + ' a ' + c.plazo_meses + ' meses</span><b>' + (estadoLabels[c.estado] || c.estado) + '</b></div>' +
+        '<div class="term-foot">' + formatDate(c.created_at) + (Number(c.en_mora) === 1 ? ' · tuvo atraso' : '') + '</div>' +
+        mensaje +
+      '</div>';
     }).join('');
   }
 
@@ -653,9 +872,9 @@
         '/payphone_confirm.php?id=' + encodeURIComponent(id) + '&clientTransactionId=' + encodeURIComponent(clientTransactionId),
         { method: 'GET', credentials: 'include' }
       );
-      await mostrarResultadoAporte(data.aprobado === true);
+      await mostrarResultadoPago(data.tipo, data.aprobado === true);
     } catch (err) {
-      // Si no se pudo verificar, simplemente no mostramos el aporte como acreditado.
+      // Si no se pudo verificar, simplemente no mostramos el pago como acreditado.
     } finally {
       const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
       history.replaceState({}, '', clean);
@@ -664,9 +883,19 @@
 
   // PayPhone regresa siempre a la "Url de respuesta" configurada a nivel de la aplicación
   // (registro.html), sin importar desde dónde se inició el pago. registro.html reenvía aquí
-  // el resultado ya confirmado del lado del servidor cuando la transacción no era el aporte
-  // inicial (?pp_aprobado=1|0), para no volver a llamar a payphone_confirm.php dos veces.
-  async function mostrarResultadoAporte(aprobado) {
+  // el resultado ya confirmado del lado del servidor (con el tipo de transacción) cuando no
+  // era el aporte inicial, para no volver a llamar a payphone_confirm.php dos veces.
+  async function mostrarResultadoPago(tipo, aprobado) {
+    if (tipo === 'pago_credito') {
+      showSocioTab('creditos');
+      if (aprobado) {
+        await loadSocioDashboard(); // refresca la tabla de cuotas con el pago ya acreditado
+      } else {
+        setError('errCredito', 'El pago no se completó o fue rechazado. Intenta de nuevo.');
+      }
+      return;
+    }
+    // 'aporte' (depósito recurrente)
     togglePanel('deposit');
     if (aprobado) {
       $('depositSuccess').classList.add('show');
@@ -740,6 +969,7 @@
     const returnId = PARAMS.get('id');
     const returnTxId = PARAMS.get('clientTransactionId');
     const ppAprobado = PARAMS.get('pp_aprobado');
+    const ppTipo = PARAMS.get('pp_tipo');
 
     try {
       await apiFetch('/me.php', { credentials: 'include' });
@@ -747,7 +977,7 @@
       if (returnId && returnTxId) {
         await confirmarAporteRetorno(returnId, returnTxId);
       } else if (ppAprobado !== null) {
-        await mostrarResultadoAporte(ppAprobado === '1');
+        await mostrarResultadoPago(ppTipo, ppAprobado === '1');
         const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
         history.replaceState({}, '', clean);
       }

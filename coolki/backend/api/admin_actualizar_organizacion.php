@@ -10,17 +10,39 @@ $retiroMinimo = floatval($in['retiro_minimo'] ?? -1);
 $aporteInicial = floatval($in['aporte_inicial'] ?? -1);
 $comisionDeposito = floatval($in['comision_deposito_pct'] ?? -1);
 $ivaPct = floatval($in['iva_pct'] ?? -1);
+$creditoTasaAnual = floatval($in['credito_tasa_anual'] ?? -1);
+$creditoLimiteBase = floatval($in['credito_limite_base'] ?? -1);
+$creditoIncrementoPorPago = floatval($in['credito_incremento_por_pago'] ?? -1);
+$creditoLimiteMaximo = floatval($in['credito_limite_maximo'] ?? -1);
+$creditoPlazoMin = intval($in['credito_plazo_min_meses'] ?? -1);
+$creditoPlazoMax = intval($in['credito_plazo_max_meses'] ?? -1);
 
-if ($tasaPlazoFijo < 0 || $retiroMinimo < 0 || $aporteInicial < 0 || $comisionDeposito < 0 || $ivaPct < 0) {
-    jsonResponse(['error' => 'Todos los valores deben ser números válidos mayores o iguales a 0.'], 400);
+$valores = [
+    $tasaPlazoFijo, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
+    $creditoTasaAnual, $creditoLimiteBase, $creditoIncrementoPorPago, $creditoLimiteMaximo,
+    $creditoPlazoMin, $creditoPlazoMax,
+];
+foreach ($valores as $v) {
+    if ($v < 0) {
+        jsonResponse(['error' => 'Todos los valores deben ser números válidos mayores o iguales a 0.'], 400);
+    }
+}
+if ($creditoPlazoMin < 1 || $creditoPlazoMax < $creditoPlazoMin) {
+    jsonResponse(['error' => 'El rango de plazo de crédito no es válido.'], 400);
 }
 
 $pdo = getDB();
 $stmt = $pdo->prepare(
     "UPDATE organizaciones
-     SET tasa_plazo_fijo = ?, retiro_minimo = ?, aporte_inicial = ?, comision_deposito_pct = ?, iva_pct = ?
+     SET tasa_plazo_fijo = ?, retiro_minimo = ?, aporte_inicial = ?, comision_deposito_pct = ?, iva_pct = ?,
+         credito_tasa_anual = ?, credito_limite_base = ?, credito_incremento_por_pago = ?,
+         credito_limite_maximo = ?, credito_plazo_min_meses = ?, credito_plazo_max_meses = ?
      WHERE id = ?"
 );
-$stmt->execute([$tasaPlazoFijo, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct, $admin['organizacion_id']]);
+$stmt->execute([
+    $tasaPlazoFijo, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
+    $creditoTasaAnual, $creditoLimiteBase, $creditoIncrementoPorPago, $creditoLimiteMaximo,
+    $creditoPlazoMin, $creditoPlazoMax, $admin['organizacion_id'],
+]);
 
 jsonResponse(['ok' => true]);

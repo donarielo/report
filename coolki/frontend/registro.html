@@ -332,6 +332,7 @@
         const url = new URL('sistema', location.href);
         if (ORG_SLUG) url.searchParams.set('org', ORG_SLUG);
         url.searchParams.set('pp_aprobado', data.aprobado ? '1' : '0');
+        url.searchParams.set('pp_tipo', data.tipo);
         location.href = url.toString();
         return;
       }
