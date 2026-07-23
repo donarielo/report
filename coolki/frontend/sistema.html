@@ -624,7 +624,7 @@
         setError('errAporteInicial', 'No se pudo cargar el componente de pago de PayPhone. Recarga la página.');
         return;
       }
-      const responseUrl = location.origin + '/registro.html' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
       btn.classList.add('hidden');
       const ppConfig = {
         token: data.token,

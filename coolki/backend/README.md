@@ -46,7 +46,7 @@ no permite configurar URLs de respuesta sin HTTPS.
    (así funciona ese método de PayPhone). La seguridad no depende de ocultarlo: el pago sólo se
    acredita en `payphone_confirm.php`, que verifica contra PayPhone del lado del servidor.
 3. Configura la **URL de respuesta** de PayPhone apuntando a la **página de registro**, por ejemplo:
-   `https://tudominio.com/registro.html`
+   `https://tudominio.com/registro` (sin `.html` — ver sección 11, "URLs limpias").
    Ahí es donde el navegador vuelve tras pagar (PayPhone añade `?id=...&clientTransactionId=...`).
    `registro.html` toma esos parámetros y llama por su cuenta a `payphone_confirm.php` para
    confirmar el cobro del lado del servidor antes de mostrar la pantalla de "pago acreditado".
@@ -127,6 +127,24 @@ cuando el plazo cumple un año (no día a día). Si tu caja de ahorro maneja el 
 (otra fórmula, otra frecuencia de pago, retiro anticipado del capital), este script hay que
 ajustarlo — hoy no existe una forma de que el socio retire el capital de un plazo fijo antes de
 su vencimiento; eso se coordinaría manualmente con el administrador.
+
+## 11. URLs limpias (sin `.html`)
+
+El archivo `.htaccess` (en la raíz de `public_html`, junto a `index.html`) hace dos cosas:
+
+1. Si alguien pide `/registro.html` directamente, redirige (301) a `/registro`.
+2. Al pedir `/registro` (sin extensión), sirve internamente `registro.html` — el navegador
+   nunca ve el `.html` en la barra de direcciones.
+
+No afecta a `backend/` — los endpoints `.php` funcionan exactamente igual que antes.
+
+**Importante:** actualiza la **URL de respuesta** en PayPhone Developer a
+`https://tudominio.com/registro` (sin `.html`) para evitar depender del salto de redirección.
+
+Requiere que tu hosting tenga `mod_rewrite` habilitado y permita `.htaccess`
+(`AllowOverride All`) — en Hostinger compartido esto ya viene activado por defecto. Si después
+de subir el `.htaccess` las URLs limpias no funcionan, revisa en hPanel si hay alguna opción de
+"Reescritura de URL" que debas activar, o contacta a soporte de Hostinger.
 
 ## Qué falta todavía (para ser 100% honestos)
 

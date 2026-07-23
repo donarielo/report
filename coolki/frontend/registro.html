@@ -329,7 +329,7 @@
       // NO es el aporte inicial (ej. un aporte hecho desde sistema.html), reenviamos al
       // socio a su cuenta en vez de mostrar las pantallas de registro.
       if (data.tipo && data.tipo !== 'aporte_inicial') {
-        const url = new URL('sistema.html', location.href);
+        const url = new URL('sistema', location.href);
         if (ORG_SLUG) url.searchParams.set('org', ORG_SLUG);
         url.searchParams.set('pp_aprobado', data.aprobado ? '1' : '0');
         location.href = url.toString();
@@ -368,7 +368,7 @@
   // El registro ya terminó (la cuenta existe): estos botones llevan al socio a su
   // cuenta real, nunca de vuelta al formulario de registro.
   function irACuenta() {
-    location.href = 'sistema.html' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+    location.href = 'sistema' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
   }
 
   // El aporte inicial falló: reintentamos el pago (Paso 2), no reiniciamos el registro
@@ -403,7 +403,7 @@
         preparePago();
       } else if (data.socio && data.socio.estado === 'activo') {
         // Ya está activo: no tiene nada que hacer aquí, lo mandamos a su cuenta.
-        location.href = 'sistema.html' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+        location.href = 'sistema' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
       }
     } catch (e) { /* no hay sesión: se queda en el Paso 1 normal */ }
   })();

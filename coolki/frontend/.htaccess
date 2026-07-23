@@ -1,0 +1,19 @@
+# COOLKI · URLs sin extensión .html
+# Este archivo va en la raíz de public_html (junto a index.html, registro.html, etc.)
+
+DirectoryIndex index.html
+
+RewriteEngine On
+
+# Si alguien pide la página con .html en la URL, redirige (301) a la versión limpia.
+# Esto no afecta a backend/ (los .php siguen funcionando exactamente igual).
+RewriteCond %{REQUEST_URI} !^/backend/
+RewriteCond %{THE_REQUEST} \s/+(.*)\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# Sirve internamente el archivo .html correspondiente cuando se pide la ruta sin
+# extensión (el navegador nunca ve el .html en la barra de direcciones).
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^([^.]+)$ $1.html [NC,L]
