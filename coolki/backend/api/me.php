@@ -9,7 +9,7 @@ $pdo = getDB();
 
 $stmt = $pdo->prepare(
     "SELECT s.id, s.nombre, s.cedula, s.email, s.celular, s.saldo_disponible, s.saldo_congelado, s.estado, s.created_at,
-            o.retiro_minimo, o.aporte_inicial, o.tasa_plazo_fijo, o.comision_deposito_pct, o.iva_pct,
+            o.retiro_minimo, o.aporte_inicial, o.tasa_plazo_fijo, o.coolcoin_tasa_anual, o.comision_deposito_pct, o.iva_pct,
             o.credito_tasa_anual, o.credito_limite_base, o.credito_incremento_por_pago,
             o.credito_limite_maximo, o.credito_plazo_min_meses, o.credito_plazo_max_meses
      FROM socios s JOIN organizaciones o ON o.id = s.organizacion_id
@@ -30,11 +30,13 @@ $stmt->execute([$socioId]);
 $movimientos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare(
-    "SELECT id, capital, tasa_anual, fecha_inicio, fecha_vencimiento, generado
+    "SELECT id, producto, capital, tasa_anual, fecha_inicio, fecha_vencimiento, generado
      FROM plazos_fijos WHERE socio_id = ? ORDER BY fecha_inicio DESC"
 );
 $stmt->execute([$socioId]);
-$plazosFijos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$todosLosPlazos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$plazosFijos = array_values(array_filter($todosLosPlazos, fn($p) => $p['producto'] === 'plazo_fijo'));
+$coolcoinInversiones = array_values(array_filter($todosLosPlazos, fn($p) => $p['producto'] === 'coolcoin'));
 
 $stmt = $pdo->prepare(
     "SELECT id, monto, created_at FROM solicitudes_retiro
@@ -75,6 +77,7 @@ jsonResponse([
     'socio' => $socio,
     'movimientos' => $movimientos,
     'plazos_fijos' => $plazosFijos,
+    'coolcoin_inversiones' => $coolcoinInversiones,
     'retiros_pendientes' => $retirosPendientes,
     'credito_actual' => $creditoActual,
     'cuotas_credito' => $cuotasCredito,

@@ -34,6 +34,7 @@ jsonResponse([
         'aporte_inicial' => $org['aporte_inicial'],
         'retiro_minimo' => $org['retiro_minimo'],
         'tasa_plazo_fijo' => $org['tasa_plazo_fijo'],
+        'coolcoin_tasa_anual' => $org['coolcoin_tasa_anual'],
         'comision_deposito_pct' => $org['comision_deposito_pct'],
         'iva_pct' => $org['iva_pct'],
         'credito_tasa_anual' => $org['credito_tasa_anual'],

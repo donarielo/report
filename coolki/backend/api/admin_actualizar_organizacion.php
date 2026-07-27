@@ -6,6 +6,7 @@ $admin = requireAdminAuth();
 
 $in = jsonInput();
 $tasaPlazoFijo = floatval($in['tasa_plazo_fijo'] ?? -1);
+$coolcoinTasaAnual = floatval($in['coolcoin_tasa_anual'] ?? -1);
 $retiroMinimo = floatval($in['retiro_minimo'] ?? -1);
 $aporteInicial = floatval($in['aporte_inicial'] ?? -1);
 $comisionDeposito = floatval($in['comision_deposito_pct'] ?? -1);
@@ -18,7 +19,7 @@ $creditoPlazoMin = intval($in['credito_plazo_min_meses'] ?? -1);
 $creditoPlazoMax = intval($in['credito_plazo_max_meses'] ?? -1);
 
 $valores = [
-    $tasaPlazoFijo, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
+    $tasaPlazoFijo, $coolcoinTasaAnual, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
     $creditoTasaAnual, $creditoLimiteBase, $creditoIncrementoPorPago, $creditoLimiteMaximo,
     $creditoPlazoMin, $creditoPlazoMax,
 ];
@@ -34,13 +35,14 @@ if ($creditoPlazoMin < 1 || $creditoPlazoMax < $creditoPlazoMin) {
 $pdo = getDB();
 $stmt = $pdo->prepare(
     "UPDATE organizaciones
-     SET tasa_plazo_fijo = ?, retiro_minimo = ?, aporte_inicial = ?, comision_deposito_pct = ?, iva_pct = ?,
+     SET tasa_plazo_fijo = ?, coolcoin_tasa_anual = ?, retiro_minimo = ?, aporte_inicial = ?,
+         comision_deposito_pct = ?, iva_pct = ?,
          credito_tasa_anual = ?, credito_limite_base = ?, credito_incremento_por_pago = ?,
          credito_limite_maximo = ?, credito_plazo_min_meses = ?, credito_plazo_max_meses = ?
      WHERE id = ?"
 );
 $stmt->execute([
-    $tasaPlazoFijo, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
+    $tasaPlazoFijo, $coolcoinTasaAnual, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
     $creditoTasaAnual, $creditoLimiteBase, $creditoIncrementoPorPago, $creditoLimiteMaximo,
     $creditoPlazoMin, $creditoPlazoMax, $admin['organizacion_id'],
 ]);

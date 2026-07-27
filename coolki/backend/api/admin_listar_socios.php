@@ -5,7 +5,8 @@ $admin = requireAdminAuth();
 $pdo = getDB();
 $stmt = $pdo->prepare(
     "SELECT s.id, s.nombre, s.email, s.saldo_disponible, s.saldo_congelado, s.estado, s.created_at,
-            COALESCE((SELECT SUM(p.capital) FROM plazos_fijos p WHERE p.socio_id = s.id), 0) AS plazo_fijo_total,
+            COALESCE((SELECT SUM(p.capital) FROM plazos_fijos p WHERE p.socio_id = s.id AND p.producto = 'plazo_fijo'), 0) AS plazo_fijo_total,
+            COALESCE((SELECT SUM(p.capital) FROM plazos_fijos p WHERE p.socio_id = s.id AND p.producto = 'coolcoin'), 0) AS coolcoin_total,
             (SELECT MAX(t.created_at) FROM transacciones t
              WHERE t.socio_id = s.id AND t.tipo IN ('aporte','aporte_inicial') AND t.estado = 'confirmado') AS ultimo_aporte
      FROM socios s

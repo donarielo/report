@@ -12,6 +12,7 @@ CREATE TABLE organizaciones (
   aporte_inicial DECIMAL(10,2) DEFAULT 5.00,
   retiro_minimo DECIMAL(10,2) DEFAULT 10.00,
   tasa_plazo_fijo DECIMAL(5,2) DEFAULT 5.00,
+  coolcoin_tasa_anual DECIMAL(5,2) DEFAULT 5.50,     -- tasa anual de CoolCoin (segunda opción de inversión, igual mecanismo que el plazo fijo)
   aprobacion_retiros ENUM('manual','automatica') DEFAULT 'manual',
   comision_deposito_pct DECIMAL(5,2) DEFAULT 5.00,  -- % de comisión sobre depósitos (no aplica al aporte inicial)
   iva_pct DECIMAL(5,2) DEFAULT 15.00,               -- % de IVA, calculado sobre la comisión
@@ -67,6 +68,7 @@ CREATE TABLE transacciones (
 CREATE TABLE plazos_fijos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   socio_id INT NOT NULL,
+  producto ENUM('plazo_fijo','coolcoin') NOT NULL DEFAULT 'plazo_fijo', -- misma mecánica, dos productos con tasas distintas
   capital DECIMAL(10,2) NOT NULL,
   tasa_anual DECIMAL(5,2) NOT NULL,
   fecha_inicio DATE NOT NULL,

@@ -65,7 +65,7 @@
 .admin-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .export-btn { padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: not-allowed; }
 
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
+.stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 26px; }
 .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
 .stat-label { font-size: 11.5px; color: var(--muted); }
 .stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; color: var(--ink); margin-top: 6px; }
@@ -136,6 +136,7 @@ table.socios tbody tr:hover { background: var(--bg); }
 .settings-msg.err { color: var(--coral); }
 
 @media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) and (min-width: 801px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
 </style>
 
 <!-- ============ LOGIN GATE ============ -->
@@ -183,6 +184,7 @@ table.socios tbody tr:hover { background: var(--bg); }
         <div class="stat-card"><div class="stat-label">Socios activos</div><div class="stat-value" id="statActivos">0</div></div>
         <div class="stat-card"><div class="stat-label">Total ahorrado</div><div class="stat-value" id="statTotal">$0</div></div>
         <div class="stat-card"><div class="stat-label">En plazo fijo</div><div class="stat-value" id="statPlazo">$0</div></div>
+        <div class="stat-card"><div class="stat-label">En CoolCoin</div><div class="stat-value" id="statCoolcoin">$0</div></div>
         <div class="stat-card"><div class="stat-label">Retiros pendientes</div><div class="stat-value" id="statRetiros">0</div></div>
       </div>
 
@@ -203,6 +205,7 @@ table.socios tbody tr:hover { background: var(--bg); }
 
           <div class="settings-group-title">Reglas de ahorro</div>
           <div class="settings-row"><label class="settings-label">Tasa de plazo fijo anual (%)</label><input class="settings-input" id="cfgTasa" /></div>
+          <div class="settings-row"><label class="settings-label">Tasa de CoolCoin anual (%)</label><input class="settings-input" id="cfgCoolcoinTasa" /></div>
           <div class="settings-row"><label class="settings-label">Aporte inicial (congelado)</label><input class="settings-input" id="cfgAporte" /></div>
           <div class="settings-row"><label class="settings-label">Retiro mínimo</label><input class="settings-input" id="cfgRetiro" /></div>
 
@@ -355,6 +358,7 @@ table.socios tbody tr:hover { background: var(--bg); }
 
   function fillSettingsForm() {
     $('cfgTasa').value = adminOrgSettings.tasa_plazo_fijo != null ? adminOrgSettings.tasa_plazo_fijo : '';
+    $('cfgCoolcoinTasa').value = adminOrgSettings.coolcoin_tasa_anual != null ? adminOrgSettings.coolcoin_tasa_anual : '';
     $('cfgAporte').value = adminOrgSettings.aporte_inicial != null ? adminOrgSettings.aporte_inicial : '';
     $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
     $('cfgComision').value = adminOrgSettings.comision_deposito_pct != null ? adminOrgSettings.comision_deposito_pct : '';
@@ -388,11 +392,13 @@ table.socios tbody tr:hover { background: var(--bg); }
     }
 
     const activos = socios.filter(s => s.estado === 'activo').length;
-    const totalAhorrado = socios.reduce((sum, s) => sum + parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado) + parseFloat(s.plazo_fijo_total), 0);
     const enPlazo = socios.reduce((sum, s) => sum + parseFloat(s.plazo_fijo_total), 0);
+    const enCoolcoin = socios.reduce((sum, s) => sum + parseFloat(s.coolcoin_total), 0);
+    const totalAhorrado = socios.reduce((sum, s) => sum + parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado), 0) + enPlazo + enCoolcoin;
     $('statActivos').textContent = activos;
     $('statTotal').textContent = money(totalAhorrado);
     $('statPlazo').textContent = money(enPlazo);
+    $('statCoolcoin').textContent = money(enCoolcoin);
     $('statRetiros').textContent = retiros.length;
 
     $('sociosTableBody').innerHTML = socios.length ? socios.map(s => {
@@ -435,6 +441,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     const msg = $('settingsMsg');
     msg.classList.add('hidden');
     const tasa = parseFloat($('cfgTasa').value);
+    const coolcoinTasa = parseFloat($('cfgCoolcoinTasa').value);
     const aporte = parseFloat($('cfgAporte').value);
     const retiro = parseFloat($('cfgRetiro').value);
     const comision = parseFloat($('cfgComision').value);
@@ -445,7 +452,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     const creditoMax = parseFloat($('cfgCreditoMax').value);
     const creditoPlazoMin = parseInt($('cfgCreditoPlazoMin').value);
     const creditoPlazoMax = parseInt($('cfgCreditoPlazoMax').value);
-    const valores = [tasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax];
+    const valores = [tasa, coolcoinTasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax];
     if (valores.some(v => isNaN(v) || v < 0)) {
       msg.textContent = 'Revisa que todos los valores sean números válidos.';
       msg.className = 'settings-msg err';
@@ -460,7 +467,7 @@ table.socios tbody tr:hover { background: var(--bg); }
       await apiFetch('/admin_actualizar_organizacion.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify({
-          tasa_plazo_fijo: tasa, aporte_inicial: aporte, retiro_minimo: retiro,
+          tasa_plazo_fijo: tasa, coolcoin_tasa_anual: coolcoinTasa, aporte_inicial: aporte, retiro_minimo: retiro,
           comision_deposito_pct: comision, iva_pct: iva,
           credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
           credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
@@ -468,7 +475,7 @@ table.socios tbody tr:hover { background: var(--bg); }
         })
       });
       Object.assign(adminOrgSettings, {
-        tasa_plazo_fijo: tasa, aporte_inicial: aporte, retiro_minimo: retiro,
+        tasa_plazo_fijo: tasa, coolcoin_tasa_anual: coolcoinTasa, aporte_inicial: aporte, retiro_minimo: retiro,
         comision_deposito_pct: comision, iva_pct: iva,
         credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
         credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
@@ -614,9 +621,21 @@ table.socios tbody tr:hover { background: var(--bg); }
       '<div><div class="modal-info-label">Congelado (aporte inicial)</div><div>' + money(s.saldo_congelado) + '</div></div>' +
     '</div>';
 
-    if (data.plazos_fijos && data.plazos_fijos.length) {
+    const plazosFijos = (data.plazos_fijos || []).filter(p => p.producto !== 'coolcoin');
+    const coolcoinInversiones = (data.plazos_fijos || []).filter(p => p.producto === 'coolcoin');
+
+    if (plazosFijos.length) {
       html += '<div class="modal-section-title">Plazos fijos</div>';
-      html += data.plazos_fijos.map(p =>
+      html += plazosFijos.map(p =>
+        '<div class="tx-row"><div><div class="tx-desc">' + money(p.capital) + ' al ' + p.tasa_anual + '% anual</div>' +
+        '<div class="tx-sub">Vence ' + formatDate(p.fecha_vencimiento) + '</div></div>' +
+        '<div class="tx-amt pos">+' + money(p.generado) + '</div></div>'
+      ).join('');
+    }
+
+    if (coolcoinInversiones.length) {
+      html += '<div class="modal-section-title">CoolCoin</div>';
+      html += coolcoinInversiones.map(p =>
         '<div class="tx-row"><div><div class="tx-desc">' + money(p.capital) + ' al ' + p.tasa_anual + '% anual</div>' +
         '<div class="tx-sub">Vence ' + formatDate(p.fecha_vencimiento) + '</div></div>' +
         '<div class="tx-amt pos">+' + money(p.generado) + '</div></div>'

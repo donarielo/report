@@ -130,7 +130,7 @@
 .activation-btn { margin-top: 10px; padding: 10px 16px; border: none; border-radius: 10px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 13.5px; cursor: pointer; }
 
 /* ---------- Resumen de fondos (separado del saldo disponible) ---------- */
-.funds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
+.funds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
 .fund-tile { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px; }
 .fund-tile.highlight { background: var(--brand-soft); border-color: var(--brand-soft); }
 .fund-label { font-size: 11px; color: var(--muted); font-weight: 600; }
@@ -271,6 +271,11 @@
           <div class="fund-value" id="fundPlazoFijo">$0.00</div>
           <div class="fund-sub">Ahorro a plazo</div>
         </div>
+        <div class="fund-tile">
+          <div class="fund-label">En CoolCoin</div>
+          <div class="fund-value" id="fundCoolcoin">$0.00</div>
+          <div class="fund-sub">Segunda opción de inversión</div>
+        </div>
         <div class="fund-tile highlight">
           <div class="fund-label">Total ahorrado</div>
           <div class="fund-value" id="fundTotal">$0.00</div>
@@ -281,6 +286,12 @@
         <div class="section-head"><div class="section-title">Ahorro a plazo fijo</div></div>
         <div class="section-desc">Este dinero gana interés y se renueva automáticamente cada año.</div>
         <div id="plazosFijosWrap"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">CoolCoin</div></div>
+        <div class="section-desc">Otra forma de hacer crecer tu dinero, aparte del plazo fijo — mismo mecanismo, tu propia tasa.</div>
+        <div id="coolcoinWrap"></div>
       </div>
 
       <div class="section">
@@ -453,6 +464,7 @@
     socioState.creditoPlazoMin = parseInt(s.credito_plazo_min_meses) || 1;
     socioState.creditoPlazoMax = parseInt(s.credito_plazo_max_meses) || 6;
     socioState.creditoLimiteMaximo = parseFloat(s.credito_limite_maximo) || 0;
+    socioState.coolcoinTasaAnual = parseFloat(s.coolcoin_tasa_anual) || 0;
 
     if (s.estado === 'pendiente_pago') {
       $('activationText').textContent = 'Te falta pagar tu aporte inicial de ' + money(socioState.aporteInicial) + ' para activar tu cuenta.';
@@ -466,10 +478,12 @@
     $('balanceFigure').textContent = money(socioState.saldoDisponible);
 
     const plazoTotal = (data.plazos_fijos || []).reduce((sum, p) => sum + parseFloat(p.capital), 0);
+    const coolcoinTotal = (data.coolcoin_inversiones || []).reduce((sum, p) => sum + parseFloat(p.capital), 0);
     const saldoCongelado = parseFloat(s.saldo_congelado || 0);
     $('fundCongelado').textContent = money(saldoCongelado);
     $('fundPlazoFijo').textContent = money(plazoTotal);
-    $('fundTotal').textContent = money(socioState.saldoDisponible + saldoCongelado + plazoTotal);
+    $('fundCoolcoin').textContent = money(coolcoinTotal);
+    $('fundTotal').textContent = money(socioState.saldoDisponible + saldoCongelado + plazoTotal + coolcoinTotal);
 
     $('withdrawNote').textContent = 'Retiros disponibles desde ' + money(socioState.retiroMinimo) + '. Se procesan en 1–2 días hábiles. Máximo disponible: ' + money(socioState.saldoDisponible) + '.';
     $('withdrawAmount').setAttribute('min', socioState.retiroMinimo);
@@ -485,6 +499,7 @@
     }
 
     renderPlazosFijos(data.plazos_fijos, s.tasa_plazo_fijo);
+    renderCoolcoin(data.coolcoin_inversiones, s.coolcoin_tasa_anual);
     renderLedger(data.movimientos);
     updateFeeBreakdown();
     renderCreditos(data);
@@ -496,26 +511,23 @@
     return true;
   }
 
+  function termCardHTML(p) {
+    const inicio = new Date(p.fecha_inicio + 'T00:00:00');
+    const fin = new Date(p.fecha_vencimiento + 'T00:00:00');
+    const hoy = new Date();
+    let pct = ((hoy - inicio) / (fin - inicio)) * 100;
+    pct = Math.max(0, Math.min(100, Math.round(pct)));
+    return '<div class="term-card">' +
+      '<div class="term-row"><span>Capital colocado</span><b>' + money(p.capital) + '</b></div>' +
+      '<div class="term-row"><span>Generado en este periodo</span><b>+' + money(p.generado) + '</b></div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="term-foot">' + p.tasa_anual + '% anual · vence el ' + fin.getDate() + ' de ' + MESES[fin.getMonth()] + ' de ' + fin.getFullYear() + ' · se renueva automáticamente</div>' +
+      '</div>';
+  }
+
   function renderPlazosFijos(plazos, tasaOrg) {
     const wrap = $('plazosFijosWrap');
-    wrap.innerHTML = '';
-    if (plazos && plazos.length) {
-      plazos.forEach(p => {
-        const inicio = new Date(p.fecha_inicio + 'T00:00:00');
-        const fin = new Date(p.fecha_vencimiento + 'T00:00:00');
-        const hoy = new Date();
-        let pct = ((hoy - inicio) / (fin - inicio)) * 100;
-        pct = Math.max(0, Math.min(100, Math.round(pct)));
-        const card = document.createElement('div');
-        card.className = 'term-card';
-        card.innerHTML =
-          '<div class="term-row"><span>Capital colocado</span><b>' + money(p.capital) + '</b></div>' +
-          '<div class="term-row"><span>Generado en este periodo</span><b>+' + money(p.generado) + '</b></div>' +
-          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
-          '<div class="term-foot">' + p.tasa_anual + '% anual · vence el ' + fin.getDate() + ' de ' + MESES[fin.getMonth()] + ' de ' + fin.getFullYear() + ' · se renueva automáticamente</div>';
-        wrap.appendChild(card);
-      });
-    }
+    wrap.innerHTML = (plazos || []).map(termCardHTML).join('');
     const form = document.createElement('div');
     form.className = 'term-card term-form';
     form.innerHTML =
@@ -526,21 +538,37 @@
     wrap.appendChild(form);
   }
 
-  async function crearPlazoFijo() {
-    clearError('errPlazo');
-    const monto = parseFloat($('newPlazoAmount').value);
-    if (!monto || monto <= 0) { setError('errPlazo', 'Ingresa un monto válido.'); return; }
-    if (monto > socioState.saldoDisponible) { setError('errPlazo', 'No tienes saldo suficiente disponible.'); return; }
+  function renderCoolcoin(plazos, tasaOrg) {
+    const wrap = $('coolcoinWrap');
+    wrap.innerHTML = (plazos || []).map(termCardHTML).join('');
+    const form = document.createElement('div');
+    form.className = 'term-card term-form';
+    form.innerHTML =
+      '<div class="term-row" style="margin-bottom:10px;"><span>Colocar más a CoolCoin</span><b>' + tasaOrg + '% anual</b></div>' +
+      '<input type="number" id="newCoolcoinAmount" placeholder="Monto a colocar" step="0.01">' +
+      '<div id="errCoolcoin" class="panel-error hidden" style="color:#E5484D;"></div>' +
+      '<button onclick="crearCoolcoin()">Colocar a CoolCoin</button>';
+    wrap.appendChild(form);
+  }
+
+  async function crearInversion(producto, inputId, errId) {
+    clearError(errId);
+    const monto = parseFloat($(inputId).value);
+    if (!monto || monto <= 0) { setError(errId, 'Ingresa un monto válido.'); return; }
+    if (monto > socioState.saldoDisponible) { setError(errId, 'No tienes saldo suficiente disponible.'); return; }
     try {
       await apiFetch('/crear_plazo_fijo.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ monto })
+        body: JSON.stringify({ monto, producto })
       });
       await loadSocioDashboard();
     } catch (err) {
-      setError('errPlazo', err.message || NET_MSG);
+      setError(errId, err.message || NET_MSG);
     }
   }
+
+  function crearPlazoFijo() { return crearInversion('plazo_fijo', 'newPlazoAmount', 'errPlazo'); }
+  function crearCoolcoin() { return crearInversion('coolcoin', 'newCoolcoinAmount', 'errCoolcoin'); }
 
   function renderLedger(movimientos) {
     const wrap = $('ledgerWrap');

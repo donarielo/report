@@ -29,7 +29,7 @@ $stmt->execute([$socioId]);
 $transacciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare(
-    "SELECT id, capital, tasa_anual, fecha_inicio, fecha_vencimiento, generado
+    "SELECT id, producto, capital, tasa_anual, fecha_inicio, fecha_vencimiento, generado
      FROM plazos_fijos WHERE socio_id = ? ORDER BY fecha_inicio DESC"
 );
 $stmt->execute([$socioId]);

@@ -100,7 +100,7 @@ nueva se da de alta **manualmente** (insertando su fila en `organizaciones` y co
 | `payphone_prepare.php` | `registro.html`, `sistema.html` | Prepara una transacción (`aporte_inicial` o `aporte`) |
 | `payphone_confirm.php` | PayPhone (URL de respuesta) | Confirma el pago server-to-server y acredita el saldo |
 | `solicitar_retiro.php` | `sistema.html` | El socio pide un retiro |
-| `crear_plazo_fijo.php` | `sistema.html` | El socio coloca saldo a plazo fijo |
+| `crear_plazo_fijo.php` | `sistema.html` | El socio coloca saldo a plazo fijo o a CoolCoin (según el campo `producto`) |
 | `admin_listar_socios.php` | `sistema.html` | Lista de socios + saldo + total en plazo fijo (para el admin) |
 | `admin_listar_retiros.php` | `sistema.html` | Solicitudes de retiro pendientes (para el admin) |
 | `admin_resolver_retiro.php` | `admin.html` | Aprobar / rechazar un retiro (deja registro en `transacciones`) |
@@ -245,6 +245,45 @@ CREATE TABLE credito_cuotas (
 - **Un socio no puede tener dos créditos a la vez** (ni dos solicitudes pendientes) — debe
   terminar de pagar el actual antes de solicitar otro. Es una regla de sentido común que agregué
   sin que me la pidieras explícitamente; dime si prefieres permitir créditos simultáneos.
+
+## 13. CoolCoin (segunda opción de inversión, misma mecánica del plazo fijo)
+
+CoolCoin **no es una criptomoneda ni un sistema de puntos** — es un producto de inversión real,
+idéntico en mecánica al plazo fijo: el socio coloca dinero real de su saldo disponible, ese
+capital queda bloqueado 1 año, se renueva solo, y genera una rentabilidad fija (5.5% anual por
+defecto) que se acredita a su saldo disponible al vencer — exactamente igual que ya sucede con
+el plazo fijo. La única diferencia es la tasa y que aparece en su propia sección del dashboard.
+
+Por eso, en vez de crear una tabla y un flujo paralelos, se reutiliza `plazos_fijos` /
+`crear_plazo_fijo.php` / `cron/acreditar_intereses.php` por completo, agregando solo una columna
+discriminadora `producto`. **El cron no necesita ningún cambio** — ya calcula el interés con la
+`tasa_anual` guardada en cada fila individual, sin importar de qué producto sea.
+
+### Migración de base de datos requerida
+
+Si tu base de datos ya está en producción, corre esto en phpMyAdmin **antes** de subir el código
+nuevo:
+
+```sql
+ALTER TABLE plazos_fijos
+  ADD COLUMN producto ENUM('plazo_fijo','coolcoin') NOT NULL DEFAULT 'plazo_fijo' AFTER socio_id;
+
+ALTER TABLE organizaciones
+  ADD COLUMN coolcoin_tasa_anual DECIMAL(5,2) DEFAULT 5.50 AFTER tasa_plazo_fijo;
+```
+
+### Cómo funciona
+
+- El socio elige, desde `sistema.html`, colocar su dinero a "plazo fijo" o a "CoolCoin" — son dos
+  formularios separados que llaman al mismo endpoint `crear_plazo_fijo.php` con
+  `producto: 'plazo_fijo'` o `producto: 'coolcoin'`.
+- Cada fila de `plazos_fijos` guarda su propia `tasa_anual` al momento de crearse (tomada de
+  `tasa_plazo_fijo` o `coolcoin_tasa_anual` de la organización, según el producto), así que si el
+  administrador cambia la tasa de CoolCoin después, no afecta las inversiones ya colocadas.
+- El panel del administrador (`admin.html`) ajusta la tasa de CoolCoin junto a la de plazo fijo,
+  en Configuración → "Reglas de ahorro", y muestra el total invertido en CoolCoin como estadística
+  separada del total en plazo fijo — nunca se suman entre sí para no confundir un producto con
+  otro.
 
 ## Qué falta todavía (para ser 100% honestos)
 
