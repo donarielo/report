@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>COOLKI — Tu caja de ahorro digital</title>
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
 </head>
 <body style="margin:0;">
 <style>
@@ -89,7 +90,7 @@
   <div class="demo-banner">Vista de demostración para clientes — así vería la página tu propio equipo o comunidad, no está publicada al público</div>
 
   <div class="wrap">
-    <div class="nav">
+    <div class="nav" data-section="nav" data-pinned="true">
       <div class="logo">
         <svg width="30" height="30" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
         <div class="logo-word">coolki</div>
@@ -97,7 +98,7 @@
       <button class="nav-cta">Abrir mi cuenta</button>
     </div>
 
-    <div class="hero">
+    <div class="hero" data-section="hero">
       <span class="org-pill">✦ Exclusivo para colaboradores de Tu Empresa</span>
       <h1>Ahorra sin darte cuenta, retira cuando quieras</h1>
       <p>Tu empresa ahora tiene su propia caja de ahorro digital. Aporta desde $5, deja crecer tu dinero al 5% anual, y retíralo cuando lo necesites.</p>
@@ -105,7 +106,7 @@
       <div class="hero-note">Toma menos de 2 minutos · disponible solo para el equipo de Tu Empresa</div>
     </div>
 
-    <div class="preview-wrap">
+    <div class="preview-wrap" data-section="preview">
       <div class="mini-card">
         <div class="mini-label">Saldo disponible</div>
         <div class="mini-balance">$119.50</div>
@@ -114,7 +115,7 @@
       </div>
     </div>
 
-    <div class="benefits">
+    <div class="benefits" data-section="benefits">
       <div class="benefit-grid">
         <div class="benefit-card"><div class="benefit-icon">＄</div><div class="benefit-title">Empieza con $5</div><div class="benefit-desc">Sin mínimos complicados. Abres tu cuenta y aportas lo que puedas, cuando puedas.</div></div>
         <div class="benefit-card"><div class="benefit-icon">%</div><div class="benefit-title">5% de rendimiento anual</div><div class="benefit-desc">Deja tu ahorro a plazo fijo y velo crecer, sin mover un dedo.</div></div>
@@ -122,31 +123,33 @@
       </div>
     </div>
 
-    <div class="trust-strip">
+    <div class="trust-strip" data-section="trust">
       <div class="trust-item"><div class="trust-num">86</div><div class="trust-label">Compañeros ya ahorrando</div></div>
       <div class="trust-item"><div class="trust-num">$9,240</div><div class="trust-label">Ahorrado en conjunto</div></div>
       <div class="trust-item"><div class="trust-num">100%</div><div class="trust-label">Tu dinero, tus reglas de retiro</div></div>
     </div>
 
-    <div class="faq">
+    <div class="faq" data-section="faq">
       <h2>Preguntas frecuentes</h2>
       <div class="faq-item"><div class="faq-q">¿Quién puede abrir una cuenta?</div><div class="faq-a">Solo el equipo de Tu Empresa — esta caja de ahorro es un beneficio exclusivo para colaboradores.</div></div>
       <div class="faq-item"><div class="faq-q">¿Dónde queda mi dinero?</div><div class="faq-a">En la cuenta de tu empresa, administrada por su propio equipo. COOLKI es solo la app que usas para verlo y moverlo.</div></div>
       <div class="faq-item"><div class="faq-q">¿Puedo retirar cuando quiera?</div><div class="faq-a">Sí, desde $10, solicitándolo desde la app. Tu empresa lo aprueba y te llega en 1–2 días hábiles.</div></div>
     </div>
 
-    <div class="final-cta">
+    <div class="final-cta" data-section="final-cta">
       <h2>Tu ahorro, a un clic de distancia</h2>
       <p>Únete a tus compañeros que ya están ahorrando con COOLKI.</p>
       <button class="btn-primary">Abrir mi cuenta gratis</button>
     </div>
 
-    <div class="legal-footnote">
+    <div class="legal-footnote" data-section="footer" data-pinned="true">
       Esta página es una vista de demostración para presentar el producto a organizaciones interesadas — no está publicada ni abierta al público.
       En una implementación real, esta caja de ahorro opera exclusivamente para los colaboradores o socios de la organización contratante, bajo su propia responsabilidad legal y su propia cuenta de cobro.
     </div>
   </div>
 </div>
+
+<script src="builder-runtime.js" data-pagina="landing-socios"></script>
 
 </body>
 </html>

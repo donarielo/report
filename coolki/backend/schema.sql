@@ -113,6 +113,24 @@ CREATE TABLE solicitudes_retiro (
   FOREIGN KEY (socio_id) REFERENCES socios(id)
 );
 
+CREATE TABLE paginas_config (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  organizacion_id INT NOT NULL,
+  pagina ENUM('index','landing-socios','landing-empresas') NOT NULL,
+  secciones JSON NULL,                 -- [{"key":"hero","visible":true}, ...] en el orden a mostrar
+  popup_activo TINYINT(1) DEFAULT 0,
+  popup_titulo VARCHAR(150) NULL,
+  popup_texto TEXT NULL,
+  popup_imagen_url VARCHAR(255) NULL,  -- por URL, no hay subida de archivos en esta app
+  popup_boton_texto VARCHAR(60) NULL,
+  popup_boton_url VARCHAR(255) NULL,
+  popup_fecha_inicio DATE NULL,
+  popup_fecha_fin DATE NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unico_por_org_pagina (organizacion_id, pagina),
+  FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+
 -- Organización de ejemplo para poder probar de inmediato.
 -- El admin de esta organización se crea aparte, ejecutando setup_admin.php una sola vez
 -- (así la contraseña queda correctamente encriptada, no puesta a mano en el SQL).

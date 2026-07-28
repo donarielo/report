@@ -285,6 +285,69 @@ ALTER TABLE organizaciones
   separada del total en plazo fijo — nunca se suman entre sí para no confundir un producto con
   otro.
 
+## 14. Constructor de páginas (page builder)
+
+Un panel dentro de `admin.html` para reordenar/ocultar secciones de las páginas públicas,
+elegir un color de marca (aplicado también a `sistema.html`/`admin.html`), y configurar un
+pop-up distinto por página — todo con vista previa en tiempo real antes de guardar.
+
+### Migración de base de datos requerida
+
+Si tu base de datos ya está en producción, corre esto en phpMyAdmin **antes** de subir el código
+nuevo:
+
+```sql
+CREATE TABLE paginas_config (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  organizacion_id INT NOT NULL,
+  pagina ENUM('index','landing-socios','landing-empresas') NOT NULL,
+  secciones JSON NULL,
+  popup_activo TINYINT(1) DEFAULT 0,
+  popup_titulo VARCHAR(150) NULL,
+  popup_texto TEXT NULL,
+  popup_imagen_url VARCHAR(255) NULL,
+  popup_boton_texto VARCHAR(60) NULL,
+  popup_boton_url VARCHAR(255) NULL,
+  popup_fecha_inicio DATE NULL,
+  popup_fecha_fin DATE NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unico_por_org_pagina (organizacion_id, pagina),
+  FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+```
+
+Ninguna organización necesita una fila de por sí: si no existe una fila para
+`(organizacion_id, pagina)`, se asume el orden por defecto (todas las secciones visibles, en el
+orden original de cada archivo) y el pop-up inactivo — así `coolki` sigue viéndose exactamente
+igual que hoy hasta que alguien use el builder.
+
+### Cómo funciona
+
+- **Páginas con builder completo** (secciones + pop-up + color): `index.html`,
+  `landing-socios.html`, `landing-empresas.html`.
+- **Páginas que solo reciben el color** (sin secciones ni pop-up): `sistema.html`, `admin.html`.
+- **`onboarding.html` queda fuera** — es el asistente interno de CDH SOFT para dar de alta
+  organizaciones nuevas, no una página de contenido para socios/visitantes.
+- El color de marca ya existía en `organizaciones.color_marca` (columna sin usar hasta ahora); el
+  builder lo aplica en tiempo real a las 5 páginas de arriba, incluyendo el logo SVG.
+- Un solo script compartido, `frontend/builder-runtime.js`, es lo que cada página incluye para
+  pintarse: consulta `obtener_config_publica.php` (endpoint público, sin login) y aplica color,
+  orden/visibilidad de secciones, y el pop-up si corresponde.
+- El pop-up de cada página se puede programar con fecha de inicio y fin; fuera de ese rango no se
+  muestra aunque esté marcado como activo. Las imágenes van por URL — esta app no tiene
+  mecanismo de subida de archivos.
+- En el panel del administrador, arrastrar secciones, cambiar el color o editar el pop-up
+  actualiza al instante una vista previa en un `<iframe>` (sin tocar la base de datos) — solo el
+  botón "Guardar cambios" persiste.
+
+### Limitaciones conocidas
+
+- **No hay historial de versiones** — guardar sobreescribe la configuración anterior de esa
+  página, sin deshacer.
+- **Sin subida de imágenes** para el pop-up, solo URL externa.
+- **`onboarding.html` no se beneficia de este color** — sigue con sus swatches fijos, ya que es
+  la herramienta para crear organizaciones nuevas (antes de que exista un color que aplicar).
+
 ## Qué falta todavía (para ser 100% honestos)
 
 - **Pago real del retiro al socio**: aprobar un retiro solo descuenta el saldo interno; el envío

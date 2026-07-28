@@ -87,7 +87,7 @@
 
 <div class="coolki-b2c">
   <div class="wrap">
-    <div class="nav">
+    <div class="nav" data-section="nav" data-pinned="true">
       <div class="logo">
         <svg width="30" height="30" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
         <div class="logo-word">coolki</div>
@@ -98,7 +98,7 @@
       </div>
     </div>
 
-    <div class="hero">
+    <div class="hero" data-section="hero">
       <span class="org-pill">✦ Tu caja de ahorro digital</span>
       <h1>Ahorra sin darte cuenta, retira cuando quieras</h1>
       <p>Aporta desde $5, deja crecer tu dinero a plazo fijo, y retíralo cuando lo necesites.</p>
@@ -106,7 +106,7 @@
       <div class="hero-note">Toma menos de 2 minutos</div>
     </div>
 
-    <div class="preview-wrap">
+    <div class="preview-wrap" data-section="preview">
       <div class="mini-card">
         <div class="mini-label">Saldo disponible</div>
         <div class="mini-balance">$119.50</div>
@@ -115,7 +115,7 @@
       </div>
     </div>
 
-    <div class="benefits">
+    <div class="benefits" data-section="benefits">
       <div class="benefit-grid">
         <div class="benefit-card"><div class="benefit-icon">＄</div><div class="benefit-title">Empieza con $5</div><div class="benefit-desc">Sin mínimos complicados. Abres tu cuenta y aportas lo que puedas, cuando puedas.</div></div>
         <div class="benefit-card"><div class="benefit-icon">%</div><div class="benefit-title">5% de rendimiento anual</div><div class="benefit-desc">Deja tu ahorro a plazo fijo y velo crecer, sin mover un dedo.</div></div>
@@ -123,26 +123,26 @@
       </div>
     </div>
 
-    <div class="trust-strip">
+    <div class="trust-strip" data-section="trust">
       <div class="trust-item"><div class="trust-num">$5</div><div class="trust-label">Aporte inicial para activar tu cuenta</div></div>
       <div class="trust-item"><div class="trust-num">5%</div><div class="trust-label">Rendimiento anual a plazo fijo</div></div>
       <div class="trust-item"><div class="trust-num">$10</div><div class="trust-label">Monto mínimo de retiro</div></div>
     </div>
 
-    <div class="faq">
+    <div class="faq" data-section="faq">
       <h2>Preguntas frecuentes</h2>
       <div class="faq-item"><div class="faq-q">¿Quién puede abrir una cuenta?</div><div class="faq-a">Cualquier persona puede abrir su cuenta de ahorro en COOLKI en un par de minutos.</div></div>
       <div class="faq-item"><div class="faq-q">¿Dónde queda mi dinero?</div><div class="faq-a">Tu dinero llega directo a la cuenta de COOLKI en PayPhone. La app es la herramienta que usas para verlo y moverlo.</div></div>
       <div class="faq-item"><div class="faq-q">¿Puedo retirar cuando quiera?</div><div class="faq-a">Sí, desde $10, solicitándolo directamente desde la app. Se procesa en 1–2 días hábiles.</div></div>
     </div>
 
-    <div class="final-cta">
+    <div class="final-cta" data-section="final-cta">
       <h2>Tu ahorro, a un clic de distancia</h2>
       <p>Abre tu cuenta y empieza a ahorrar con COOLKI.</p>
       <a class="btn-primary" id="finalCta" href="registro">Abrir mi cuenta gratis</a>
     </div>
 
-    <div class="legal-footnote">
+    <div class="legal-footnote" data-section="footer" data-pinned="true">
       COOLKI es un servicio de ahorro digital. Los aportes y retiros se procesan a través de PayPhone.
     </div>
   </div>
@@ -164,6 +164,7 @@
     document.getElementById('navLogin').href = 'sistema' + qs;
   }
 </script>
+<script src="builder-runtime.js" data-pagina="index"></script>
 
 </body>
 </html>

@@ -135,7 +135,23 @@ table.socios tbody tr:hover { background: var(--bg); }
 .settings-msg.ok { color: var(--mint); }
 .settings-msg.err { color: var(--coral); }
 
-@media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } }
+.tabs { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 18px; width: fit-content; }
+.tab-btn { border: none; background: transparent; padding: 8px 16px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.tab-btn.active { background: var(--brand); color: #fff; }
+
+.builder-color-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.builder-color-row input[type="color"] { width: 46px; height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 2px; background: none; cursor: pointer; }
+
+.builder-grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; align-items: start; }
+.builder-section-list { list-style: none; margin: 0 0 18px; padding: 0; }
+.builder-section-item { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: grab; }
+.builder-section-item.dragging { opacity: 0.4; }
+.builder-drag-handle { color: var(--muted); font-size: 14px; }
+.builder-section-name { flex: 1; font-size: 13.5px; font-weight: 600; }
+.builder-iframe-wrap { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; height: 660px; }
+.builder-iframe-wrap iframe { width: 100%; height: 100%; border: none; }
+
+@media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } .builder-grid { grid-template-columns: 1fr; } }
 @media (max-width: 1100px) and (min-width: 801px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
 </style>
 
@@ -259,6 +275,52 @@ table.socios tbody tr:hover { background: var(--bg); }
           <div id="mantMsg" class="settings-msg hidden"></div>
         </div>
       </div>
+
+      <div class="admin-card" style="margin-top: 20px;">
+        <h3>Diseño del sitio</h3>
+        <div class="mant-desc">Elige el color de marca, y para cada página pública reordena o
+          esconde secciones y configura un pop-up. Los cambios se ven al instante en la vista
+          previa de la derecha — no se guardan hasta que presiones "Guardar cambios".</div>
+
+        <div class="builder-color-row">
+          <input type="color" id="cfgColorMarca" oninput="onBuilderChange()">
+          <label class="settings-label" style="margin:0;">Color de marca (aplica también a este panel y a la cuenta del socio)</label>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" id="tabBtnIndex" onclick="switchBuilderTab('index')">Inicio</button>
+          <button class="tab-btn" id="tabBtnLandingSocios" onclick="switchBuilderTab('landing-socios')">Landing socios</button>
+          <button class="tab-btn" id="tabBtnLandingEmpresas" onclick="switchBuilderTab('landing-empresas')">Landing empresas</button>
+        </div>
+
+        <div class="builder-grid">
+          <div>
+            <div class="settings-group-title" style="margin-top:0;">Secciones (arrastra para reordenar)</div>
+            <ul class="builder-section-list" id="builderSectionList"></ul>
+
+            <div class="settings-group-title">Pop-up de esta página</div>
+            <div class="settings-row">
+              <label class="settings-label"><input type="checkbox" id="cfgPopupActivo" onchange="onBuilderChange()"> Activo</label>
+            </div>
+            <div class="settings-row"><label class="settings-label">Título</label><input class="settings-input" id="cfgPopupTitulo" oninput="onBuilderChange()"></div>
+            <div class="settings-row"><label class="settings-label">Texto</label><textarea class="settings-input" id="cfgPopupTexto" rows="3" oninput="onBuilderChange()"></textarea></div>
+            <div class="settings-row"><label class="settings-label">URL de imagen (opcional)</label><input class="settings-input" id="cfgPopupImagen" oninput="onBuilderChange()"></div>
+            <div class="settings-row"><label class="settings-label">Texto del botón</label><input class="settings-input" id="cfgPopupBotonTexto" oninput="onBuilderChange()"></div>
+            <div class="settings-row"><label class="settings-label">URL del botón</label><input class="settings-input" id="cfgPopupBotonUrl" oninput="onBuilderChange()"></div>
+            <div class="settings-row" style="display:flex; gap:10px;">
+              <div style="flex:1;"><label class="settings-label">Desde</label><input class="settings-input" type="date" id="cfgPopupFechaInicio" onchange="onBuilderChange()"></div>
+              <div style="flex:1;"><label class="settings-label">Hasta</label><input class="settings-input" type="date" id="cfgPopupFechaFin" onchange="onBuilderChange()"></div>
+            </div>
+
+            <button class="save-btn" onclick="guardarPaginaConfig()">Guardar cambios</button>
+            <div id="builderMsg" class="settings-msg hidden"></div>
+          </div>
+
+          <div class="builder-iframe-wrap">
+            <iframe id="builderPreviewFrame"></iframe>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -354,9 +416,11 @@ table.socios tbody tr:hover { background: var(--bg); }
     await loadAdminDashboard();
     await loadTransacciones();
     await loadCreditos();
+    await loadBuilderConfig();
   }
 
   function fillSettingsForm() {
+    $('cfgColorMarca').value = adminOrgSettings.color_marca || '#2454FF';
     $('cfgTasa').value = adminOrgSettings.tasa_plazo_fijo != null ? adminOrgSettings.tasa_plazo_fijo : '';
     $('cfgCoolcoinTasa').value = adminOrgSettings.coolcoin_tasa_anual != null ? adminOrgSettings.coolcoin_tasa_anual : '';
     $('cfgAporte').value = adminOrgSettings.aporte_inicial != null ? adminOrgSettings.aporte_inicial : '';
@@ -483,6 +547,177 @@ table.socios tbody tr:hover { background: var(--bg); }
       });
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+    }
+  }
+
+  // ============ Diseño del sitio (page builder) ============
+  const SECTION_LABELS = {
+    hero: 'Hero (encabezado principal)', preview: 'Vista previa de cuenta', benefits: 'Beneficios',
+    trust: 'Cifras de confianza', faq: 'Preguntas frecuentes', steps: 'Cómo funciona',
+    orgs: 'Para organizaciones', 'final-cta': 'Llamado final a la acción',
+  };
+  const BUILDER_PAGINAS = ['index', 'landing-socios', 'landing-empresas'];
+  const TAB_BTN_IDS = { 'index': 'tabBtnIndex', 'landing-socios': 'tabBtnLandingSocios', 'landing-empresas': 'tabBtnLandingEmpresas' };
+
+  let paginasConfigCache = {};
+  let builderPaginaActual = 'index';
+  let builderDebounce = null;
+
+  function mezclarConBlanco(hex, factor) {
+    factor = factor == null ? 0.90 : factor;
+    hex = String(hex || '').replace('#', '');
+    if (!/^[0-9A-Fa-f]{6}$/.test(hex)) hex = '2454FF';
+    const canal = (i) => parseInt(hex.substr(i, 2), 16);
+    const mezclar = (c) => Math.round(c + (255 - c) * factor).toString(16).padStart(2, '0').toUpperCase();
+    return '#' + mezclar(canal(0)) + mezclar(canal(2)) + mezclar(canal(4));
+  }
+
+  async function loadBuilderConfig() {
+    try {
+      const data = await apiFetch('/admin_obtener_paginas_config.php', { credentials: 'include' });
+      paginasConfigCache = data.paginas || {};
+    } catch (err) {
+      paginasConfigCache = {};
+    }
+    switchBuilderTab('index');
+  }
+
+  function switchBuilderTab(pagina) {
+    builderPaginaActual = pagina;
+    BUILDER_PAGINAS.forEach(p => $(TAB_BTN_IDS[p]).classList.toggle('active', p === pagina));
+    renderBuilderSectionList(pagina);
+    renderBuilderPopupForm(pagina);
+    loadBuilderIframe(pagina);
+    $('builderMsg').classList.add('hidden');
+  }
+
+  function getDragAfterElement(container, y) {
+    const items = [...container.querySelectorAll('.builder-section-item:not(.dragging)')];
+    return items.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: -Infinity, element: null }).element;
+  }
+
+  function renderBuilderSectionList(pagina) {
+    const wrap = $('builderSectionList');
+    wrap.innerHTML = '';
+    const cfg = paginasConfigCache[pagina] || { secciones: [] };
+    (cfg.secciones || []).forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'builder-section-item';
+      li.draggable = true;
+      li.dataset.key = item.key;
+      li.innerHTML =
+        '<span class="builder-drag-handle">⠿</span>' +
+        '<span class="builder-section-name">' + escapeHtml(SECTION_LABELS[item.key] || item.key) + '</span>' +
+        '<label style="font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:5px;">' +
+        '<input type="checkbox" ' + (item.visible !== false ? 'checked' : '') + ' onchange="onBuilderChange()"> Visible</label>';
+      li.addEventListener('dragstart', () => li.classList.add('dragging'));
+      li.addEventListener('dragend', () => { li.classList.remove('dragging'); onBuilderChange(); });
+      wrap.appendChild(li);
+    });
+    wrap.ondragover = (e) => {
+      e.preventDefault();
+      const dragging = wrap.querySelector('.dragging');
+      if (!dragging) return;
+      const after = getDragAfterElement(wrap, e.clientY);
+      if (after == null) wrap.appendChild(dragging); else wrap.insertBefore(dragging, after);
+    };
+  }
+
+  function renderBuilderPopupForm(pagina) {
+    const cfg = paginasConfigCache[pagina] || {};
+    $('cfgPopupActivo').checked = !!cfg.popup_activo;
+    $('cfgPopupTitulo').value = cfg.popup_titulo || '';
+    $('cfgPopupTexto').value = cfg.popup_texto || '';
+    $('cfgPopupImagen').value = cfg.popup_imagen_url || '';
+    $('cfgPopupBotonTexto').value = cfg.popup_boton_texto || '';
+    $('cfgPopupBotonUrl').value = cfg.popup_boton_url || '';
+    $('cfgPopupFechaInicio').value = cfg.popup_fecha_inicio || '';
+    $('cfgPopupFechaFin').value = cfg.popup_fecha_fin || '';
+  }
+
+  function loadBuilderIframe(pagina) {
+    $('builderPreviewFrame').src = '/' + pagina + '?org=' + encodeURIComponent(ORG_SLUG) + '&preview=1';
+  }
+
+  function collectBuilderSecciones() {
+    return [...$('builderSectionList').querySelectorAll('.builder-section-item')].map(li => ({
+      key: li.dataset.key,
+      visible: li.querySelector('input[type="checkbox"]').checked,
+    }));
+  }
+
+  function collectBuilderPopup() {
+    return {
+      activo: $('cfgPopupActivo').checked,
+      titulo: $('cfgPopupTitulo').value.trim() || null,
+      texto: $('cfgPopupTexto').value.trim() || null,
+      imagen_url: $('cfgPopupImagen').value.trim() || null,
+      boton_texto: $('cfgPopupBotonTexto').value.trim() || null,
+      boton_url: $('cfgPopupBotonUrl').value.trim() || null,
+    };
+  }
+
+  function onBuilderChange() {
+    clearTimeout(builderDebounce);
+    builderDebounce = setTimeout(postPreviewUpdate, 150);
+  }
+
+  function postPreviewUpdate() {
+    const frame = $('builderPreviewFrame');
+    if (!frame.contentWindow) return;
+    const color = $('cfgColorMarca').value;
+    const payload = {
+      organizacion: { color_marca: color, brand_soft: mezclarConBlanco(color) },
+      secciones: collectBuilderSecciones(),
+      popup: collectBuilderPopup(),
+    };
+    frame.contentWindow.postMessage({ source: 'coolki-builder', type: 'preview-update', payload }, location.origin);
+  }
+
+  async function guardarPaginaConfig() {
+    const msg = $('builderMsg');
+    msg.classList.add('hidden');
+    const color = $('cfgColorMarca').value;
+    try {
+      if (color !== (adminOrgSettings.color_marca || '#2454FF')) {
+        await apiFetch('/admin_actualizar_color_marca.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ color_marca: color })
+        });
+        adminOrgSettings.color_marca = color;
+      }
+      const popup = collectBuilderPopup();
+      const fechaInicio = $('cfgPopupFechaInicio').value || null;
+      const fechaFin = $('cfgPopupFechaFin').value || null;
+      const secciones = collectBuilderSecciones();
+      await apiFetch('/admin_guardar_pagina_config.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          pagina: builderPaginaActual, secciones,
+          popup_activo: popup.activo, popup_titulo: popup.titulo, popup_texto: popup.texto,
+          popup_imagen_url: popup.imagen_url, popup_boton_texto: popup.boton_texto, popup_boton_url: popup.boton_url,
+          popup_fecha_inicio: fechaInicio, popup_fecha_fin: fechaFin,
+        })
+      });
+      paginasConfigCache[builderPaginaActual] = {
+        secciones,
+        popup_activo: popup.activo, popup_titulo: popup.titulo, popup_texto: popup.texto,
+        popup_imagen_url: popup.imagen_url, popup_boton_texto: popup.boton_texto, popup_boton_url: popup.boton_url,
+        popup_fecha_inicio: fechaInicio, popup_fecha_fin: fechaFin,
+      };
+      msg.textContent = 'Cambios guardados.';
+      msg.className = 'settings-msg ok';
+      loadBuilderIframe(builderPaginaActual);
     } catch (err) {
       msg.textContent = err.message || NET_MSG;
       msg.className = 'settings-msg err';
@@ -709,6 +944,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     } catch (e) { /* no hay sesión: se queda en el gate */ }
   })();
 </script>
+<script src="builder-runtime.js"></script>
 
 </body>
 </html>

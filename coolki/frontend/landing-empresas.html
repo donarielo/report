@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>COOLKI — Software para cajas de ahorro digitales</title>
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
 </head>
 <body style="margin:0;">
 <style>
@@ -84,7 +85,7 @@
 
 <div class="coolki-land">
   <div class="wrap">
-    <div class="nav">
+    <div class="nav" data-section="nav" data-pinned="true">
       <div class="logo">
         <svg width="30" height="30" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
         <div class="logo-word">coolki</div>
@@ -92,7 +93,7 @@
       <button class="nav-cta">Agendar demo</button>
     </div>
 
-    <div class="hero">
+    <div class="hero" data-section="hero">
       <div class="hero-eyebrow">Software para cajas de ahorro comunitarias y empresariales</div>
       <h1>La caja de ahorro de tu organización, ahora en una app</h1>
       <p>COOLKI digitaliza la caja de ahorro que ya tiene tu empresa, cooperativa o comunidad: aportes, plazo fijo y retiros — sin que el dinero salga nunca de tu propia cuenta.</p>
@@ -102,7 +103,7 @@
       </div>
     </div>
 
-    <div class="preview-wrap">
+    <div class="preview-wrap" data-section="preview">
       <div class="mini-card">
         <div class="mini-label">Saldo disponible</div>
         <div class="mini-balance">$119.50</div>
@@ -111,7 +112,7 @@
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-section="steps">
       <div class="section-head"><div class="section-eyebrow">Cómo funciona para un socio</div><h2>Tres pasos, tan simples como llevar la cuenta a mano</h2></div>
       <div class="steps">
         <div class="step-card"><div class="step-num">01</div><div class="step-title">Aporta desde $5</div><div class="step-desc">El socio abre su cuenta dentro de la caja de su organización y aporta cuando quiera, pagando con PayPhone directo a la cuenta de la caja.</div></div>
@@ -120,7 +121,7 @@
       </div>
     </div>
 
-    <div class="section" style="padding-top: 0;">
+    <div class="section" style="padding-top: 0;" data-section="orgs">
       <div class="orgs">
         <h2>Para empresas, cooperativas y comunidades</h2>
         <p class="lead">COOLKI es el software — tu organización sigue siendo la dueña y responsable de su caja de ahorro. Nosotros solo la digitalizamos.</p>
@@ -137,18 +138,20 @@
       </div>
     </div>
 
-    <div class="final-cta">
+    <div class="final-cta" data-section="final-cta">
       <h2>¿Listos para digitalizar la caja de tu organización?</h2>
       <p>Te mostramos la vista del socio y el panel de administrador con datos de ejemplo.</p>
       <button class="btn-primary">Agendar una demo</button>
     </div>
 
-    <div class="legal-footnote">
+    <div class="legal-footnote" data-section="footer" data-pinned="true">
       COOLKI es una marca de demostración creada para presentar este software. COOLKI no es una entidad financiera ni una caja de ahorro real:
       es la plataforma tecnológica que cada organización cliente usa para administrar su propia caja, bajo su propia responsabilidad legal y su propia cuenta de cobro.
     </div>
   </div>
 </div>
+
+<script src="builder-runtime.js" data-pagina="landing-empresas"></script>
 
 </body>
 </html>

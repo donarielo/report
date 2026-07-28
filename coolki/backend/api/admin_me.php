@@ -1,6 +1,7 @@
 <?php
 // Restaura la sesión del administrador al recargar la página (sin pedir login de nuevo).
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/color.php';
 $admin = requireAdminAuth();
 
 $pdo = getDB();
@@ -18,6 +19,8 @@ jsonResponse([
     'organizacion' => [
         'nombre' => $org['nombre'],
         'slug' => $org['slug'],
+        'color_marca' => $org['color_marca'],
+        'brand_soft' => mezclarConBlanco($org['color_marca']),
         'aporte_inicial' => $org['aporte_inicial'],
         'retiro_minimo' => $org['retiro_minimo'],
         'tasa_plazo_fijo' => $org['tasa_plazo_fijo'],
