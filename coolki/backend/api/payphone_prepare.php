@@ -74,11 +74,11 @@ if (!$socio['payphone_token']) {
     jsonResponse(['error' => 'Esta caja aún no ha conectado su cuenta de PayPhone.'], 400);
 }
 
-// Costo de transacción: SOLO se le suma al aporte recurrente ('aporte'), nunca al aporte
-// inicial (ese es un monto fijo operativo, no un ahorro). El socio paga monto + comisión + IVA
-// en PayPhone, pero se le acredita el monto COMPLETO que quiso ahorrar — la comisión y el IVA
-// no salen de sus ahorros.
-if ($tipo === 'aporte') {
+// Costo de transacción: se cobra encima en cualquier pago que pase por PayPhone (aporte,
+// aporte inicial, y membresía Premium) — el socio paga monto + comisión + IVA en PayPhone,
+// pero se acredita/activa el monto COMPLETO sin que la comisión ni el IVA salgan de su
+// ahorro o le resten al monto de la membresía. 'pago_credito' no cobra este recargo.
+if (in_array($tipo, ['aporte', 'aporte_inicial', 'membresia_premium'], true)) {
     $comisionPct = floatval($socio['comision_deposito_pct']);
     $ivaPct = floatval($socio['iva_pct']);
     $comision = round($monto * $comisionPct / 100, 2);

@@ -119,6 +119,7 @@
         <div class="deposit-hero-amount" id="hero-amount">$5.00</div>
         <span class="deposit-hero-tag">Se congela al activar tu cuenta</span>
       </div>
+      <div id="fee-breakdown" class="defer-note" style="margin:10px 0 0;"></div>
       <div id="pp-status" class="defer-note" style="margin:0 0 14px;">Cargando el pago seguro de PayPhone…</div>
       <div id="pp-button"></div>
       <div id="err-aporte" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:12px 0 0;text-align:center;"></div>
@@ -269,6 +270,7 @@
     $('pp-status').textContent = 'Cargando el pago seguro de PayPhone…';
     $('pp-status').classList.remove('hidden');
     $('pp-button').innerHTML = '';
+    $('fee-breakdown').textContent = '';
 
     try {
       const data = await apiFetch('/payphone_prepare.php', {
@@ -296,6 +298,14 @@
       $('pp-status').classList.add('hidden');
       setError('err-aporte', 'No se pudo cargar el componente de pago de PayPhone. Recarga la página.');
       return;
+    }
+
+    const comision = parseFloat(data.comision || 0);
+    const iva = parseFloat(data.iva || 0);
+    if (comision > 0 || iva > 0) {
+      $('fee-breakdown').textContent =
+        'Tu cuenta se activa con ' + money(data.montoNeto) + ' + comisión ' + money(comision) + ' + IVA ' + money(iva) +
+        ' = pagas ' + money(data.montoCobrado) + ' en PayPhone.';
     }
 
     // A dónde vuelve el navegador tras pagar. Volvemos a ESTA misma página (no a

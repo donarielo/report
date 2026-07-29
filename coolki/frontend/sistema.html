@@ -329,6 +329,7 @@
           <div class="term-foot" style="margin-bottom: 14px;">Para solicitar un microcrédito, primero debes actualizar tu cuenta a Cliente Premium (pago único, no reembolsable).</div>
           <button class="profile-save-btn" onclick="pagarPremiumConSaldo()">Pagar con mi saldo disponible</button>
           <button class="payphone-btn" style="margin-top:10px;" onclick="pagarPremiumConPayphone()"><span class="payphone-mark">P</span> Pagar con PayPhone</button>
+          <div id="premiumFeeBreakdown" class="term-foot" style="margin-top:8px;"></div>
           <div id="pp-button-premium" style="margin-top:10px;"></div>
           <div id="errPremium" class="profile-msg err hidden"></div>
         </div>
@@ -878,6 +879,11 @@
       });
       if (!data.token) { setError('errPremium', 'Esta caja aún no tiene configurado su pago con PayPhone.'); return; }
       if (typeof PPaymentButtonBox === 'undefined') { setError('errPremium', 'No se pudo cargar el componente de pago. Recarga la página.'); return; }
+      const comision = parseFloat(data.comision || 0);
+      const iva = parseFloat(data.iva || 0);
+      $('premiumFeeBreakdown').textContent = (comision > 0 || iva > 0)
+        ? 'Membresía ' + money(data.montoNeto) + ' + comisión ' + money(comision) + ' + IVA ' + money(iva) + ' = pagas ' + money(data.montoCobrado) + ' en PayPhone.'
+        : '';
       const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
       const ppConfig = {
         token: data.token, clientTransactionId: data.clientTransactionId,
