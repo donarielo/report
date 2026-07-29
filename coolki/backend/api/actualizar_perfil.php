@@ -12,6 +12,16 @@ $celular = trim($in['celular'] ?? '');
 $passwordActual = $in['password_actual'] ?? '';
 $passwordNueva = $in['password_nueva'] ?? '';
 
+// Datos adicionales de perfil: opcionales aquí (edición posterior). El primer llenado
+// obligatorio ocurre en completar_perfil.php, que sí exige todos estos campos.
+$ciudad = trim($in['ciudad'] ?? '') ?: null;
+$provincia = trim($in['provincia'] ?? '') ?: null;
+$direccion = trim($in['direccion'] ?? '') ?: null;
+$tipoEmpleo = in_array($in['tipo_empleo'] ?? '', ['dependiente', 'independiente'], true) ? $in['tipo_empleo'] : null;
+$ingresosMensuales = (isset($in['ingresos_mensuales']) && $in['ingresos_mensuales'] !== '') ? floatval($in['ingresos_mensuales']) : null;
+$estadoCivilIn = $in['estado_civil'] ?? '';
+$estadoCivil = in_array($estadoCivilIn, ['soltero', 'casado', 'divorciado', 'viudo', 'union_libre'], true) ? $estadoCivilIn : null;
+
 if (!$nombre || !$cedula || !$email) {
     jsonResponse(['error' => 'Nombre, cédula y correo son obligatorios.'], 400);
 }
@@ -30,7 +40,7 @@ if (strcasecmp($email, $socio['email']) !== 0) {
 }
 
 $setPassword = '';
-$params = [$nombre, $cedula, $email, $celular];
+$params = [$nombre, $cedula, $email, $celular, $ciudad, $provincia, $direccion, $tipoEmpleo, $ingresosMensuales, $estadoCivil];
 
 if ($passwordNueva !== '') {
     if (strlen($passwordNueva) < 8) {
@@ -45,7 +55,9 @@ if ($passwordNueva !== '') {
 $params[] = $socioId;
 
 $stmt = $pdo->prepare(
-    "UPDATE socios SET nombre = ?, cedula = ?, email = ?, celular = ?" . $setPassword . " WHERE id = ?"
+    "UPDATE socios SET nombre = ?, cedula = ?, email = ?, celular = ?,
+            ciudad = ?, provincia = ?, direccion = ?, tipo_empleo = ?, ingresos_mensuales = ?, estado_civil = ?"
+    . $setPassword . " WHERE id = ?"
 );
 $stmt->execute($params);
 

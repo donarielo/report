@@ -33,6 +33,7 @@ jsonResponse([
         'credito_limite_maximo' => $org['credito_limite_maximo'],
         'credito_plazo_min_meses' => $org['credito_plazo_min_meses'],
         'credito_plazo_max_meses' => $org['credito_plazo_max_meses'],
+        'membresia_premium_costo' => $org['membresia_premium_costo'],
         'aprobacion_retiros' => $org['aprobacion_retiros'],
         'payphone_store_id' => $org['payphone_store_id'],
         'payphone_conectado' => !empty($org['payphone_token']),

@@ -230,6 +230,7 @@ table.socios tbody tr:hover { background: var(--bg); }
           <div class="settings-row"><label class="settings-label">IVA sobre la comisión (%)</label><input class="settings-input" id="cfgIva" /></div>
 
           <div class="settings-group-title">Reglas de crédito</div>
+          <div class="settings-row"><label class="settings-label">Costo de membresía Premium (requisito para pedir crédito)</label><input class="settings-input" id="cfgMembresiaCosto" /></div>
           <div class="settings-row"><label class="settings-label">Tasa efectiva anual (%)</label><input class="settings-input" id="cfgCreditoTasa" /></div>
           <div class="settings-row"><label class="settings-label">Cupo sugerido inicial</label><input class="settings-input" id="cfgCreditoBase" /></div>
           <div class="settings-row"><label class="settings-label">Incremento por crédito pagado a tiempo</label><input class="settings-input" id="cfgCreditoIncremento" /></div>
@@ -427,6 +428,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
     $('cfgComision').value = adminOrgSettings.comision_deposito_pct != null ? adminOrgSettings.comision_deposito_pct : '';
     $('cfgIva').value = adminOrgSettings.iva_pct != null ? adminOrgSettings.iva_pct : '';
+    $('cfgMembresiaCosto').value = adminOrgSettings.membresia_premium_costo != null ? adminOrgSettings.membresia_premium_costo : '';
     $('cfgCreditoTasa').value = adminOrgSettings.credito_tasa_anual != null ? adminOrgSettings.credito_tasa_anual : '';
     $('cfgCreditoBase').value = adminOrgSettings.credito_limite_base != null ? adminOrgSettings.credito_limite_base : '';
     $('cfgCreditoIncremento').value = adminOrgSettings.credito_incremento_por_pago != null ? adminOrgSettings.credito_incremento_por_pago : '';
@@ -516,7 +518,8 @@ table.socios tbody tr:hover { background: var(--bg); }
     const creditoMax = parseFloat($('cfgCreditoMax').value);
     const creditoPlazoMin = parseInt($('cfgCreditoPlazoMin').value);
     const creditoPlazoMax = parseInt($('cfgCreditoPlazoMax').value);
-    const valores = [tasa, coolcoinTasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax];
+    const membresiaCosto = parseFloat($('cfgMembresiaCosto').value);
+    const valores = [tasa, coolcoinTasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax, membresiaCosto];
     if (valores.some(v => isNaN(v) || v < 0)) {
       msg.textContent = 'Revisa que todos los valores sean números válidos.';
       msg.className = 'settings-msg err';
@@ -536,6 +539,7 @@ table.socios tbody tr:hover { background: var(--bg); }
           credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
           credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
           credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
+          membresia_premium_costo: membresiaCosto,
         })
       });
       Object.assign(adminOrgSettings, {
@@ -544,6 +548,7 @@ table.socios tbody tr:hover { background: var(--bg); }
         credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
         credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
         credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
+        membresia_premium_costo: membresiaCosto,
       });
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';
@@ -837,15 +842,22 @@ table.socios tbody tr:hover { background: var(--bg); }
     $('modalOverlay').classList.remove('show');
   }
 
+  const ESTADO_CIVIL_LABELS = { soltero: 'Soltero/a', casado: 'Casado/a', divorciado: 'Divorciado/a', viudo: 'Viudo/a', union_libre: 'Unión libre' };
+  const TIPO_EMPLEO_LABELS = { dependiente: 'Dependiente', independiente: 'Independiente' };
+
   function renderSocioModal(data) {
     const s = data.socio;
     const pill = s.estado === 'activo'
       ? '<span class="status-pill">Activo</span>'
       : '<span class="status-pill alert">Pago pendiente</span>';
+    const nivelPill = s.nivel === 'premium'
+      ? '<span class="status-pill">Cliente Premium</span>'
+      : '<span class="status-pill alert">Cliente Normal</span>';
 
     let html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;padding-right:24px;">' +
       '<div><div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:19px;">' + escapeHtml(s.nombre) + '</div>' +
-      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">Socio desde ' + formatDate(s.created_at) + '</div></div>' + pill +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">Socio desde ' + formatDate(s.created_at) + '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' + pill + nivelPill + '</div>' +
     '</div>';
 
     html += '<div class="modal-info-grid">' +
@@ -854,6 +866,12 @@ table.socios tbody tr:hover { background: var(--bg); }
       '<div><div class="modal-info-label">Celular</div><div>' + escapeHtml(s.celular || '—') + '</div></div>' +
       '<div><div class="modal-info-label">Saldo disponible</div><div>' + money(s.saldo_disponible) + '</div></div>' +
       '<div><div class="modal-info-label">Congelado (aporte inicial)</div><div>' + money(s.saldo_congelado) + '</div></div>' +
+      '<div><div class="modal-info-label">Ciudad</div><div>' + escapeHtml(s.ciudad || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Provincia</div><div>' + escapeHtml(s.provincia || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Dirección</div><div>' + escapeHtml(s.direccion || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Tipo de empleo</div><div>' + (TIPO_EMPLEO_LABELS[s.tipo_empleo] || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Ingresos mensuales</div><div>' + (s.ingresos_mensuales ? money(s.ingresos_mensuales) : '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Estado civil</div><div>' + (ESTADO_CIVIL_LABELS[s.estado_civil] || '—') + '</div></div>' +
     '</div>';
 
     const plazosFijos = (data.plazos_fijos || []).filter(p => p.producto !== 'coolcoin');

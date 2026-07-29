@@ -19,7 +19,7 @@ $socioId = requireSocioAuth();
 
 $in = jsonInput();
 $monto = floatval($in['monto'] ?? 0);
-$tipo = $in['tipo'] ?? 'aporte'; // 'aporte_inicial', 'aporte' o 'pago_credito'
+$tipo = $in['tipo'] ?? 'aporte'; // 'aporte_inicial', 'aporte', 'pago_credito' o 'membresia_premium'
 $cuotaId = intval($in['cuota_id'] ?? 0);
 
 $pdo = getDB();
@@ -42,6 +42,21 @@ if ($tipo === 'pago_credito') {
         jsonResponse(['error' => 'Cuota no encontrada o ya pagada.'], 404);
     }
     $monto = floatval($cuota['monto_cuota']);
+}
+
+// Para la membresía Premium, el monto SIEMPRE sale de organizaciones.membresia_premium_costo
+// (nunca del cliente) — mismo principio que 'pago_credito' de arriba.
+if ($tipo === 'membresia_premium') {
+    $stmt = $pdo->prepare(
+        "SELECT o.membresia_premium_costo, s.nivel FROM socios s
+         JOIN organizaciones o ON o.id = s.organizacion_id WHERE s.id = ?"
+    );
+    $stmt->execute([$socioId]);
+    $membresiaInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($membresiaInfo['nivel'] === 'premium') {
+        jsonResponse(['error' => 'Ya eres Cliente Premium.'], 400);
+    }
+    $monto = floatval($membresiaInfo['membresia_premium_costo']);
 }
 
 if ($monto <= 0) {

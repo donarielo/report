@@ -113,6 +113,10 @@ nueva se da de alta **manualmente** (insertando su fila en `organizaciones` y co
 | `admin_listar_creditos.php` | `admin.html` | Cola de solicitudes de crédito, con contexto y cupo sugerido por socio |
 | `admin_detalle_credito.php` | `admin.html` | Detalle de una solicitud de crédito específica |
 | `admin_resolver_credito.php` | `admin.html` | Aprobar (desembolsa + genera cuotas) / rechazar un crédito, con mensaje al socio |
+| `pagar_cuota_con_saldo.php` | `sistema.html` | Paga una cuota de crédito descontando el saldo disponible (alternativa a PayPhone) |
+| `pagar_membresia_con_saldo.php` | `sistema.html` | Paga la membresía Cliente Premium descontando el saldo disponible |
+| `completar_perfil.php` | `sistema.html` | Formulario obligatorio de datos adicionales, una sola vez, al activarse la cuenta |
+| `obtener_config_publica.php` | `index.html`, `landing-*.html`, `terminos.html` | Color de marca, secciones/pop-up de una página, y (nuevo) aporte inicial y costo de membresía Premium |
 
 ## 10. Cron de intereses de plazo fijo
 
@@ -348,6 +352,103 @@ igual que hoy hasta que alguien use el builder.
 - **`onboarding.html` no se beneficia de este color** — sigue con sus swatches fijos, ya que es
   la herramienta para crear organizaciones nuevas (antes de que exista un color que aplicar).
 
+## 15. Membresía Cliente Premium (requisito para pedir crédito)
+
+Todo socio empieza como "Cliente Normal" y no puede solicitar microcréditos. Para poder pedirlos,
+debe pagar una sola vez la membresía "Cliente Premium" (monto configurable, $20 por defecto) —
+con PayPhone o descontado directo de su saldo disponible. Ese pago **no se acredita a ningún
+saldo del socio** — es ingreso puro de la organización ("fondos de reserva / gastos
+administrativos"), a diferencia de un aporte normal.
+
+### Migración de base de datos requerida
+
+```sql
+ALTER TABLE organizaciones
+  ADD COLUMN membresia_premium_costo DECIMAL(10,2) DEFAULT 20.00 AFTER credito_plazo_max_meses;
+
+ALTER TABLE socios
+  ADD COLUMN nivel ENUM('normal','premium') NOT NULL DEFAULT 'normal' AFTER estado;
+
+ALTER TABLE transacciones
+  MODIFY tipo ENUM('aporte_inicial','aporte','retiro','interes','comision_admin','credito_desembolso','pago_credito','membresia_premium') NOT NULL;
+
+-- Los socios que YA están activos hoy quedan exonerados del pago (Premium automático).
+-- Esto solo exonera el pago de $20 — el formulario de perfil de la sección 17 sigue
+-- siendo obligatorio para todos, incluidos estos socios.
+UPDATE socios SET nivel = 'premium' WHERE estado = 'activo';
+```
+
+### Cómo funciona
+
+- `solicitar_credito.php` rechaza la solicitud si `nivel !== 'premium'`.
+- `sistema.html` (pestaña Créditos) muestra una tarjeta de actualización en vez del formulario de
+  solicitud mientras el socio sea "Normal", con el costo real tomado de
+  `membresia_premium_costo` (nunca un texto fijo).
+- Pago con PayPhone: `payphone_prepare.php`/`payphone_confirm.php` tratan `tipo =
+  'membresia_premium'` igual que ya tratan `pago_credito` — el monto sale siempre de la base de
+  datos, nunca del navegador.
+- Pago con saldo: `pagar_membresia_con_saldo.php` hace el mismo cambio de `nivel` de forma
+  síncrona, sin pasar por PayPhone.
+- Configúralo desde `admin.html` → Configuración → "Reglas de crédito".
+
+## 16. Términos y condiciones en el registro
+
+`registro.html` exige aceptar un checkbox de Términos y Condiciones antes de crear la cuenta, con
+un link a la nueva página `terminos.html`. El documento describe, con los montos reales de la
+organización (no textos fijos): el aporte inicial como costo administrativo de apertura de
+cuenta (ya existente, solo documentado por escrito), el costo de la membresía Premium, y el
+consentimiento del socio para ser parte de la "Comunidad Digital COOLKI" y recibir contenido
+educativo de ahorro y finanzas personales por correo.
+
+### Migración de base de datos requerida
+
+```sql
+ALTER TABLE socios
+  ADD COLUMN terminos_aceptados_at TIMESTAMP NULL AFTER created_at;
+```
+
+### Cómo funciona
+
+- `terminos.html` consulta `obtener_config_publica.php?org=slug` (público, sin login) para
+  mostrar los montos reales de `aporte_inicial` y `membresia_premium_costo`.
+- `registro.php` rechaza la creación de la cuenta si no llega `terminos_aceptados: true`, y
+  guarda `terminos_aceptados_at = NOW()` al crear el socio.
+
+## 17. Perfil obligatorio del socio (datos adicionales)
+
+Justo cuando la cuenta de un socio pasa a `activo` (aporte inicial confirmado), se le muestra un
+formulario obligatorio y bloqueante — no puede usar el resto del dashboard hasta llenarlo — con:
+ciudad, provincia, dirección domiciliaria, tipo de empleo (dependiente/independiente), ingresos
+mensuales y estado civil. Es una sola vez; después queda disponible para editar (opcionalmente)
+desde la pestaña "Mi perfil".
+
+**Aplica también a socios que ya están activos hoy** — la próxima vez que entren verán este
+formulario (decisión explícita: solo se exoneró el pago de la membresía Premium, no este
+formulario).
+
+### Migración de base de datos requerida
+
+```sql
+ALTER TABLE socios
+  ADD COLUMN perfil_completo TINYINT(1) NOT NULL DEFAULT 0 AFTER nivel,
+  ADD COLUMN ciudad VARCHAR(100) NULL AFTER celular,
+  ADD COLUMN provincia VARCHAR(100) NULL AFTER ciudad,
+  ADD COLUMN direccion VARCHAR(255) NULL AFTER provincia,
+  ADD COLUMN tipo_empleo ENUM('dependiente','independiente') NULL AFTER direccion,
+  ADD COLUMN ingresos_mensuales DECIMAL(10,2) NULL AFTER tipo_empleo,
+  ADD COLUMN estado_civil ENUM('soltero','casado','divorciado','viudo','union_libre') NULL AFTER ingresos_mensuales;
+```
+
+### Cómo funciona
+
+- `sistema.html` revisa, en cada carga del dashboard, si `estado === 'activo' &&
+  !perfil_completo` — si es así, muestra un overlay que no se puede cerrar hasta guardar.
+- `completar_perfil.php` exige los 6 campos y marca `perfil_completo = 1`.
+- `actualizar_perfil.php` (edición posterior, opcional) también acepta estos mismos campos, sin
+  tocar `perfil_completo`.
+- El panel de administrador (`admin.html`, modal de detalle de socio) muestra estos datos — son
+  relevantes para decidir sobre una solicitud de crédito.
+
 ## Qué falta todavía (para ser 100% honestos)
 
 - **Pago real del retiro al socio**: aprobar un retiro solo descuenta el saldo interno; el envío
@@ -367,3 +468,9 @@ igual que hoy hasta que alguien use el builder.
 - **Auto-registro de organizaciones nuevas**: `onboarding.html` sigue siendo una maqueta de venta;
   dar de alta un cliente nuevo se hace manualmente (SQL + `setup_admin.php`), no hay un flujo
   público para que una organización se autoconfigure.
+- **Envío de correos educativos/marketing de "Comunidad Digital COOLKI"**: el registro captura
+  por escrito el consentimiento del socio (checkbox de Términos y Condiciones), pero no existe
+  ninguna infraestructura de envío masivo de correos en esta app — ni lista de suscriptores, ni
+  plantillas, ni cron de envío. Construir eso es un desarrollo aparte; si el negocio ya promete
+  esto como parte de la membresía, conviene priorizarlo pronto para no incumplir lo que el socio
+  aceptó.

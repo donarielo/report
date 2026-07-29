@@ -11,7 +11,8 @@ if (!$socioId) {
 
 $pdo = getDB();
 $stmt = $pdo->prepare(
-    "SELECT id, nombre, cedula, email, celular, saldo_disponible, saldo_congelado, estado, created_at
+    "SELECT id, nombre, cedula, email, celular, saldo_disponible, saldo_congelado, estado, created_at,
+            nivel, ciudad, provincia, direccion, tipo_empleo, ingresos_mensuales, estado_civil
      FROM socios WHERE id = ? AND organizacion_id = ?"
 );
 $stmt->execute([$socioId, $admin['organizacion_id']]);

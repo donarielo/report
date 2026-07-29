@@ -21,6 +21,8 @@ $respuesta = [
         'nombre' => $org['nombre'],
         'color_marca' => $org['color_marca'],
         'brand_soft' => mezclarConBlanco($org['color_marca']),
+        'aporte_inicial' => $org['aporte_inicial'],
+        'membresia_premium_costo' => $org['membresia_premium_costo'],
     ],
 ];
 

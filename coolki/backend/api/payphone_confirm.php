@@ -97,6 +97,10 @@ try {
                 $stmt = $pdo->prepare("UPDATE creditos SET estado = 'pagado' WHERE id = ?");
                 $stmt->execute([$creditoId]);
             }
+        } elseif ($tx['tipo'] === 'membresia_premium') {
+            // Ingreso puro de la organización — no se acredita ningún saldo del socio.
+            $stmt = $pdo->prepare("UPDATE socios SET nivel = 'premium' WHERE id = ?");
+            $stmt->execute([$tx['socio_id']]);
         } else {
             $stmt = $pdo->prepare(
                 "UPDATE socios SET saldo_disponible = saldo_disponible + ? WHERE id = ?"

@@ -77,6 +77,11 @@
 .confirm-desc { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 22px; }
 
 .hidden { display: none; }
+
+.terms-row { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 16px; }
+.terms-row input { margin-top: 3px; flex-shrink: 0; }
+.terms-row label { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.terms-row a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 </style>
 
 <div class="coolki-reg">
@@ -97,6 +102,10 @@
       <div class="field"><label>Correo electrónico</label><input id="reg-email" type="email" placeholder="tucorreo@ejemplo.com"></div>
       <div class="field"><label>Celular</label><input id="reg-celular" type="text" placeholder="09xxxxxxxx"></div>
       <div class="field"><label>Contraseña</label><input id="reg-password" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="terms-row">
+        <input type="checkbox" id="reg-terminos">
+        <label for="reg-terminos">He leído y acepto los <a href="terminos" id="terminos-link" target="_blank">Términos y Condiciones</a> de COOLKI.</label>
+      </div>
       <div id="err-datos" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:2px 0 14px;"></div>
       <button class="btn-primary" id="btn-datos" onclick="submitDatos()">Continuar</button>
     </div>
@@ -160,6 +169,10 @@
 
   let aporteInicial = 5.00; // se sobrescribe con el valor real que devuelve el backend
 
+  if (ORG_SLUG) {
+    document.getElementById('terminos-link').href = 'terminos?org=' + encodeURIComponent(ORG_SLUG);
+  }
+
   // -------- utilidades de UI --------
   const $ = (id) => document.getElementById(id);
   function show(id) { $(id).classList.remove('hidden'); }
@@ -214,6 +227,10 @@
       setError('err-datos', 'La contraseña debe tener al menos 8 caracteres.');
       return;
     }
+    if (!$('reg-terminos').checked) {
+      setError('err-datos', 'Debes aceptar los Términos y Condiciones para crear tu cuenta.');
+      return;
+    }
 
     const btn = $('btn-datos');
     btn.disabled = true;
@@ -225,7 +242,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ organizacion: ORG_SLUG, nombre, cedula, email, celular, password })
+        body: JSON.stringify({ organizacion: ORG_SLUG, nombre, cedula, email, celular, password, terminos_aceptados: true })
       });
 
       aporteInicial = parseFloat(data.aporte_inicial) || 5.00;

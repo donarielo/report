@@ -31,6 +31,8 @@
   --coral-soft: #FBE6E6;
   --sun-soft: #FFF3D6;
   --payphone: #5B2A8C;
+  --gold: #C9971C;
+  --gold-soft: #FCF1D8;
 
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
@@ -70,6 +72,7 @@
 .cuota-estado.pagada { background: var(--mint-soft); color: var(--mint); }
 .cuota-estado.vencida { background: var(--sun-soft); color: #B98424; }
 .cuota-pay-btn { padding: 6px 12px; border-radius: 8px; border: none; background: var(--payphone); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+.cuota-pay-btn.saldo { background: var(--mint); }
 .credito-mensaje { font-size: 12.5px; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
 .mora-banner { background: var(--coral-soft); color: var(--coral); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; }
 
@@ -133,10 +136,17 @@
 .funds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
 .fund-tile { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px; }
 .fund-tile.highlight { background: var(--brand-soft); border-color: var(--brand-soft); }
+.fund-tile.gold { background: var(--gold-soft); border-color: var(--gold-soft); }
+.fund-tile.gold .fund-value { color: var(--gold); }
 .fund-label { font-size: 11px; color: var(--muted); font-weight: 600; }
 .fund-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; margin-top: 4px; }
 .fund-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
 @media (max-width: 420px) { .funds-grid { grid-template-columns: 1fr 1fr; } .fund-tile.highlight { grid-column: 1 / -1; } }
+
+/* Sección CoolCoin: overrides las variables de color dentro de este contenedor a dorado,
+   así todo lo que ya usa var(--brand)/var(--mint) (term-form button, bar-fill) hereda el
+   color sin duplicar reglas CSS. */
+#coolcoinWrap { --brand: var(--gold); --mint: var(--gold); }
 
 .section { margin-top: 26px; }
 .section-head { margin-bottom: 4px; }
@@ -164,6 +174,12 @@
 .ledger-amt.pos { color: var(--mint); }
 .ledger-amt.neg { color: var(--coral); }
 .empty-note { font-size: 12.5px; color: var(--muted); padding: 10px 0; }
+
+/* Overlay bloqueante del perfil obligatorio: a diferencia de un modal normal, no tiene
+   botón de cerrar ni se descarta con click afuera — el socio debe completarlo para seguir. */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(22,24,43,0.55); z-index: 60; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 18px; max-width: 440px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 28px; }
 </style>
 
 <!-- ============ LOGIN GATE ============ -->
@@ -271,10 +287,10 @@
           <div class="fund-value" id="fundPlazoFijo">$0.00</div>
           <div class="fund-sub">Ahorro a plazo</div>
         </div>
-        <div class="fund-tile">
-          <div class="fund-label">En CoolCoin</div>
+        <div class="fund-tile gold">
+          <div class="fund-label">🪙 En CoolCoin</div>
           <div class="fund-value" id="fundCoolcoin">$0.00</div>
-          <div class="fund-sub">Segunda opción de inversión</div>
+          <div class="fund-sub" id="fundCoolcoinSub">Gana 5.5% anual. ¡Compra ya!</div>
         </div>
         <div class="fund-tile highlight">
           <div class="fund-label">Total ahorrado</div>
@@ -289,7 +305,7 @@
       </div>
 
       <div class="section">
-        <div class="section-head"><div class="section-title">CoolCoin</div></div>
+        <div class="section-head"><div class="section-title">🪙 CoolCoin</div></div>
         <div class="section-desc">Otra forma de hacer crecer tu dinero, aparte del plazo fijo — mismo mecanismo, tu propia tasa.</div>
         <div id="coolcoinWrap"></div>
       </div>
@@ -306,6 +322,17 @@
     <div class="screen">
       <div class="section-head"><div class="section-title">Créditos</div></div>
       <div class="section-desc">Microcréditos a cuota fija mensual. El administrador revisa cada solicitud.</div>
+
+      <div id="premiumUpsellWrap" class="hidden">
+        <div class="term-card">
+          <div class="term-row"><span>Membresía requerida</span><b id="premiumCosto">$20.00</b></div>
+          <div class="term-foot" style="margin-bottom: 14px;">Para solicitar un microcrédito, primero debes actualizar tu cuenta a Cliente Premium (pago único, no reembolsable).</div>
+          <button class="profile-save-btn" onclick="pagarPremiumConSaldo()">Pagar con mi saldo disponible</button>
+          <button class="payphone-btn" style="margin-top:10px;" onclick="pagarPremiumConPayphone()"><span class="payphone-mark">P</span> Pagar con PayPhone</button>
+          <div id="pp-button-premium" style="margin-top:10px;"></div>
+          <div id="errPremium" class="profile-msg err hidden"></div>
+        </div>
+      </div>
 
       <div id="creditoSolicitudWrap">
         <div class="term-card">
@@ -341,6 +368,29 @@
         <div class="profile-field"><label>Cédula</label><input id="perfilCedula" type="text"></div>
         <div class="profile-field"><label>Correo electrónico</label><input id="perfilEmail" type="email"></div>
         <div class="profile-field"><label>Celular</label><input id="perfilCelular" type="text"></div>
+        <div class="profile-field"><label>Ciudad</label><input id="perfilCiudad" type="text"></div>
+        <div class="profile-field"><label>Provincia</label><input id="perfilProvincia" type="text"></div>
+        <div class="profile-field"><label>Dirección domiciliaria</label><input id="perfilDireccion" type="text"></div>
+        <div class="profile-field">
+          <label>Tipo de empleo</label>
+          <select id="perfilTipoEmpleo" class="credito-select">
+            <option value="">Selecciona…</option>
+            <option value="dependiente">Dependiente</option>
+            <option value="independiente">Independiente</option>
+          </select>
+        </div>
+        <div class="profile-field"><label>Ingresos mensuales</label><input id="perfilIngresos" type="number" step="0.01"></div>
+        <div class="profile-field">
+          <label>Estado civil</label>
+          <select id="perfilEstadoCivil" class="credito-select">
+            <option value="">Selecciona…</option>
+            <option value="soltero">Soltero/a</option>
+            <option value="casado">Casado/a</option>
+            <option value="divorciado">Divorciado/a</option>
+            <option value="viudo">Viudo/a</option>
+            <option value="union_libre">Unión libre</option>
+          </select>
+        </div>
 
         <div class="section-desc" style="margin-top: 18px;">Cambiar contraseña (opcional — déjalo en blanco si no quieres cambiarla)</div>
         <div class="profile-field"><label>Contraseña actual</label><input id="perfilPasswordActual" type="password" placeholder="Solo si vas a cambiarla"></div>
@@ -350,6 +400,38 @@
         <button class="profile-save-btn" onclick="guardarPerfil()">Guardar cambios</button>
         <div id="perfilMsg" class="profile-msg hidden"></div>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="perfilGateOverlay">
+    <div class="modal-box">
+      <div class="auth-title" style="font-size:20px;">Completa tu perfil</div>
+      <div class="auth-desc">Antes de continuar, necesitamos algunos datos adicionales sobre ti.</div>
+      <div class="profile-field"><label>Ciudad</label><input id="gateCiudad" type="text"></div>
+      <div class="profile-field"><label>Provincia</label><input id="gateProvincia" type="text"></div>
+      <div class="profile-field"><label>Dirección domiciliaria</label><input id="gateDireccion" type="text"></div>
+      <div class="profile-field">
+        <label>Tipo de empleo</label>
+        <select id="gateTipoEmpleo" class="credito-select">
+          <option value="">Selecciona…</option>
+          <option value="dependiente">Dependiente</option>
+          <option value="independiente">Independiente</option>
+        </select>
+      </div>
+      <div class="profile-field"><label>Ingresos mensuales</label><input id="gateIngresos" type="number" step="0.01"></div>
+      <div class="profile-field">
+        <label>Estado civil</label>
+        <select id="gateEstadoCivil" class="credito-select">
+          <option value="">Selecciona…</option>
+          <option value="soltero">Soltero/a</option>
+          <option value="casado">Casado/a</option>
+          <option value="divorciado">Divorciado/a</option>
+          <option value="viudo">Viudo/a</option>
+          <option value="union_libre">Unión libre</option>
+        </select>
+      </div>
+      <div id="errPerfilGate" class="profile-msg err hidden"></div>
+      <button class="profile-save-btn" onclick="completarPerfilGate()">Guardar y continuar</button>
     </div>
   </div>
 </div>
@@ -465,12 +547,19 @@
     socioState.creditoPlazoMax = parseInt(s.credito_plazo_max_meses) || 6;
     socioState.creditoLimiteMaximo = parseFloat(s.credito_limite_maximo) || 0;
     socioState.coolcoinTasaAnual = parseFloat(s.coolcoin_tasa_anual) || 0;
+    socioState.membresiaPremioCosto = parseFloat(s.membresia_premium_costo) || 0;
 
     if (s.estado === 'pendiente_pago') {
       $('activationText').textContent = 'Te falta pagar tu aporte inicial de ' + money(socioState.aporteInicial) + ' para activar tu cuenta.';
       $('activationBanner').classList.remove('hidden');
     } else {
       $('activationBanner').classList.add('hidden');
+    }
+
+    if (s.estado === 'activo' && !Number(s.perfil_completo)) {
+      $('perfilGateOverlay').classList.add('show');
+    } else {
+      $('perfilGateOverlay').classList.remove('show');
     }
 
     $('greetingName').textContent = s.nombre;
@@ -483,6 +572,7 @@
     $('fundCongelado').textContent = money(saldoCongelado);
     $('fundPlazoFijo').textContent = money(plazoTotal);
     $('fundCoolcoin').textContent = money(coolcoinTotal);
+    $('fundCoolcoinSub').textContent = 'Gana ' + socioState.coolcoinTasaAnual + '% anual. ¡Compra ya!';
     $('fundTotal').textContent = money(socioState.saldoDisponible + saldoCongelado + plazoTotal + coolcoinTotal);
 
     $('withdrawNote').textContent = 'Retiros disponibles desde ' + money(socioState.retiroMinimo) + '. Se procesan en 1–2 días hábiles. Máximo disponible: ' + money(socioState.saldoDisponible) + '.';
@@ -508,6 +598,12 @@
     $('perfilCedula').value = s.cedula || '';
     $('perfilEmail').value = s.email || '';
     $('perfilCelular').value = s.celular || '';
+    $('perfilCiudad').value = s.ciudad || '';
+    $('perfilProvincia').value = s.provincia || '';
+    $('perfilDireccion').value = s.direccion || '';
+    $('perfilTipoEmpleo').value = s.tipo_empleo || '';
+    $('perfilIngresos').value = s.ingresos_mensuales || '';
+    $('perfilEstadoCivil').value = s.estado_civil || '';
     return true;
   }
 
@@ -576,7 +672,7 @@
       wrap.innerHTML = '<div class="empty-note">Aún no tienes movimientos.</div>';
       return;
     }
-    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento', credito_desembolso: 'Desembolso de crédito', pago_credito: 'Pago de cuota de crédito' };
+    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento', credito_desembolso: 'Desembolso de crédito', pago_credito: 'Pago de cuota de crédito', membresia_premium: 'Membresía Premium' };
     wrap.innerHTML = movimientos.map(m => {
       const isOut = (m.tipo === 'retiro' || m.tipo === 'comision_admin' || m.tipo === 'pago_credito');
       const recargo = parseFloat(m.comision || 0) + parseFloat(m.iva || 0);
@@ -593,6 +689,17 @@
   const CUOTA_LABELS = { pendiente: 'Pendiente', pagada: 'Pagada', vencida: 'Vencida' };
 
   function renderCreditos(data) {
+    const s = data.socio;
+    if (s.nivel !== 'premium') {
+      $('premiumUpsellWrap').classList.remove('hidden');
+      $('creditoSolicitudWrap').classList.add('hidden');
+      $('creditoActivoWrap').classList.add('hidden');
+      $('premiumCosto').textContent = money(socioState.membresiaPremioCosto);
+      renderCreditoHistorial(data.historial_creditos || [], null);
+      return;
+    }
+    $('premiumUpsellWrap').classList.add('hidden');
+
     $('creditoCupo').textContent = money(data.cupo_sugerido || 0);
     poblarPlazoCredito();
 
@@ -693,10 +800,28 @@
       '<div style="display:flex; align-items:center; gap:8px;">' +
         '<b>' + money(c.monto_cuota) + '</b>' +
         '<span class="cuota-estado ' + c.estado + '">' + (CUOTA_LABELS[c.estado] || c.estado) + '</span>' +
-        (puedePagar ? '<button class="cuota-pay-btn" id="pagoCuota' + c.id + '" onclick="pagarCuota(' + c.id + ')">Pagar</button>' : '') +
+        (puedePagar ? '<button class="cuota-pay-btn saldo" id="pagoCuotaSaldo' + c.id + '" onclick="pagarCuotaConSaldo(' + c.id + ')">Pagar con saldo</button>' : '') +
+        (puedePagar ? '<button class="cuota-pay-btn" id="pagoCuota' + c.id + '" onclick="pagarCuota(' + c.id + ')">PayPhone</button>' : '') +
       '</div>' +
     '</div>' +
     (puedePagar ? '<div id="ppCuota' + c.id + '"></div><div id="errCuota' + c.id + '" class="profile-msg err hidden"></div>' : '');
+  }
+
+  async function pagarCuotaConSaldo(cuotaId) {
+    const btn = $('pagoCuotaSaldo' + cuotaId);
+    const errId = 'errCuota' + cuotaId;
+    clearError(errId);
+    btn.disabled = true;
+    try {
+      await apiFetch('/pagar_cuota_con_saldo.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ cuota_id: cuotaId })
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError(errId, err.message || NET_MSG);
+      btn.disabled = false;
+    }
   }
 
   async function pagarCuota(cuotaId) {
@@ -727,6 +852,44 @@
       btn.classList.remove('hidden');
     } finally {
       btn.disabled = false;
+    }
+  }
+
+  // ============ Membresía Cliente Premium ============
+  async function pagarPremiumConSaldo() {
+    clearError('errPremium');
+    if (!confirm('¿Pagar ' + money(socioState.membresiaPremioCosto) + ' desde tu saldo disponible para activar Cliente Premium?')) return;
+    try {
+      await apiFetch('/pagar_membresia_con_saldo.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: '{}'
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errPremium', err.message || NET_MSG);
+    }
+  }
+
+  async function pagarPremiumConPayphone() {
+    clearError('errPremium');
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tipo: 'membresia_premium' })
+      });
+      if (!data.token) { setError('errPremium', 'Esta caja aún no tiene configurado su pago con PayPhone.'); return; }
+      if (typeof PPaymentButtonBox === 'undefined') { setError('errPremium', 'No se pudo cargar el componente de pago. Recarga la página.'); return; }
+      const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      const ppConfig = {
+        token: data.token, clientTransactionId: data.clientTransactionId,
+        amount: data.amount, amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD', reference: data.reference || 'Membresía Premium',
+        lang: 'es', responseUrl: responseUrl
+      };
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button-premium');
+    } catch (err) {
+      setError('errPremium', err.message || NET_MSG);
     }
   }
 
@@ -923,6 +1086,15 @@
       }
       return;
     }
+    if (tipo === 'membresia_premium') {
+      showSocioTab('creditos');
+      if (aprobado) {
+        await loadSocioDashboard(); // refresca nivel del socio ya como Premium
+      } else {
+        setError('errPremium', 'El pago no se completó o fue rechazado. Intenta de nuevo.');
+      }
+      return;
+    }
     // 'aporte' (depósito recurrente)
     togglePanel('deposit');
     if (aprobado) {
@@ -960,6 +1132,12 @@
     const cedula = $('perfilCedula').value.trim();
     const email = $('perfilEmail').value.trim();
     const celular = $('perfilCelular').value.trim();
+    const ciudad = $('perfilCiudad').value.trim();
+    const provincia = $('perfilProvincia').value.trim();
+    const direccion = $('perfilDireccion').value.trim();
+    const tipoEmpleo = $('perfilTipoEmpleo').value;
+    const ingresosMensuales = $('perfilIngresos').value;
+    const estadoCivil = $('perfilEstadoCivil').value;
     const passwordActual = $('perfilPasswordActual').value;
     const passwordNueva = $('perfilPasswordNueva').value;
 
@@ -977,6 +1155,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify({
           nombre, cedula, email, celular,
+          ciudad, provincia, direccion, tipo_empleo: tipoEmpleo, ingresos_mensuales: ingresosMensuales, estado_civil: estadoCivil,
           password_actual: passwordActual, password_nueva: passwordNueva,
         })
       });
@@ -989,6 +1168,38 @@
       await loadSocioDashboard();
     } catch (err) {
       setError('errPerfil', err.message || NET_MSG);
+    }
+  }
+
+  // ============ Perfil obligatorio (una sola vez, al activarse la cuenta) ============
+  async function completarPerfilGate() {
+    clearError('errPerfilGate');
+    const ciudad = $('gateCiudad').value.trim();
+    const provincia = $('gateProvincia').value.trim();
+    const direccion = $('gateDireccion').value.trim();
+    const tipoEmpleo = $('gateTipoEmpleo').value;
+    const ingresosMensuales = $('gateIngresos').value;
+    const estadoCivil = $('gateEstadoCivil').value;
+
+    if (!ciudad || !provincia || !direccion) {
+      setError('errPerfilGate', 'Ciudad, provincia y dirección son obligatorios.');
+      return;
+    }
+    if (!tipoEmpleo) { setError('errPerfilGate', 'Selecciona tu tipo de empleo.'); return; }
+    if (!estadoCivil) { setError('errPerfilGate', 'Selecciona tu estado civil.'); return; }
+    if (!ingresosMensuales || parseFloat(ingresosMensuales) <= 0) { setError('errPerfilGate', 'Ingresa un ingreso mensual válido.'); return; }
+
+    try {
+      await apiFetch('/completar_perfil.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          ciudad, provincia, direccion, tipo_empleo: tipoEmpleo,
+          ingresos_mensuales: ingresosMensuales, estado_civil: estadoCivil,
+        })
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errPerfilGate', err.message || NET_MSG);
     }
   }
 

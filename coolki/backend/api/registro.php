@@ -9,9 +9,13 @@ $cedula = trim($in['cedula'] ?? '');
 $email = trim($in['email'] ?? '');
 $celular = trim($in['celular'] ?? '');
 $password = $in['password'] ?? '';
+$terminosAceptados = !empty($in['terminos_aceptados']);
 
 if (!$slug || !$nombre || !$cedula || !$email || strlen($password) < 8) {
     jsonResponse(['error' => 'Completa todos los campos. La contraseña debe tener al menos 8 caracteres.'], 400);
+}
+if (!$terminosAceptados) {
+    jsonResponse(['error' => 'Debes aceptar los Términos y Condiciones para crear tu cuenta.'], 400);
 }
 
 $org = getOrganizacionPorSlug($slug);
@@ -29,8 +33,8 @@ if ($stmt->fetch()) {
 
 $hash = password_hash($password, PASSWORD_DEFAULT);
 $stmt = $pdo->prepare(
-    "INSERT INTO socios (organizacion_id, nombre, cedula, email, celular, password_hash, estado)
-     VALUES (?, ?, ?, ?, ?, ?, 'pendiente_pago')"
+    "INSERT INTO socios (organizacion_id, nombre, cedula, email, celular, password_hash, estado, terminos_aceptados_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'pendiente_pago', NOW())"
 );
 $stmt->execute([$org['id'], $nombre, $cedula, $email, $celular, $hash]);
 $socioId = $pdo->lastInsertId();

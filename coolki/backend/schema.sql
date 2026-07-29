@@ -22,6 +22,7 @@ CREATE TABLE organizaciones (
   credito_limite_maximo DECIMAL(10,2) DEFAULT 500.00,   -- tope del cupo sugerido (el admin puede aprobar más igual)
   credito_plazo_min_meses INT DEFAULT 1,
   credito_plazo_max_meses INT DEFAULT 6,
+  membresia_premium_costo DECIMAL(10,2) DEFAULT 20.00, -- pago único para pasar a Cliente Premium (requisito para pedir crédito)
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -41,11 +42,20 @@ CREATE TABLE socios (
   cedula VARCHAR(20) NOT NULL,
   email VARCHAR(150) NOT NULL,
   celular VARCHAR(20) NULL,
+  ciudad VARCHAR(100) NULL,
+  provincia VARCHAR(100) NULL,
+  direccion VARCHAR(255) NULL,
+  tipo_empleo ENUM('dependiente','independiente') NULL,
+  ingresos_mensuales DECIMAL(10,2) NULL,
+  estado_civil ENUM('soltero','casado','divorciado','viudo','union_libre') NULL,
   password_hash VARCHAR(255) NOT NULL,
   saldo_disponible DECIMAL(10,2) DEFAULT 0.00,
   saldo_congelado DECIMAL(10,2) DEFAULT 0.00,
   estado ENUM('pendiente_pago','activo') DEFAULT 'pendiente_pago',
+  nivel ENUM('normal','premium') NOT NULL DEFAULT 'normal', -- 'premium' puede solicitar microcréditos
+  perfil_completo TINYINT(1) NOT NULL DEFAULT 0, -- formulario obligatorio de datos adicionales, una vez que estado='activo'
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  terminos_aceptados_at TIMESTAMP NULL,
   UNIQUE KEY unico_por_org (organizacion_id, email),
   FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
 );
@@ -53,7 +63,7 @@ CREATE TABLE socios (
 CREATE TABLE transacciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   socio_id INT NOT NULL,
-  tipo ENUM('aporte_inicial','aporte','retiro','interes','comision_admin','credito_desembolso','pago_credito') NOT NULL,
+  tipo ENUM('aporte_inicial','aporte','retiro','interes','comision_admin','credito_desembolso','pago_credito','membresia_premium') NOT NULL,
   monto DECIMAL(10,2) NOT NULL,              -- monto neto que se acredita al socio (sin comisión ni IVA)
   comision DECIMAL(10,2) DEFAULT 0.00,       -- comisión cobrada encima del monto (0 en aporte_inicial)
   iva DECIMAL(10,2) DEFAULT 0.00,            -- IVA calculado sobre la comisión

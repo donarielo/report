@@ -22,6 +22,9 @@ $socio = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($socio['estado'] !== 'activo') {
     jsonResponse(['error' => 'Debes completar tu aporte inicial antes de solicitar un crédito.'], 400);
 }
+if ($socio['nivel'] !== 'premium') {
+    jsonResponse(['error' => 'Debes ser Cliente Premium para solicitar un microcrédito. Actualiza tu membresía desde la pestaña Créditos.'], 400);
+}
 if ($monto <= 0 || $monto > floatval($socio['credito_limite_maximo'])) {
     jsonResponse(['error' => 'Monto inválido. El máximo permitido es $' . $socio['credito_limite_maximo'] . '.'], 400);
 }

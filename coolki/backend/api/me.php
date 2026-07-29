@@ -9,9 +9,10 @@ $pdo = getDB();
 
 $stmt = $pdo->prepare(
     "SELECT s.id, s.nombre, s.cedula, s.email, s.celular, s.saldo_disponible, s.saldo_congelado, s.estado, s.created_at,
+            s.nivel, s.perfil_completo, s.ciudad, s.provincia, s.direccion, s.tipo_empleo, s.ingresos_mensuales, s.estado_civil,
             o.retiro_minimo, o.aporte_inicial, o.tasa_plazo_fijo, o.coolcoin_tasa_anual, o.comision_deposito_pct, o.iva_pct,
             o.credito_tasa_anual, o.credito_limite_base, o.credito_incremento_por_pago,
-            o.credito_limite_maximo, o.credito_plazo_min_meses, o.credito_plazo_max_meses
+            o.credito_limite_maximo, o.credito_plazo_min_meses, o.credito_plazo_max_meses, o.membresia_premium_costo
      FROM socios s JOIN organizaciones o ON o.id = s.organizacion_id
      WHERE s.id = ?"
 );

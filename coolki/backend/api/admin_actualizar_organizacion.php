@@ -17,11 +17,12 @@ $creditoIncrementoPorPago = floatval($in['credito_incremento_por_pago'] ?? -1);
 $creditoLimiteMaximo = floatval($in['credito_limite_maximo'] ?? -1);
 $creditoPlazoMin = intval($in['credito_plazo_min_meses'] ?? -1);
 $creditoPlazoMax = intval($in['credito_plazo_max_meses'] ?? -1);
+$membresiaCosto = floatval($in['membresia_premium_costo'] ?? -1);
 
 $valores = [
     $tasaPlazoFijo, $coolcoinTasaAnual, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
     $creditoTasaAnual, $creditoLimiteBase, $creditoIncrementoPorPago, $creditoLimiteMaximo,
-    $creditoPlazoMin, $creditoPlazoMax,
+    $creditoPlazoMin, $creditoPlazoMax, $membresiaCosto,
 ];
 foreach ($valores as $v) {
     if ($v < 0) {
@@ -38,13 +39,14 @@ $stmt = $pdo->prepare(
      SET tasa_plazo_fijo = ?, coolcoin_tasa_anual = ?, retiro_minimo = ?, aporte_inicial = ?,
          comision_deposito_pct = ?, iva_pct = ?,
          credito_tasa_anual = ?, credito_limite_base = ?, credito_incremento_por_pago = ?,
-         credito_limite_maximo = ?, credito_plazo_min_meses = ?, credito_plazo_max_meses = ?
+         credito_limite_maximo = ?, credito_plazo_min_meses = ?, credito_plazo_max_meses = ?,
+         membresia_premium_costo = ?
      WHERE id = ?"
 );
 $stmt->execute([
     $tasaPlazoFijo, $coolcoinTasaAnual, $retiroMinimo, $aporteInicial, $comisionDeposito, $ivaPct,
     $creditoTasaAnual, $creditoLimiteBase, $creditoIncrementoPorPago, $creditoLimiteMaximo,
-    $creditoPlazoMin, $creditoPlazoMax, $admin['organizacion_id'],
+    $creditoPlazoMin, $creditoPlazoMax, $membresiaCosto, $admin['organizacion_id'],
 ]);
 
 jsonResponse(['ok' => true]);
