@@ -23,6 +23,8 @@ $respuesta = [
         'brand_soft' => mezclarConBlanco($org['color_marca']),
         'aporte_inicial' => $org['aporte_inicial'],
         'membresia_premium_costo' => $org['membresia_premium_costo'],
+        'soporte_email' => $org['soporte_email'],
+        'soporte_whatsapp' => $org['soporte_whatsapp'],
     ],
 ];
 

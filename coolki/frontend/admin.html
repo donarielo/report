@@ -241,6 +241,10 @@ table.socios tbody tr:hover { background: var(--bg); }
           <div class="settings-group-title">Pagos</div>
           <div class="settings-row"><label class="settings-label">Cuenta PayPhone conectada</label><input class="settings-input" id="cfgPayphone" disabled /></div>
 
+          <div class="settings-group-title">Soporte a socios (visible en la pantalla de inicio de sesión)</div>
+          <div class="settings-row"><label class="settings-label">Correo de soporte</label><input class="settings-input" id="cfgSoporteEmail" placeholder="soporte@tudominio.com" /></div>
+          <div class="settings-row"><label class="settings-label">Link de WhatsApp de soporte</label><input class="settings-input" id="cfgSoporteWhatsapp" placeholder="https://wa.me/593999999999" /></div>
+
           <button class="save-btn" onclick="guardarConfiguracion()">Guardar cambios</button>
           <div id="settingsMsg" class="settings-msg hidden"></div>
           <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula. La tasa máxima legal vigente para microcrédito minorista en Ecuador (Banco Central) es 28.23% anual — verifícala periódicamente, el BCE la actualiza.</div>
@@ -441,6 +445,8 @@ table.socios tbody tr:hover { background: var(--bg); }
     } else {
       $('cfgPayphone').value = 'No conectada';
     }
+    $('cfgSoporteEmail').value = adminOrgSettings.soporte_email || '';
+    $('cfgSoporteWhatsapp').value = adminOrgSettings.soporte_whatsapp || '';
   }
 
   async function loadAdminDashboard() {
@@ -519,6 +525,8 @@ table.socios tbody tr:hover { background: var(--bg); }
     const creditoPlazoMin = parseInt($('cfgCreditoPlazoMin').value);
     const creditoPlazoMax = parseInt($('cfgCreditoPlazoMax').value);
     const membresiaCosto = parseFloat($('cfgMembresiaCosto').value);
+    const soporteEmail = $('cfgSoporteEmail').value.trim();
+    const soporteWhatsapp = $('cfgSoporteWhatsapp').value.trim();
     const valores = [tasa, coolcoinTasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax, membresiaCosto];
     if (valores.some(v => isNaN(v) || v < 0)) {
       msg.textContent = 'Revisa que todos los valores sean números válidos.';
@@ -542,6 +550,10 @@ table.socios tbody tr:hover { background: var(--bg); }
           membresia_premium_costo: membresiaCosto,
         })
       });
+      await apiFetch('/admin_actualizar_soporte.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ soporte_email: soporteEmail, soporte_whatsapp: soporteWhatsapp })
+      });
       Object.assign(adminOrgSettings, {
         tasa_plazo_fijo: tasa, coolcoin_tasa_anual: coolcoinTasa, aporte_inicial: aporte, retiro_minimo: retiro,
         comision_deposito_pct: comision, iva_pct: iva,
@@ -549,6 +561,7 @@ table.socios tbody tr:hover { background: var(--bg); }
         credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
         credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
         membresia_premium_costo: membresiaCosto,
+        soporte_email: soporteEmail, soporte_whatsapp: soporteWhatsapp,
       });
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';

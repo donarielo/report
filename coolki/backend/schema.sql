@@ -23,6 +23,8 @@ CREATE TABLE organizaciones (
   credito_plazo_min_meses INT DEFAULT 1,
   credito_plazo_max_meses INT DEFAULT 6,
   membresia_premium_costo DECIMAL(10,2) DEFAULT 20.00, -- pago único para pasar a Cliente Premium (requisito para pedir crédito)
+  soporte_email VARCHAR(150) NULL,
+  soporte_whatsapp VARCHAR(255) NULL, -- link completo, ej. https://wa.me/593999999999
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -32,6 +34,8 @@ CREATE TABLE admins (
   email VARCHAR(150) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  intentos_fallidos INT NOT NULL DEFAULT 0,
+  bloqueado_hasta TIMESTAMP NULL,
   FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
 );
 
@@ -56,6 +60,8 @@ CREATE TABLE socios (
   perfil_completo TINYINT(1) NOT NULL DEFAULT 0, -- formulario obligatorio de datos adicionales, una vez que estado='activo'
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   terminos_aceptados_at TIMESTAMP NULL,
+  intentos_fallidos INT NOT NULL DEFAULT 0,
+  bloqueado_hasta TIMESTAMP NULL,
   UNIQUE KEY unico_por_org (organizacion_id, email),
   FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
 );
@@ -139,6 +145,17 @@ CREATE TABLE paginas_config (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unico_por_org_pagina (organizacion_id, pagina),
   FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+
+CREATE TABLE password_resets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  socio_id INT NOT NULL,
+  token_hash CHAR(64) NOT NULL,   -- sha256 hex del token; el token crudo NUNCA se guarda
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unico_token_hash (token_hash),
+  FOREIGN KEY (socio_id) REFERENCES socios(id)
 );
 
 -- Organización de ejemplo para poder probar de inmediato.

@@ -91,6 +91,16 @@
 .auth-field input:focus { outline: none; border-color: var(--brand); background: #fff; }
 .auth-btn { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
 .auth-error { font-size: 12.5px; color: var(--coral); line-height: 1.5; margin: 2px 0 14px; }
+.auth-links { display: flex; justify-content: space-between; font-size: 12.5px; margin-top: -6px; margin-bottom: 16px; }
+.auth-links a { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.auth-bottom-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 16px; }
+.auth-bottom-note a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.auth-support { text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.auth-support a { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; margin: 0 4px; }
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; border: none; background: transparent; cursor: pointer; font-size: 17px; padding: 0 10px; line-height: 1; }
+.password-toggle span { pointer-events: none; }
 .hidden { display: none; }
 
 /* ---------- SOCIO ---------- */
@@ -186,18 +196,31 @@
 <div class="coolki-app" id="gate">
   <div class="auth-wrap">
     <div class="auth-screen">
-      <div class="brand-lockup" style="margin-bottom: 22px;">
+      <a class="brand-lockup" id="gateLogoLink" href="index" style="margin-bottom: 22px; text-decoration:none;">
         <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
         <div class="brand-word">coolki</div>
-      </div>
+      </a>
 
       <div class="auth-card" id="authSocio">
         <div class="auth-title">Ingresa a tu cuenta</div>
         <div class="auth-desc">Usa el correo y la contraseña con la que te registraste en COOLKI.</div>
-        <div class="auth-field"><label>Correo electrónico</label><input id="socioEmail" type="email" placeholder="tucorreo@ejemplo.com"></div>
-        <div class="auth-field"><label>Contraseña</label><input id="socioPassword" type="password" placeholder="Tu contraseña"></div>
+        <div class="auth-field"><label>Correo electrónico</label><input id="socioEmail" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
+        <div class="auth-field">
+          <label>Contraseña</label>
+          <div class="password-wrap">
+            <input id="socioPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+            <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('socioPassword', this)"><span aria-hidden="true">👁</span></button>
+          </div>
+        </div>
+        <div class="auth-links"><a id="olvideLink" href="recuperar">¿Olvidaste tu contraseña?</a></div>
         <div id="errSocioLogin" class="auth-error hidden"></div>
         <button class="auth-btn" id="btnSocioLogin" onclick="loginSocio()">Entrar</button>
+        <div class="auth-bottom-note">¿Aún no tienes cuenta? <a id="crearCuentaLink" href="registro">Crear una cuenta</a></div>
+        <div class="auth-bottom-note"><a id="volverInicioLink" href="index">&larr; Volver al inicio</a></div>
+        <div class="auth-support" id="soporteLinks">
+          <a id="soporteEmailLink" href="#" class="hidden"></a>
+          <a id="soporteWhatsappLink" href="#" target="_blank" rel="noopener" class="hidden">WhatsApp de soporte</a>
+        </div>
       </div>
     </div>
   </div>
@@ -451,6 +474,43 @@
   const $ = (id) => document.getElementById(id);
   const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
   const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  if (ORG_SLUG) {
+    const qs = '?org=' + encodeURIComponent(ORG_SLUG);
+    ['gateLogoLink', 'volverInicioLink'].forEach(id => { $(id).href = 'index' + qs; });
+    $('olvideLink').href = 'recuperar' + qs;
+    $('crearCuentaLink').href = 'registro' + qs;
+  }
+
+  function togglePassword(inputId, btn) {
+    const input = $(inputId);
+    const mostrando = input.type === 'text';
+    input.type = mostrando ? 'password' : 'text';
+    btn.setAttribute('aria-pressed', String(!mostrando));
+    btn.setAttribute('aria-label', mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    btn.querySelector('span').textContent = mostrando ? '👁' : '🙈';
+  }
+
+  // Enlaces de soporte de la pantalla de login: solo aparecen si la organización los
+  // configuró (mismo patrón que los pop-ups del constructor de páginas).
+  async function cargarSoporteGate() {
+    if (!ORG_SLUG) return;
+    try {
+      const res = await fetch(API_BASE + '/obtener_config_publica.php?org=' + encodeURIComponent(ORG_SLUG));
+      const data = await res.json();
+      const org = (data && data.organizacion) || {};
+      if (org.soporte_email) {
+        $('soporteEmailLink').href = 'mailto:' + org.soporte_email;
+        $('soporteEmailLink').textContent = org.soporte_email;
+        $('soporteEmailLink').classList.remove('hidden');
+      }
+      if (org.soporte_whatsapp) {
+        $('soporteWhatsappLink').href = org.soporte_whatsapp;
+        $('soporteWhatsappLink').classList.remove('hidden');
+      }
+    } catch (e) { /* si falla, simplemente no mostramos los links de soporte */ }
+  }
+  cargarSoporteGate();
 
   function money(n) { return '$' + Number(n || 0).toFixed(2); }
   function formatDate(str) {

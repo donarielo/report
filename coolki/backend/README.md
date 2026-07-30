@@ -449,6 +449,64 @@ ALTER TABLE socios
 - El panel de administrador (`admin.html`, modal de detalle de socio) muestra estos datos — son
   relevantes para decidir sobre una solicitud de crédito.
 
+## 18. Seguridad de acceso, recuperación de contraseña y datos de soporte
+
+### Migración de base de datos requerida
+
+```sql
+ALTER TABLE socios
+  ADD COLUMN intentos_fallidos INT NOT NULL DEFAULT 0 AFTER terminos_aceptados_at,
+  ADD COLUMN bloqueado_hasta TIMESTAMP NULL AFTER intentos_fallidos;
+
+ALTER TABLE admins
+  ADD COLUMN intentos_fallidos INT NOT NULL DEFAULT 0 AFTER created_at,
+  ADD COLUMN bloqueado_hasta TIMESTAMP NULL AFTER intentos_fallidos;
+
+ALTER TABLE organizaciones
+  ADD COLUMN soporte_email VARCHAR(150) NULL AFTER membresia_premium_costo,
+  ADD COLUMN soporte_whatsapp VARCHAR(255) NULL AFTER soporte_email;
+
+CREATE TABLE password_resets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  socio_id INT NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unico_token_hash (token_hash),
+  FOREIGN KEY (socio_id) REFERENCES socios(id)
+);
+```
+
+### Cómo funciona
+
+- **Bloqueo por intentos fallidos**: 5 intentos fallidos seguidos (socio o administrador)
+  bloquean el acceso por 15 minutos (`LOGIN_INTENTOS_MAXIMOS`/`LOGIN_BLOQUEO_MINUTOS` en
+  `config.php`, ajustables). El bloqueo se revisa **antes** de comprobar la contraseña.
+- **Recuperación de contraseña**: `recuperar.html` pide el correo → `solicitar_recuperacion.php`
+  genera un token de un solo uso (30 minutos de vigencia, invalida cualquier token anterior sin
+  usar de ese socio) y lo envía por correo real vía SMTP. La respuesta es **siempre el mismo
+  mensaje genérico**, exista o no una cuenta con ese correo — nunca se revela si un correo está
+  registrado. `restablecer.html` recibe el link del correo y permite fijar una contraseña nueva;
+  el token deja de servir apenas se usa una vez.
+- **Envío de correo real**: requiere configurar en `config.php` una cuenta de correo real de tu
+  hosting (`SMTP_USER`/`SMTP_PASS`/`SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE` — en Hostinger, hPanel
+  > Correo > Cuentas de correo). El envío usa un cliente SMTP propio (`backend/includes/mailer.php`),
+  sin librerías externas.
+- **Validación de cédula y celular ecuatorianos**: `registro.php` valida el algoritmo real de
+  cédula (módulo 10) y que el celular tenga 10 dígitos empezando en `09` — del lado del
+  servidor, nunca solo en el navegador.
+- **Datos de soporte**: `soporte_email`/`soporte_whatsapp` son opcionales — si no están
+  configurados en `admin.html`, sus enlaces simplemente no aparecen en la pantalla de login.
+
+### Limitaciones conocidas
+
+- El correo de recuperación no puede probarse en un entorno de desarrollo sin servidor SMTP
+  real — pruébalo primero con una cuenta de correo real antes de confiar en el flujo completo.
+- La solicitud de recuperación tarda ligeramente más cuando el correo SÍ existe (por el trabajo
+  extra de generar el token y enviar el correo) — es una fuga de tiempo mínima y aceptada, no
+  se intentó igualar artificialmente el tiempo de respuesta.
+
 ## Qué falta todavía (para ser 100% honestos)
 
 - **Pago real del retiro al socio**: aprobar un retiro solo descuenta el saldo interno; el envío

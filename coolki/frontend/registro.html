@@ -82,14 +82,31 @@
 .terms-row input { margin-top: 3px; flex-shrink: 0; }
 .terms-row label { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .terms-row a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.privacy-note { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 4px 0 10px; }
+.privacy-note a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; border: none; background: transparent; cursor: pointer; font-size: 17px; padding: 0 10px; line-height: 1; }
+.password-toggle span { pointer-events: none; }
+
+.pw-meter { height: 5px; background: var(--border); border-radius: 4px; margin: 6px 0 2px; overflow: hidden; }
+.pw-meter-fill { height: 100%; width: 0%; background: var(--border); transition: width .2s, background .2s; }
+.pw-meter-label { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; min-height: 14px; }
+
+.top-nav-link { display: inline-block; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 16px; }
+.bottom-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 14px; }
+.bottom-note a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 </style>
 
 <div class="coolki-reg">
   <div class="reg-screen">
-    <div class="reg-brand">
+    <a class="top-nav-link" id="volver-inicio-link" href="index">&larr; Volver al inicio</a>
+    <a class="reg-brand" id="logo-link" href="index" style="text-decoration:none;">
       <svg width="36" height="36" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
       <div class="reg-word">coolki</div>
-    </div>
+    </a>
 
     <div class="stepper"><div class="step-dot done" id="dot1"></div><div class="step-dot" id="dot2"></div></div>
 
@@ -97,17 +114,40 @@
       <span class="card-eyebrow">Paso 1 de 2</span>
       <div class="card-title">Bienvenido a COOLKI</div>
       <div class="card-desc">Crea tu cuenta en un minuto y empieza a ahorrar a tu ritmo.</div>
-      <div class="field"><label>Nombre completo</label><input id="reg-nombre" type="text" placeholder="¿Cómo te llamas?"></div>
-      <div class="field"><label>Cédula</label><input id="reg-cedula" type="text" placeholder="1712345678"></div>
-      <div class="field"><label>Correo electrónico</label><input id="reg-email" type="email" placeholder="tucorreo@ejemplo.com"></div>
-      <div class="field"><label>Celular</label><input id="reg-celular" type="text" placeholder="09xxxxxxxx"></div>
-      <div class="field"><label>Contraseña</label><input id="reg-password" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="field"><label>Nombre completo</label><input id="reg-nombre" type="text" autocomplete="name" placeholder="¿Cómo te llamas?"></div>
+      <div class="field"><label>Cédula</label><input id="reg-cedula" type="text" autocomplete="off" inputmode="numeric" maxlength="10" placeholder="1712345678"></div>
+      <div id="err-cedula" class="hidden" style="font-size:11.5px;color:#E5484D;margin:-8px 0 12px;"></div>
+      <div class="field"><label>Correo electrónico</label><input id="reg-email" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
+      <div class="field"><label>Celular</label><input id="reg-celular" type="text" autocomplete="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx"></div>
+      <div id="err-celular" class="hidden" style="font-size:11.5px;color:#E5484D;margin:-8px 0 12px;"></div>
+
+      <div class="field">
+        <label>Contraseña</label>
+        <div class="password-wrap">
+          <input id="reg-password" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" oninput="actualizarMedidor('reg-password','pwMeterFill','pwMeterLabel')">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('reg-password', this)"><span aria-hidden="true">👁</span></button>
+        </div>
+        <div class="pw-meter"><div class="pw-meter-fill" id="pwMeterFill"></div></div>
+        <div class="pw-meter-label" id="pwMeterLabel"></div>
+      </div>
+
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <div class="password-wrap">
+          <input id="reg-password-confirmar" type="password" autocomplete="new-password" placeholder="Repite tu contraseña">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('reg-password-confirmar', this)"><span aria-hidden="true">👁</span></button>
+        </div>
+      </div>
+
+      <div class="privacy-note">Tus datos serán utilizados para crear y administrar tu cuenta, verificar tu identidad y brindarte soporte. Consulta nuestra <a href="privacidad" id="privacidad-link" target="_blank">Política de Privacidad</a> para conocer cómo protegemos y tratamos tu información.</div>
+
       <div class="terms-row">
         <input type="checkbox" id="reg-terminos">
         <label for="reg-terminos">He leído y acepto los <a href="terminos" id="terminos-link" target="_blank">Términos y Condiciones</a> de COOLKI.</label>
       </div>
       <div id="err-datos" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:2px 0 14px;"></div>
       <button class="btn-primary" id="btn-datos" onclick="submitDatos()">Continuar</button>
+      <div class="bottom-note">¿Ya tienes una cuenta? <a href="sistema" id="login-link">Inicia sesión</a></div>
     </div>
 
     <div class="card hidden" id="screen-aporte">
@@ -171,7 +211,12 @@
   let aporteInicial = 5.00; // se sobrescribe con el valor real que devuelve el backend
 
   if (ORG_SLUG) {
-    document.getElementById('terminos-link').href = 'terminos?org=' + encodeURIComponent(ORG_SLUG);
+    const qs = '?org=' + encodeURIComponent(ORG_SLUG);
+    document.getElementById('terminos-link').href = 'terminos' + qs;
+    document.getElementById('privacidad-link').href = 'privacidad' + qs;
+    document.getElementById('login-link').href = 'sistema' + qs;
+    document.getElementById('volver-inicio-link').href = 'index' + qs;
+    document.getElementById('logo-link').href = 'index' + qs;
   }
 
   // -------- utilidades de UI --------
@@ -186,6 +231,56 @@
   function money(n) { return '$' + Number(n).toFixed(2); }
   function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
   function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+
+  // -------- mostrar/ocultar contraseña + medidor de fuerza --------
+  function togglePassword(inputId, btn) {
+    const input = $(inputId);
+    const mostrando = input.type === 'text';
+    input.type = mostrando ? 'password' : 'text';
+    btn.setAttribute('aria-pressed', String(!mostrando));
+    btn.setAttribute('aria-label', mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    btn.querySelector('span').textContent = mostrando ? '👁' : '🙈';
+  }
+
+  function calcularFuerzaPassword(pw) {
+    if (!pw || pw.length < 8) return { pct: pw ? 25 : 0, color: '#E5484D', texto: pw ? 'Muy débil (mínimo 8 caracteres)' : '' };
+    let puntos = 1;
+    if (pw.length >= 12) puntos++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) puntos++;
+    if (/\d/.test(pw)) puntos++;
+    if (/[^A-Za-z0-9]/.test(pw)) puntos++;
+    if (puntos <= 2) return { pct: 45, color: '#E5484D', texto: 'Débil' };
+    if (puntos === 3) return { pct: 70, color: '#F5A623', texto: 'Media' };
+    return { pct: 100, color: '#1FAE7A', texto: 'Fuerte' };
+  }
+
+  function actualizarMedidor(pwId, fillId, labelId) {
+    const pw = $(pwId).value;
+    const r = calcularFuerzaPassword(pw);
+    $(fillId).style.width = r.pct + '%';
+    $(fillId).style.background = r.color;
+    $(labelId).textContent = r.texto;
+  }
+
+  // -------- validación de cédula y celular ecuatorianos --------
+  function validarCedulaEcuador(cedula) {
+    if (!/^\d{10}$/.test(cedula)) return false;
+    const d = cedula.split('').map(Number);
+    const provincia = d[0] * 10 + d[1];
+    if (provincia < 1 || provincia > 24) return false;
+    if (d[2] > 6) return false;
+    const coef = [2,1,2,1,2,1,2,1,2];
+    let suma = 0;
+    for (let i = 0; i < 9; i++) {
+      let v = d[i] * coef[i];
+      if (v >= 10) v -= 9;
+      suma += v;
+    }
+    let dv = (Math.ceil(suma / 10) * 10) - suma;
+    if (dv === 10) dv = 0;
+    return dv === d[9];
+  }
+  function validarCelularEcuador(celular) { return /^09\d{8}$/.test(celular); }
 
   // Mensaje amigable y uniforme cuando el backend no responde / falla la red.
   const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
@@ -209,12 +304,15 @@
   // ============ PASO 1 · crear el socio ============
   async function submitDatos() {
     clearError('err-datos');
+    clearError('err-cedula');
+    clearError('err-celular');
 
-    const nombre   = $('reg-nombre').value.trim();
-    const cedula   = $('reg-cedula').value.trim();
-    const email    = $('reg-email').value.trim();
-    const celular  = $('reg-celular').value.trim();
-    const password = $('reg-password').value;
+    const nombre     = $('reg-nombre').value.trim();
+    const cedula     = $('reg-cedula').value.trim();
+    const email      = $('reg-email').value.trim();
+    const celular    = $('reg-celular').value.trim();
+    const password   = $('reg-password').value;
+    const confirmar  = $('reg-password-confirmar').value;
 
     if (!ORG_SLUG) {
       setError('err-datos', 'No se pudo determinar la organización. Abre el enlace con ?org=tu-organizacion.');
@@ -224,8 +322,20 @@
       setError('err-datos', 'Completa todos los campos para continuar.');
       return;
     }
+    if (!validarCedulaEcuador(cedula)) {
+      setError('err-cedula', 'Ingresa una cédula ecuatoriana válida.');
+      return;
+    }
+    if (!validarCelularEcuador(celular)) {
+      setError('err-celular', 'Ingresa un número celular ecuatoriano válido, por ejemplo: 0991234567.');
+      return;
+    }
     if (password.length < 8) {
       setError('err-datos', 'La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    if (password !== confirmar) {
+      setError('err-datos', 'Las contraseñas no coinciden.');
       return;
     }
     if (!$('reg-terminos').checked) {

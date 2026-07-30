@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/validacion.php';
 iniciarSesion();
 
 $in = jsonInput();
@@ -16,6 +17,15 @@ if (!$slug || !$nombre || !$cedula || !$email || strlen($password) < 8) {
 }
 if (!$terminosAceptados) {
     jsonResponse(['error' => 'Debes aceptar los Términos y Condiciones para crear tu cuenta.'], 400);
+}
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    jsonResponse(['error' => 'Ingresa un correo electrónico válido.'], 400);
+}
+if (!validarCedulaEcuador($cedula)) {
+    jsonResponse(['error' => 'La cédula ingresada no es válida.'], 400);
+}
+if (!validarCelularEcuador($celular)) {
+    jsonResponse(['error' => 'El celular debe tener 10 dígitos y empezar con 09.'], 400);
 }
 
 $org = getOrganizacionPorSlug($slug);

@@ -34,6 +34,8 @@ jsonResponse([
         'credito_plazo_min_meses' => $org['credito_plazo_min_meses'],
         'credito_plazo_max_meses' => $org['credito_plazo_max_meses'],
         'membresia_premium_costo' => $org['membresia_premium_costo'],
+        'soporte_email' => $org['soporte_email'],
+        'soporte_whatsapp' => $org['soporte_whatsapp'],
         'aprobacion_retiros' => $org['aprobacion_retiros'],
         'payphone_store_id' => $org['payphone_store_id'],
         'payphone_conectado' => !empty($org['payphone_token']),

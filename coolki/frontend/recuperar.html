@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Recuperar contraseña</title>
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-reg, .coolki-reg * { box-sizing: border-box; }
+
+.coolki-reg {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 34px 16px 60px;
+}
+
+.reg-screen { width: 100%; max-width: 400px; }
+.reg-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.reg-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+.card-desc { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.field input { width: 100%; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); }
+.field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+
+.btn-primary { width: 100%; padding: 15px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.btn-link { width: 100%; text-align: center; padding: 12px 0; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13.5px; cursor: pointer; margin-top: 4px; text-decoration: underline; text-underline-offset: 3px; display: block; }
+
+.success-note { font-size: 13.5px; color: var(--ink); background: var(--mint-soft); border-radius: 12px; padding: 14px; line-height: 1.55; margin-bottom: 14px; }
+.hidden { display: none; }
+</style>
+
+<div class="coolki-reg">
+  <div class="reg-screen">
+    <div class="reg-brand">
+      <svg width="36" height="36" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="reg-word">coolki</div>
+    </div>
+
+    <div class="card" id="screen-form">
+      <div class="card-title">¿Olvidaste tu contraseña?</div>
+      <div class="card-desc">Ingresa el correo con el que te registraste y te enviaremos instrucciones para recuperar el acceso.</div>
+      <div class="field"><label>Correo electrónico</label><input id="rec-email" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
+      <div id="err-rec" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:2px 0 14px;"></div>
+      <button class="btn-primary" id="btn-rec" onclick="solicitarRecuperacion()">Enviar instrucciones</button>
+      <a class="btn-link" id="login-link" href="sistema">Volver a iniciar sesión</a>
+    </div>
+
+    <div class="card hidden" id="screen-enviado">
+      <div class="card-title">Revisa tu correo</div>
+      <div class="success-note" id="mensaje-enviado"></div>
+      <a class="btn-link" id="login-link-2" href="sistema">Volver a iniciar sesión</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+  const $ = (id) => document.getElementById(id);
+  const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+
+  if (ORG_SLUG) {
+    const qs = '?org=' + encodeURIComponent(ORG_SLUG);
+    $('login-link').href = 'sistema' + qs;
+    $('login-link-2').href = 'sistema' + qs;
+  }
+
+  function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+
+  async function apiFetch(path, options) {
+    let res;
+    try {
+      res = await fetch(API_BASE + path, options);
+    } catch (e) {
+      throw { network: true, message: NET_MSG };
+    }
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      throw { network: false, message: data.error || ('Ocurrió un error (código ' + res.status + '). Intenta de nuevo.') };
+    }
+    return data;
+  }
+
+  async function solicitarRecuperacion() {
+    clearError('err-rec');
+    const email = $('rec-email').value.trim();
+    if (!ORG_SLUG) { setError('err-rec', 'Falta indicar la organización (?org=...) en el enlace.'); return; }
+    if (!email) { setError('err-rec', 'Ingresa tu correo electrónico.'); return; }
+
+    const btn = $('btn-rec');
+    btn.disabled = true;
+    try {
+      const data = await apiFetch('/solicitar_recuperacion.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizacion: ORG_SLUG, email })
+      });
+      $('mensaje-enviado').textContent = data.mensaje || 'Si el correo corresponde a una cuenta registrada, recibirás las instrucciones para recuperar tu acceso.';
+      $('screen-form').classList.add('hidden');
+      $('screen-enviado').classList.remove('hidden');
+    } catch (err) {
+      setError('err-rec', err.message || NET_MSG);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
