@@ -3,10 +3,22 @@
 // "nav" y "footer" no aparecen aquí: siempre van fijos al inicio/final, nunca se
 // reordenan ni se ocultan desde el builder.
 const SECCIONES_POR_PAGINA = [
-    'index'            => ['hero', 'preview', 'benefits', 'trust', 'faq', 'final-cta'],
+    'index'            => ['hero', 'preview', 'como-funciona', 'benefits', 'trust', 'testimonios', 'seguridad', 'faq', 'final-cta'],
     'landing-socios'   => ['hero', 'preview', 'benefits', 'trust', 'faq', 'final-cta'],
     'landing-empresas' => ['hero', 'preview', 'steps', 'orgs', 'final-cta'],
 ];
+
+// Emojis permitidos como ícono de un paso de "Cómo funciona" en el editor de admin —
+// una lista corta y curada en vez de un selector de emojis libre.
+const ICONOS_PASOS = ['🪙', '📱', '✅', '💰', '📈', '🔒', '⏱️', '🤝'];
+
+function pasosPorDefecto() {
+    return [
+        ['icono' => '📱', 'titulo' => 'Abre tu cuenta', 'descripcion' => 'Regístrate en menos de 2 minutos con tu cédula y celular.'],
+        ['icono' => '🪙', 'titulo' => 'Aporta lo que puedas', 'descripcion' => 'Desde $5, cuando quieras. Tu saldo queda disponible al instante.'],
+        ['icono' => '📈', 'titulo' => 'Deja crecer tu ahorro', 'descripcion' => 'Pon tu dinero a plazo fijo y gana rendimiento, o retíralo cuando lo necesites.'],
+    ];
+}
 
 function seccionesPorDefecto($pagina) {
     $keys = SECCIONES_POR_PAGINA[$pagina] ?? [];

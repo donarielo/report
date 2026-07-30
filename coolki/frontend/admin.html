@@ -245,6 +245,15 @@ table.socios tbody tr:hover { background: var(--bg); }
           <div class="settings-row"><label class="settings-label">Correo de soporte</label><input class="settings-input" id="cfgSoporteEmail" placeholder="soporte@tudominio.com" /></div>
           <div class="settings-row"><label class="settings-label">Link de WhatsApp de soporte</label><input class="settings-input" id="cfgSoporteWhatsapp" placeholder="https://wa.me/593999999999" /></div>
 
+          <div class="settings-group-title">Redes sociales (footer del sitio público)</div>
+          <div class="settings-row"><label class="settings-label">Instagram</label><input class="settings-input" id="cfgInstagram" placeholder="https://instagram.com/tu_organizacion" /></div>
+          <div class="settings-row"><label class="settings-label">TikTok</label><input class="settings-input" id="cfgTiktok" placeholder="https://tiktok.com/@tu_organizacion" /></div>
+          <div class="settings-row"><label class="settings-label">Facebook</label><input class="settings-input" id="cfgFacebook" placeholder="https://facebook.com/tu_organizacion" /></div>
+
+          <div class="settings-group-title">Analítica (solo se carga si el visitante acepta cookies)</div>
+          <div class="settings-row"><label class="settings-label">Google Analytics — Measurement ID</label><input class="settings-input" id="cfgGaId" placeholder="G-XXXXXXX" /></div>
+          <div class="settings-row"><label class="settings-label">Meta Pixel ID</label><input class="settings-input" id="cfgPixelId" placeholder="123456789012345" /></div>
+
           <button class="save-btn" onclick="guardarConfiguracion()">Guardar cambios</button>
           <div id="settingsMsg" class="settings-msg hidden"></div>
           <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula. La tasa máxima legal vigente para microcrédito minorista en Ecuador (Banco Central) es 28.23% anual — verifícala periódicamente, el BCE la actualiza.</div>
@@ -317,13 +326,52 @@ table.socios tbody tr:hover { background: var(--bg); }
               <div style="flex:1;"><label class="settings-label">Hasta</label><input class="settings-input" type="date" id="cfgPopupFechaFin" onchange="onBuilderChange()"></div>
             </div>
 
-            <button class="save-btn" onclick="guardarPaginaConfig()">Guardar cambios</button>
+            <div class="settings-group-title">SEO de esta página</div>
+            <div class="settings-row"><label class="settings-label">Título (máx. 70 caracteres)</label><input class="settings-input" id="cfgSeoTitulo" maxlength="70"></div>
+            <div class="settings-row"><label class="settings-label">Descripción (máx. 170 caracteres)</label><textarea class="settings-input" id="cfgSeoDescripcion" rows="2" maxlength="170"></textarea></div>
+            <div class="settings-row"><label class="settings-label">Imagen para compartir (URL, 1200×630px recomendado)</label><input class="settings-input" id="cfgSeoImagen"></div>
+            <div class="settings-row"><label class="settings-label">Título al compartir en redes (opcional)</label><input class="settings-input" id="cfgSeoShareTitulo" maxlength="70"></div>
+            <div class="settings-row"><label class="settings-label">Descripción al compartir en redes (opcional)</label><textarea class="settings-input" id="cfgSeoShareDescripcion" rows="2" maxlength="200"></textarea></div>
+
+            <div id="builderPasosWrap" class="hidden">
+              <div class="settings-group-title">Pasos de "Cómo funciona"</div>
+              <div id="pasosList"></div>
+              <button type="button" class="save-btn" style="background: var(--muted);" onclick="agregarPaso()">+ Añadir paso</button>
+            </div>
+
+            <button class="save-btn" onclick="guardarPaginaConfig()" style="margin-top:16px;">Guardar cambios</button>
             <div id="builderMsg" class="settings-msg hidden"></div>
           </div>
 
           <div class="builder-iframe-wrap">
             <iframe id="builderPreviewFrame"></iframe>
           </div>
+        </div>
+      </div>
+
+      <div class="admin-card" style="margin-top: 20px;">
+        <h3>Testimonios</h3>
+        <div class="mant-desc">Testimonios reales de socios, publicados en la portada. Un testimonio solo puede
+          marcarse como publicado si confirmas que el socio autorizó usar su nombre y foto.</div>
+        <div id="testimoniosList"></div>
+        <button type="button" class="save-btn" style="background: var(--muted); margin-top:12px;" onclick="abrirFormTestimonio(null)">+ Añadir testimonio</button>
+
+        <div id="testimonioForm" class="hidden" style="margin-top:18px; border-top:1px solid var(--border); padding-top:18px;">
+          <input type="hidden" id="testId">
+          <div class="settings-row"><label class="settings-label">Nombre</label><input class="settings-input" id="testNombre" maxlength="100"></div>
+          <div class="settings-row"><label class="settings-label">Ciudad (opcional)</label><input class="settings-input" id="testCiudad" maxlength="100"></div>
+          <div class="settings-row"><label class="settings-label">Testimonio</label><textarea class="settings-input" id="testTexto" rows="3"></textarea></div>
+          <div class="settings-row"><label class="settings-label">Fecha (opcional)</label><input class="settings-input" type="date" id="testFecha"></div>
+          <div class="settings-row">
+            <label class="settings-label">Foto (opcional, JPG/PNG/WEBP, máx. 3 MB)</label>
+            <input class="settings-input" type="file" id="testFoto" accept="image/jpeg,image/png,image/webp" onchange="subirFotoTestimonio()">
+            <div id="testFotoPreview"></div>
+          </div>
+          <div class="settings-row"><label class="settings-label"><input type="checkbox" id="testAutorizado"> El socio autorizó usar su nombre y foto</label></div>
+          <div class="settings-row"><label class="settings-label"><input type="checkbox" id="testPublicado"> Publicado en la portada</label></div>
+          <button class="save-btn" onclick="guardarTestimonio()">Guardar testimonio</button>
+          <button type="button" class="save-btn" style="background: var(--muted);" onclick="cerrarFormTestimonio()">Cancelar</button>
+          <div id="testimonioMsg" class="settings-msg hidden"></div>
         </div>
       </div>
     </div>
@@ -422,6 +470,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     await loadTransacciones();
     await loadCreditos();
     await loadBuilderConfig();
+    await loadTestimonios();
   }
 
   function fillSettingsForm() {
@@ -447,6 +496,11 @@ table.socios tbody tr:hover { background: var(--bg); }
     }
     $('cfgSoporteEmail').value = adminOrgSettings.soporte_email || '';
     $('cfgSoporteWhatsapp').value = adminOrgSettings.soporte_whatsapp || '';
+    $('cfgInstagram').value = adminOrgSettings.instagram_url || '';
+    $('cfgTiktok').value = adminOrgSettings.tiktok_url || '';
+    $('cfgFacebook').value = adminOrgSettings.facebook_url || '';
+    $('cfgGaId').value = adminOrgSettings.ga_measurement_id || '';
+    $('cfgPixelId').value = adminOrgSettings.meta_pixel_id || '';
   }
 
   async function loadAdminDashboard() {
@@ -527,6 +581,11 @@ table.socios tbody tr:hover { background: var(--bg); }
     const membresiaCosto = parseFloat($('cfgMembresiaCosto').value);
     const soporteEmail = $('cfgSoporteEmail').value.trim();
     const soporteWhatsapp = $('cfgSoporteWhatsapp').value.trim();
+    const instagram = $('cfgInstagram').value.trim();
+    const tiktok = $('cfgTiktok').value.trim();
+    const facebook = $('cfgFacebook').value.trim();
+    const gaId = $('cfgGaId').value.trim();
+    const pixelId = $('cfgPixelId').value.trim();
     const valores = [tasa, coolcoinTasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax, membresiaCosto];
     if (valores.some(v => isNaN(v) || v < 0)) {
       msg.textContent = 'Revisa que todos los valores sean números válidos.';
@@ -554,6 +613,13 @@ table.socios tbody tr:hover { background: var(--bg); }
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify({ soporte_email: soporteEmail, soporte_whatsapp: soporteWhatsapp })
       });
+      await apiFetch('/admin_actualizar_redes.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          instagram_url: instagram, tiktok_url: tiktok, facebook_url: facebook,
+          ga_measurement_id: gaId, meta_pixel_id: pixelId,
+        })
+      });
       Object.assign(adminOrgSettings, {
         tasa_plazo_fijo: tasa, coolcoin_tasa_anual: coolcoinTasa, aporte_inicial: aporte, retiro_minimo: retiro,
         comision_deposito_pct: comision, iva_pct: iva,
@@ -562,6 +628,8 @@ table.socios tbody tr:hover { background: var(--bg); }
         credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
         membresia_premium_costo: membresiaCosto,
         soporte_email: soporteEmail, soporte_whatsapp: soporteWhatsapp,
+        instagram_url: instagram, tiktok_url: tiktok, facebook_url: facebook,
+        ga_measurement_id: gaId, meta_pixel_id: pixelId,
       });
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';
@@ -576,6 +644,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     hero: 'Hero (encabezado principal)', preview: 'Vista previa de cuenta', benefits: 'Beneficios',
     trust: 'Cifras de confianza', faq: 'Preguntas frecuentes', steps: 'Cómo funciona',
     orgs: 'Para organizaciones', 'final-cta': 'Llamado final a la acción',
+    'como-funciona': 'Cómo funciona (pasos)', testimonios: 'Testimonios', seguridad: 'Seguridad y protección de datos',
   };
   const BUILDER_PAGINAS = ['index', 'landing-socios', 'landing-empresas'];
   const TAB_BTN_IDS = { 'index': 'tabBtnIndex', 'landing-socios': 'tabBtnLandingSocios', 'landing-empresas': 'tabBtnLandingEmpresas' };
@@ -583,6 +652,64 @@ table.socios tbody tr:hover { background: var(--bg); }
   let paginasConfigCache = {};
   let builderPaginaActual = 'index';
   let builderDebounce = null;
+
+  const PASO_ICONOS = ['🪙', '📱', '✅', '💰', '📈', '🔒', '⏱️', '🤝'];
+  let pasosCache = [];
+
+  async function loadPasos() {
+    try {
+      const data = await apiFetch('/admin_listar_pasos.php', { credentials: 'include' });
+      pasosCache = data.pasos || [];
+    } catch (err) {
+      pasosCache = [];
+    }
+    renderPasosList();
+  }
+
+  function renderPasosList() {
+    const wrap = $('pasosList');
+    wrap.innerHTML = pasosCache.map((p, i) => (
+      '<div class="builder-section-item" style="cursor:default; flex-direction:column; align-items:stretch; gap:8px;">' +
+        '<div style="display:flex; gap:8px; align-items:center;">' +
+          '<select onchange="actualizarPaso(' + i + ", 'icono', this.value)\">" +
+            PASO_ICONOS.map(ic => '<option value="' + ic + '" ' + (ic === p.icono ? 'selected' : '') + '>' + ic + '</option>').join('') +
+          '</select>' +
+          '<input class="settings-input" style="flex:1;" placeholder="Título" value="' + escapeHtml(p.titulo || '') + '" oninput="actualizarPaso(' + i + ", 'titulo', this.value)\">" +
+          '<label style="font-size:12px; display:flex; align-items:center; gap:4px; white-space:nowrap;"><input type="checkbox" ' + (p.visible !== false ? 'checked' : '') + ' onchange="actualizarPaso(' + i + ", 'visible', this.checked)\"> Visible</label>" +
+        '</div>' +
+        '<textarea class="settings-input" rows="2" placeholder="Descripción" oninput="actualizarPaso(' + i + ", 'descripcion', this.value)\">" + escapeHtml(p.descripcion || '') + '</textarea>' +
+        '<div style="display:flex; gap:6px;">' +
+          '<button type="button" class="req-btn approve" onclick="moverPaso(' + i + ', -1)">↑</button>' +
+          '<button type="button" class="req-btn approve" onclick="moverPaso(' + i + ', 1)">↓</button>' +
+          '<button type="button" class="req-btn reject" onclick="quitarPaso(' + i + ')">Quitar</button>' +
+        '</div>' +
+      '</div>'
+    )).join('') || '<div class="empty-note">No hay pasos todavía.</div>';
+  }
+
+  function actualizarPaso(i, campo, valor) {
+    pasosCache[i][campo] = valor;
+  }
+
+  function moverPaso(i, delta) {
+    const j = i + delta;
+    if (j < 0 || j >= pasosCache.length) return;
+    const tmp = pasosCache[i];
+    pasosCache[i] = pasosCache[j];
+    pasosCache[j] = tmp;
+    renderPasosList();
+  }
+
+  function quitarPaso(i) {
+    pasosCache.splice(i, 1);
+    renderPasosList();
+  }
+
+  function agregarPaso() {
+    if (pasosCache.length >= 8) { alert('No puedes tener más de 8 pasos.'); return; }
+    pasosCache.push({ icono: PASO_ICONOS[0], titulo: '', descripcion: '', visible: true });
+    renderPasosList();
+  }
 
   function mezclarConBlanco(hex, factor) {
     factor = factor == null ? 0.90 : factor;
@@ -600,6 +727,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     } catch (err) {
       paginasConfigCache = {};
     }
+    await loadPasos();
     switchBuilderTab('index');
   }
 
@@ -609,6 +737,7 @@ table.socios tbody tr:hover { background: var(--bg); }
     renderBuilderSectionList(pagina);
     renderBuilderPopupForm(pagina);
     loadBuilderIframe(pagina);
+    $('builderPasosWrap').classList.toggle('hidden', pagina !== 'index');
     $('builderMsg').classList.add('hidden');
   }
 
@@ -661,6 +790,21 @@ table.socios tbody tr:hover { background: var(--bg); }
     $('cfgPopupBotonUrl').value = cfg.popup_boton_url || '';
     $('cfgPopupFechaInicio').value = cfg.popup_fecha_inicio || '';
     $('cfgPopupFechaFin').value = cfg.popup_fecha_fin || '';
+    $('cfgSeoTitulo').value = cfg.seo_titulo || '';
+    $('cfgSeoDescripcion').value = cfg.seo_descripcion || '';
+    $('cfgSeoImagen').value = cfg.seo_imagen_url || '';
+    $('cfgSeoShareTitulo').value = cfg.seo_share_titulo || '';
+    $('cfgSeoShareDescripcion').value = cfg.seo_share_descripcion || '';
+  }
+
+  function collectSeoFields() {
+    return {
+      seo_titulo: $('cfgSeoTitulo').value.trim() || null,
+      seo_descripcion: $('cfgSeoDescripcion').value.trim() || null,
+      seo_imagen_url: $('cfgSeoImagen').value.trim() || null,
+      seo_share_titulo: $('cfgSeoShareTitulo').value.trim() || null,
+      seo_share_descripcion: $('cfgSeoShareDescripcion').value.trim() || null,
+    };
   }
 
   function loadBuilderIframe(pagina) {
@@ -718,6 +862,7 @@ table.socios tbody tr:hover { background: var(--bg); }
       const fechaInicio = $('cfgPopupFechaInicio').value || null;
       const fechaFin = $('cfgPopupFechaFin').value || null;
       const secciones = collectBuilderSecciones();
+      const seo = collectSeoFields();
       await apiFetch('/admin_guardar_pagina_config.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify({
@@ -725,13 +870,21 @@ table.socios tbody tr:hover { background: var(--bg); }
           popup_activo: popup.activo, popup_titulo: popup.titulo, popup_texto: popup.texto,
           popup_imagen_url: popup.imagen_url, popup_boton_texto: popup.boton_texto, popup_boton_url: popup.boton_url,
           popup_fecha_inicio: fechaInicio, popup_fecha_fin: fechaFin,
+          ...seo,
         })
       });
+      if (builderPaginaActual === 'index') {
+        await apiFetch('/admin_guardar_pasos.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ pasos: pasosCache })
+        });
+      }
       paginasConfigCache[builderPaginaActual] = {
         secciones,
         popup_activo: popup.activo, popup_titulo: popup.titulo, popup_texto: popup.texto,
         popup_imagen_url: popup.imagen_url, popup_boton_texto: popup.boton_texto, popup_boton_url: popup.boton_url,
         popup_fecha_inicio: fechaInicio, popup_fecha_fin: fechaFin,
+        ...seo,
       };
       msg.textContent = 'Cambios guardados.';
       msg.className = 'settings-msg ok';
@@ -740,6 +893,138 @@ table.socios tbody tr:hover { background: var(--bg); }
       msg.textContent = err.message || NET_MSG;
       msg.className = 'settings-msg err';
     }
+  }
+
+  // ============ Testimonios ============
+  let testimoniosCache = [];
+  let testFotoUrlActual = null;
+
+  async function loadTestimonios() {
+    try {
+      const data = await apiFetch('/admin_listar_testimonios.php', { credentials: 'include' });
+      testimoniosCache = data.testimonios || [];
+    } catch (err) {
+      testimoniosCache = [];
+    }
+    renderTestimoniosList();
+  }
+
+  function renderTestimoniosList() {
+    const wrap = $('testimoniosList');
+    wrap.innerHTML = testimoniosCache.length ? testimoniosCache.map((t, i) => {
+      const extracto = escapeHtml((t.testimonio || '').slice(0, 80)) + ((t.testimonio || '').length > 80 ? '…' : '');
+      return '<div class="request-row">' +
+        '<div class="request-info"><b>' + escapeHtml(t.nombre) + '</b> ' +
+        (t.publicado ? '<span class="status-pill">Publicado</span>' : '<span class="status-pill alert">Borrador</span>') +
+        '<div class="request-name">' + extracto + '</div></div>' +
+        '<div class="request-actions">' +
+          '<button class="req-btn approve" onclick="moverTestimonio(' + i + ', -1)">↑</button>' +
+          '<button class="req-btn approve" onclick="moverTestimonio(' + i + ', 1)">↓</button>' +
+          '<button class="req-btn approve" onclick="abrirFormTestimonio(' + t.id + ')">Editar</button>' +
+          '<button class="req-btn reject" onclick="eliminarTestimonio(' + t.id + ')">Borrar</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') : '<div class="empty-note">Todavía no hay testimonios.</div>';
+  }
+
+  function abrirFormTestimonio(id) {
+    const t = id ? testimoniosCache.find(x => x.id === id) : null;
+    $('testId').value = t ? t.id : '';
+    $('testNombre').value = t ? t.nombre : '';
+    $('testCiudad').value = t ? (t.ciudad || '') : '';
+    $('testTexto').value = t ? t.testimonio : '';
+    $('testFecha').value = t ? (t.fecha_registro || '') : '';
+    $('testAutorizado').checked = t ? !!t.autorizacion_confirmada : false;
+    $('testPublicado').checked = t ? !!t.publicado : false;
+    testFotoUrlActual = t ? (t.foto_url || null) : null;
+    $('testFotoPreview').innerHTML = testFotoUrlActual ? '<img src="' + testFotoUrlActual + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:8px;">' : '';
+    $('testFoto').value = '';
+    $('testimonioMsg').classList.add('hidden');
+    $('testimonioForm').classList.remove('hidden');
+  }
+
+  function cerrarFormTestimonio() {
+    $('testimonioForm').classList.add('hidden');
+  }
+
+  async function subirFotoTestimonio() {
+    const input = $('testFoto');
+    if (!input.files || !input.files[0]) return;
+    const msg = $('testimonioMsg');
+    msg.classList.add('hidden');
+    const fd = new FormData();
+    fd.append('foto', input.files[0]);
+    try {
+      const res = await fetch(API_BASE + '/admin_subir_foto_testimonio.php', { method: 'POST', credentials: 'include', body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || NET_MSG);
+      testFotoUrlActual = data.foto_url;
+      $('testFotoPreview').innerHTML = '<img src="' + testFotoUrlActual + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:8px;">';
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+      msg.classList.remove('hidden');
+    }
+  }
+
+  async function guardarTestimonio() {
+    const msg = $('testimonioMsg');
+    msg.classList.add('hidden');
+    const nombre = $('testNombre').value.trim();
+    const testimonio = $('testTexto').value.trim();
+    if (!nombre || !testimonio) {
+      msg.textContent = 'El nombre y el testimonio son obligatorios.';
+      msg.className = 'settings-msg err';
+      msg.classList.remove('hidden');
+      return;
+    }
+    try {
+      await apiFetch('/admin_guardar_testimonio.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          id: $('testId').value ? parseInt($('testId').value) : null,
+          nombre, ciudad: $('testCiudad').value.trim(), testimonio,
+          fecha_registro: $('testFecha').value || null,
+          foto_url: testFotoUrlActual,
+          autorizacion_confirmada: $('testAutorizado').checked,
+          publicado: $('testPublicado').checked,
+        })
+      });
+      cerrarFormTestimonio();
+      await loadTestimonios();
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+      msg.classList.remove('hidden');
+    }
+  }
+
+  async function eliminarTestimonio(id) {
+    if (!confirm('¿Borrar este testimonio? Esta acción no se puede deshacer.')) return;
+    try {
+      await apiFetch('/admin_eliminar_testimonio.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ id })
+      });
+      await loadTestimonios();
+    } catch (err) {
+      alert(err.message || NET_MSG);
+    }
+  }
+
+  async function moverTestimonio(i, delta) {
+    const j = i + delta;
+    if (j < 0 || j >= testimoniosCache.length) return;
+    const tmp = testimoniosCache[i];
+    testimoniosCache[i] = testimoniosCache[j];
+    testimoniosCache[j] = tmp;
+    renderTestimoniosList();
+    try {
+      await apiFetch('/admin_reordenar_testimonios.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ ids: testimoniosCache.map(t => t.id) })
+      });
+    } catch (err) { /* si falla, se reordena de nuevo en el próximo loadTestimonios() */ }
   }
 
   // ============ Historial global de transacciones ============

@@ -29,6 +29,27 @@
     });
   }
 
+  // Enlaces de redes sociales en el footer: solo se muestran si la organización configuró
+  // esa URL en admin.html — mismo criterio que ya usa mostrarPopup() con sessionStorage y
+  // los datos de soporte en sistema.html (esconder en vez de mostrar un link roto).
+  function aplicarFooter(org) {
+    if (!org) return;
+    [
+      ['footerInstagram', org.instagram_url],
+      ['footerTiktok', org.tiktok_url],
+      ['footerFacebook', org.facebook_url],
+    ].forEach(([id, url]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (url) {
+        el.href = url;
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
+    });
+  }
+
   function aplicarSecciones(secciones) {
     if (!Array.isArray(secciones) || !secciones.length) return;
     const footer = document.querySelector('[data-section="footer"]');
@@ -122,6 +143,7 @@
 
   function applyConfig(data) {
     aplicarColor(data.organizacion);
+    aplicarFooter(data.organizacion);
     if (PAGINA) {
       aplicarSecciones(data.secciones);
       mostrarPopup(data.popup);

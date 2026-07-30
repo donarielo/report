@@ -1,10 +1,30 @@
+<?php
+require __DIR__ . '/seo_bootstrap.php';
+
+$org = resolverOrganizacionPublica('coolki');
+if (!$org) {
+    http_response_code(404);
+    echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Página no encontrada</title></head>' .
+         '<body style="font-family:sans-serif;text-align:center;padding:60px 20px;">' .
+         '<p>No pudimos encontrar esta página.</p></body></html>';
+    exit;
+}
+$orgSlug = $org['slug'];
+
+$pdo = getDB();
+$stmt = $pdo->prepare("SELECT * FROM paginas_config WHERE organizacion_id = ? AND pagina = 'landing-empresas'");
+$stmt->execute([$org['id']]);
+$seoConfig = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+$e = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COOLKI — Software para cajas de ahorro digitales</title>
-<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+<?php renderSeoHead($org, 'landing-empresas', $seoConfig); ?>
+<script>window.COOLKI_CONFIG = { org: <?= json_encode($orgSlug) ?> };</script>
 </head>
 <body style="margin:0;">
 <style>
@@ -78,7 +98,13 @@
 .final-cta h2 { font-family: 'Space Grotesk', sans-serif; font-size: 28px; margin: 0 0 10px; letter-spacing: -0.01em; }
 .final-cta p { color: var(--muted); margin-bottom: 26px; }
 
-.legal-footnote { border-top: 1px solid var(--border); padding: 26px 0 40px; font-size: 11.5px; color: var(--muted); line-height: 1.7; text-align: center; }
+.site-footer { border-top: 1px solid var(--border); padding: 30px 0 40px; }
+.footer-social { display: flex; justify-content: center; gap: 14px; margin-bottom: 16px; }
+.footer-social-link { width: 36px; height: 36px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.footer-links { text-align: center; font-size: 12.5px; margin-bottom: 12px; }
+.footer-links a { color: var(--muted); text-decoration: none; }
+.footer-links a:hover { color: var(--brand); }
+.legal-footnote { font-size: 11.5px; color: var(--muted); line-height: 1.7; text-align: center; }
 
 @media (max-width: 720px) { .steps, .org-grid { grid-template-columns: 1fr; } .orgs { padding: 32px 22px; } }
 </style>
@@ -144,14 +170,32 @@
       <button class="btn-primary">Agendar una demo</button>
     </div>
 
-    <div class="legal-footnote" data-section="footer" data-pinned="true">
-      COOLKI es una marca de demostración creada para presentar este software. COOLKI no es una entidad financiera ni una caja de ahorro real:
-      es la plataforma tecnológica que cada organización cliente usa para administrar su propia caja, bajo su propia responsabilidad legal y su propia cuenta de cobro.
+    <div class="site-footer" data-section="footer" data-pinned="true">
+      <div class="footer-social">
+        <a id="footerInstagram" class="footer-social-link" href="#" target="_blank" rel="noopener" style="display:none" aria-label="Instagram">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+        </a>
+        <a id="footerTiktok" class="footer-social-link" href="#" target="_blank" rel="noopener" style="display:none" aria-label="TikTok">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M15 3c.3 2 1.7 3.6 4 3.9v3c-1.4 0-2.8-.4-4-1.2v6.4c0 3.3-2.7 5.9-6 5.9s-6-2.6-6-5.9 2.7-5.9 6-5.9c.3 0 .6 0 .9.1v3.1c-.3-.1-.6-.1-.9-.1-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 2.9-1.3 2.9-2.9V3h3.1z"/></svg>
+        </a>
+        <a id="footerFacebook" class="footer-social-link" href="#" target="_blank" rel="noopener" style="display:none" aria-label="Facebook">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v6h3v-6h3l1-3h-4v-2c0-.6.4-1 1-1z"/></svg>
+        </a>
+      </div>
+      <div class="footer-links">
+        <a href="terminos<?= $orgSlug ? '?org=' . urlencode($orgSlug) : '' ?>">Términos y condiciones</a> ·
+        <a href="privacidad<?= $orgSlug ? '?org=' . urlencode($orgSlug) : '' ?>">Política de privacidad</a>
+      </div>
+      <div class="legal-footnote">
+        COOLKI es una marca de demostración creada para presentar este software. COOLKI no es una entidad financiera ni una caja de ahorro real:
+        es la plataforma tecnológica que cada organización cliente usa para administrar su propia caja, bajo su propia responsabilidad legal y su propia cuenta de cobro.
+      </div>
     </div>
   </div>
 </div>
 
 <script src="builder-runtime.js" data-pagina="landing-empresas"></script>
+<script src="analytics-consent.js"></script>
 
 </body>
 </html>

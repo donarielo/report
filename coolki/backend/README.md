@@ -507,6 +507,139 @@ CREATE TABLE password_resets (
   extra de generar el token y enviar el correo) — es una fuga de tiempo mínima y aceptada, no
   se intentó igualar artificialmente el tiempo de respuesta.
 
+## 19. Contenido editable de portada (pasos, testimonios con foto real, footer y redes)
+
+### Migración de base de datos requerida
+
+```sql
+ALTER TABLE organizaciones
+  ADD COLUMN instagram_url VARCHAR(255) NULL AFTER soporte_whatsapp,
+  ADD COLUMN tiktok_url VARCHAR(255) NULL AFTER instagram_url,
+  ADD COLUMN facebook_url VARCHAR(255) NULL AFTER tiktok_url,
+  ADD COLUMN ga_measurement_id VARCHAR(30) NULL AFTER facebook_url,
+  ADD COLUMN meta_pixel_id VARCHAR(30) NULL AFTER ga_measurement_id;
+
+CREATE TABLE pagina_pasos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  organizacion_id INT NOT NULL,
+  pagina ENUM('index') NOT NULL DEFAULT 'index',
+  orden INT NOT NULL DEFAULT 0,
+  icono VARCHAR(8) NOT NULL DEFAULT '🪙',
+  titulo VARCHAR(100) NOT NULL,
+  descripcion VARCHAR(280) NOT NULL,
+  visible TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+
+CREATE TABLE testimonios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  organizacion_id INT NOT NULL,
+  foto_url VARCHAR(255) NULL,
+  nombre VARCHAR(100) NOT NULL,
+  ciudad VARCHAR(100) NULL,
+  testimonio TEXT NOT NULL,
+  fecha_registro DATE NULL,
+  publicado TINYINT(1) NOT NULL DEFAULT 0,
+  autorizacion_confirmada TINYINT(1) NOT NULL DEFAULT 0,
+  orden INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+```
+
+### Cómo funciona
+
+- **Pasos de "Cómo funciona"**: `admin.html` (dentro de la tarjeta "Diseño del sitio") permite
+  crear/editar/reordenar/ocultar tarjetas con emoji + título + descripción, guardadas en
+  `pagina_pasos`. `index.php` las lista en el orden guardado; si el administrador no ha
+  configurado ninguna, se muestran 3 pasos por defecto (`pasosPorDefecto()` en
+  `backend/includes/paginas_config.php`) para que la sección nunca aparezca vacía.
+- **Testimonios con foto real**: es la única función de esta app con subida real de archivos.
+  `admin_subir_foto_testimonio.php` exige sesión de administrador, mide el tamaño en el
+  servidor (máx. 3 MB), verifica el tipo real del archivo con `finfo_file()` (nunca confía en
+  la extensión ni en el `Content-Type` que manda el navegador) contra una lista blanca de
+  `jpg/png/webp` — **nunca GIF ni SVG** (SVG puede contener `<script>` embebido), confirma con
+  `getimagesize()` que coincide con el mismo tipo (descarta archivos "polyglot"), valida
+  dimensiones razonables, y guarda el archivo con un nombre aleatorio
+  (`bin2hex(random_bytes(16))`, nunca derivado del nombre original) usando
+  `move_uploaded_file()`. La carpeta `frontend/uploads/testimonios/` tiene su propio
+  `.htaccess` que desactiva la ejecución de PHP ahí dentro, como defensa adicional.
+  Cada testimonio requiere marcar "autorización confirmada" (que el socio autorizó publicar su
+  nombre/foto) antes de poder marcarlo como publicado. Solo los publicados aparecen en
+  `index.php`.
+- **Footer con redes sociales**: `instagram_url`/`tiktok_url`/`facebook_url` son opcionales —
+  `admin_actualizar_redes.php` los guarda, `obtener_config_publica.php` los expone, y
+  `builder-runtime.js` (nueva función `aplicarFooter`) solo muestra el ícono de cada red si su
+  URL está configurada — mismo criterio que ya se usa para los pop-ups y los datos de soporte.
+
+### Limitaciones conocidas
+
+- No hay recompresión ni redimensionado de las fotos subidas — se guardan tal cual las sube el
+  administrador (ya validadas como imagen real). Si pesan mucho, conviene pedirle al socio una
+  foto más liviana antes de subirla.
+- El borrado de un testimonio borra su fila y, si tiene foto, intenta borrar el archivo del
+  disco; si el archivo ya no existe (borrado manual por FTP, etc.) no se considera error.
+
+## 20. SEO técnico (metadatos por página, sitemap/robots, structured data, cookies/analítica)
+
+### Migración de base de datos requerida
+
+```sql
+ALTER TABLE paginas_config
+  ADD COLUMN seo_titulo VARCHAR(70) NULL AFTER popup_fecha_fin,
+  ADD COLUMN seo_descripcion VARCHAR(170) NULL AFTER seo_titulo,
+  ADD COLUMN seo_imagen_url VARCHAR(255) NULL AFTER seo_descripcion,
+  ADD COLUMN seo_share_titulo VARCHAR(70) NULL AFTER seo_imagen_url,
+  ADD COLUMN seo_share_descripcion VARCHAR(200) NULL AFTER seo_share_titulo;
+```
+
+### Cómo funciona
+
+- **El problema que resuelve**: `builder-runtime.js` aplica color/secciones/pop-ups desde el
+  navegador con `fetch()`, lo cual funciona perfecto para visitantes reales pero no sirve para
+  metadatos de SEO — los rastreadores de Facebook/WhatsApp/Twitter/Google que generan la vista
+  previa de un link **no ejecutan JavaScript**, así que necesitan el `<title>`, meta
+  descripción, Open Graph y datos estructurados ya presentes en la primera respuesta HTML del
+  servidor. Por eso `index.html` y `landing-empresas.html` pasaron a ser `index.php` y
+  `landing-empresas.php`: siguen siendo HTML normal para el navegador, pero ahora el servidor
+  arma el `<head>` con PHP antes de enviarlo. `landing-socios.html` (demo interna, no
+  publicada) se queda como archivo estático, solo con un `noindex` fijo.
+- **Metadatos editables por página**: `admin.html` (misma tarjeta de "Diseño del sitio") permite
+  fijar, por cada página pública, un título SEO (máx. 70 caracteres), una descripción (máx. 170),
+  una imagen para compartir (por URL, se recomienda 1200×630px — no hay subida de archivo para
+  esta imagen, es un campo de texto) y un título/descripción distintos para cuando se comparte
+  en redes (Open Graph), por si se quiere un texto más informal que el de Google. Si un campo no
+  se configura, se usa un valor por defecto razonable (nunca queda vacío).
+- **Canonical siempre correcto**: la URL canónica de cada página **no es editable** — se calcula
+  siempre a partir de una tabla fija de rutas (`RUTA_CANONICA_POR_PAGINA` en
+  `backend/includes/seo.php`) más `SITE_URL`, así el canonical de la portada es siempre
+  exactamente `https://coolkiecuador.com/`, sin importar cómo se haya visitado la página
+  (nunca arrastra `?org=` ni parámetros de tracking). Se decidió así — en vez de un campo
+  editable — porque un canonical mal escrito a mano puede sacar la página entera de Google.
+- **Datos estructurados**: `index.php` incluye un bloque JSON-LD tipo `Organization` (no un tipo
+  específico de institución financiera, para no insinuar una regulación que la cooperativa no
+  tiene) con nombre, URL y logo de la organización.
+- **`sitemap.xml` y `robots.txt`**: estáticos, listan las páginas públicas indexables
+  (`landing-socios.html` queda fuera de ambos por ser una demo interna).
+- **Analítica con consentimiento**: `analytics-consent.js` solo carga Google Analytics o Meta
+  Pixel si **ambas** condiciones se cumplen: el administrador configuró un
+  `ga_measurement_id`/`meta_pixel_id` en `admin.html` (vía `admin_actualizar_redes.php`) y el
+  visitante aceptó explícitamente el aviso de cookies (guardado en `localStorage`, no en
+  cookies, para no depender de consentimiento para leer el propio consentimiento). Sin ambas
+  condiciones, ningún script de analítica se carga.
+
+### Limitaciones conocidas
+
+- Los rastreadores de redes sociales cachean la vista previa de un link durante un tiempo
+  variable — si cambias el título/imagen SEO de una página ya compartida antes, algunas redes
+  no la actualizan de inmediato (cada red tiene su propia herramienta para forzar el
+  refresco, por ejemplo el "Sharing Debugger" de Facebook).
+- `sitemap.xml`/`robots.txt` son archivos estáticos: si en el futuro se agregan más páginas
+  públicas hay que añadirlas a mano.
+
 ## Qué falta todavía (para ser 100% honestos)
 
 - **Pago real del retiro al socio**: aprobar un retiro solo descuenta el saldo interno; el envío

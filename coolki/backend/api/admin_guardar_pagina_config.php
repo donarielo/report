@@ -21,7 +21,13 @@ $popupBotonUrl = trim($in['popup_boton_url'] ?? '') ?: null;
 $popupFechaInicio = trim($in['popup_fecha_inicio'] ?? '') ?: null;
 $popupFechaFin = trim($in['popup_fecha_fin'] ?? '') ?: null;
 
-foreach (['popup_imagen_url' => $popupImagenUrl, 'popup_boton_url' => $popupBotonUrl] as $campo => $valor) {
+$seoTitulo = trim($in['seo_titulo'] ?? '') ?: null;
+$seoDescripcion = trim($in['seo_descripcion'] ?? '') ?: null;
+$seoImagenUrl = trim($in['seo_imagen_url'] ?? '') ?: null;
+$seoShareTitulo = trim($in['seo_share_titulo'] ?? '') ?: null;
+$seoShareDescripcion = trim($in['seo_share_descripcion'] ?? '') ?: null;
+
+foreach (['popup_imagen_url' => $popupImagenUrl, 'popup_boton_url' => $popupBotonUrl, 'seo_imagen_url' => $seoImagenUrl] as $campo => $valor) {
     if ($valor !== null && !filter_var($valor, FILTER_VALIDATE_URL)) {
         jsonResponse(['error' => 'El campo ' . $campo . ' no es una URL válida.'], 400);
     }
@@ -29,23 +35,40 @@ foreach (['popup_imagen_url' => $popupImagenUrl, 'popup_boton_url' => $popupBoto
 if ($popupFechaInicio && $popupFechaFin && $popupFechaFin < $popupFechaInicio) {
     jsonResponse(['error' => 'La fecha de fin del pop-up no puede ser anterior a la de inicio.'], 400);
 }
+if ($seoTitulo !== null && mb_strlen($seoTitulo) > 70) {
+    jsonResponse(['error' => 'El título SEO no puede superar los 70 caracteres.'], 400);
+}
+if ($seoDescripcion !== null && mb_strlen($seoDescripcion) > 170) {
+    jsonResponse(['error' => 'La descripción SEO no puede superar los 170 caracteres.'], 400);
+}
+if ($seoShareTitulo !== null && mb_strlen($seoShareTitulo) > 70) {
+    jsonResponse(['error' => 'El título para compartir no puede superar los 70 caracteres.'], 400);
+}
+if ($seoShareDescripcion !== null && mb_strlen($seoShareDescripcion) > 200) {
+    jsonResponse(['error' => 'La descripción para compartir no puede superar los 200 caracteres.'], 400);
+}
 
 $pdo = getDB();
 $stmt = $pdo->prepare(
     "INSERT INTO paginas_config
         (organizacion_id, pagina, secciones, popup_activo, popup_titulo, popup_texto,
-         popup_imagen_url, popup_boton_texto, popup_boton_url, popup_fecha_inicio, popup_fecha_fin)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         popup_imagen_url, popup_boton_texto, popup_boton_url, popup_fecha_inicio, popup_fecha_fin,
+         seo_titulo, seo_descripcion, seo_imagen_url, seo_share_titulo, seo_share_descripcion)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
         secciones = VALUES(secciones), popup_activo = VALUES(popup_activo),
         popup_titulo = VALUES(popup_titulo), popup_texto = VALUES(popup_texto),
         popup_imagen_url = VALUES(popup_imagen_url), popup_boton_texto = VALUES(popup_boton_texto),
         popup_boton_url = VALUES(popup_boton_url), popup_fecha_inicio = VALUES(popup_fecha_inicio),
-        popup_fecha_fin = VALUES(popup_fecha_fin)"
+        popup_fecha_fin = VALUES(popup_fecha_fin),
+        seo_titulo = VALUES(seo_titulo), seo_descripcion = VALUES(seo_descripcion),
+        seo_imagen_url = VALUES(seo_imagen_url), seo_share_titulo = VALUES(seo_share_titulo),
+        seo_share_descripcion = VALUES(seo_share_descripcion)"
 );
 $stmt->execute([
     $admin['organizacion_id'], $pagina, json_encode($secciones), $popupActivo, $popupTitulo, $popupTexto,
     $popupImagenUrl, $popupBotonTexto, $popupBotonUrl, $popupFechaInicio, $popupFechaFin,
+    $seoTitulo, $seoDescripcion, $seoImagenUrl, $seoShareTitulo, $seoShareDescripcion,
 ]);
 
 jsonResponse(['ok' => true]);

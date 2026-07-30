@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /backend/
+Disallow: /landing-socios
+Disallow: /uploads/
+
+Sitemap: https://coolkiecuador.com/sitemap.xml

@@ -29,6 +29,11 @@ foreach (array_keys(SECCIONES_POR_PAGINA) as $pagina) {
             'popup_boton_url' => $fila['popup_boton_url'],
             'popup_fecha_inicio' => $fila['popup_fecha_inicio'],
             'popup_fecha_fin' => $fila['popup_fecha_fin'],
+            'seo_titulo' => $fila['seo_titulo'],
+            'seo_descripcion' => $fila['seo_descripcion'],
+            'seo_imagen_url' => $fila['seo_imagen_url'],
+            'seo_share_titulo' => $fila['seo_share_titulo'],
+            'seo_share_descripcion' => $fila['seo_share_descripcion'],
         ];
     } else {
         $paginas[$pagina] = [
@@ -41,6 +46,11 @@ foreach (array_keys(SECCIONES_POR_PAGINA) as $pagina) {
             'popup_boton_url' => null,
             'popup_fecha_inicio' => null,
             'popup_fecha_fin' => null,
+            'seo_titulo' => null,
+            'seo_descripcion' => null,
+            'seo_imagen_url' => null,
+            'seo_share_titulo' => null,
+            'seo_share_descripcion' => null,
         ];
     }
 }

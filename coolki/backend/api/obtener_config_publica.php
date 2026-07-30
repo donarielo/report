@@ -25,6 +25,11 @@ $respuesta = [
         'membresia_premium_costo' => $org['membresia_premium_costo'],
         'soporte_email' => $org['soporte_email'],
         'soporte_whatsapp' => $org['soporte_whatsapp'],
+        'instagram_url' => $org['instagram_url'],
+        'tiktok_url' => $org['tiktok_url'],
+        'facebook_url' => $org['facebook_url'],
+        'ga_measurement_id' => $org['ga_measurement_id'],
+        'meta_pixel_id' => $org['meta_pixel_id'],
     ],
 ];
 

@@ -25,6 +25,11 @@ CREATE TABLE organizaciones (
   membresia_premium_costo DECIMAL(10,2) DEFAULT 20.00, -- pago único para pasar a Cliente Premium (requisito para pedir crédito)
   soporte_email VARCHAR(150) NULL,
   soporte_whatsapp VARCHAR(255) NULL, -- link completo, ej. https://wa.me/593999999999
+  instagram_url VARCHAR(255) NULL,
+  tiktok_url VARCHAR(255) NULL,
+  facebook_url VARCHAR(255) NULL,
+  ga_measurement_id VARCHAR(30) NULL,  -- Google Analytics (ej. G-XXXXXXX), vacío = no se carga
+  meta_pixel_id VARCHAR(30) NULL,      -- Meta Pixel, vacío = no se carga
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -142,8 +147,43 @@ CREATE TABLE paginas_config (
   popup_boton_url VARCHAR(255) NULL,
   popup_fecha_inicio DATE NULL,
   popup_fecha_fin DATE NULL,
+  seo_titulo VARCHAR(70) NULL,
+  seo_descripcion VARCHAR(170) NULL,
+  seo_imagen_url VARCHAR(255) NULL,        -- por URL, 1200x630px recomendado (no hay subida para esta imagen)
+  seo_share_titulo VARCHAR(70) NULL,       -- título al compartir en WhatsApp/Facebook/Twitter (Open Graph)
+  seo_share_descripcion VARCHAR(200) NULL, -- descripción al compartir
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unico_por_org_pagina (organizacion_id, pagina),
+  FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+
+CREATE TABLE pagina_pasos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  organizacion_id INT NOT NULL,
+  pagina ENUM('index') NOT NULL DEFAULT 'index',
+  orden INT NOT NULL DEFAULT 0,
+  icono VARCHAR(8) NOT NULL DEFAULT '🪙',
+  titulo VARCHAR(100) NOT NULL,
+  descripcion VARCHAR(280) NOT NULL,
+  visible TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
+);
+
+CREATE TABLE testimonios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  organizacion_id INT NOT NULL,
+  foto_url VARCHAR(255) NULL,          -- subida real, ver backend/api/admin_subir_foto_testimonio.php
+  nombre VARCHAR(100) NOT NULL,
+  ciudad VARCHAR(100) NULL,
+  testimonio TEXT NOT NULL,
+  fecha_registro DATE NULL,
+  publicado TINYINT(1) NOT NULL DEFAULT 0,
+  autorizacion_confirmada TINYINT(1) NOT NULL DEFAULT 0, -- el admin confirma tener el consentimiento de la persona
+  orden INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id)
 );
 
