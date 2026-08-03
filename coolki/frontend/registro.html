@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Crear cuenta</title>
+<!-- Config del frontend para esta caja. Si este archivo se reutiliza para otro cliente,
+     cambia 'org' aquí (o bórralo y siempre pasa ?org=slug en la URL). -->
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+<!-- PayPhone · Cajita de Pagos (SDK oficial v2.0). Ver docs.payphone.app/cajita-de-pagos -->
+<script src="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.js" type="module"></script>
+<link href="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.css" rel="stylesheet">
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-reg, .coolki-reg * { box-sizing: border-box; }
+
+.coolki-reg {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --sun-soft: #FFF3D6;
+  --payphone: #5B2A8C;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 34px 16px 60px;
+}
+
+.reg-screen { width: 100%; max-width: 400px; }
+.reg-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.reg-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+
+.stepper { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+.step-dot { flex: 1; height: 5px; border-radius: 4px; background: var(--border); }
+.step-dot.done { background: var(--brand); }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.card-eyebrow { display: inline-block; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); background: var(--brand-soft); padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+.card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+.card-desc { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.field input { width: 100%; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); }
+.field input::placeholder { color: #A7ABC0; }
+.field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+
+.btn-primary { width: 100%; padding: 15px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-link { width: 100%; text-align: center; padding: 12px 0; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13.5px; cursor: pointer; margin-top: 4px; text-decoration: underline; text-underline-offset: 3px; }
+
+.deposit-hero { border-radius: 16px; padding: 22px 20px; margin-bottom: 18px; background: var(--brand); color: #fff; }
+.deposit-hero-label { font-size: 12.5px; opacity: 0.85; margin-bottom: 6px; }
+.deposit-hero-amount { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 38px; letter-spacing: -0.02em; }
+.deposit-hero-tag { display: inline-block; margin-top: 10px; font-size: 11.5px; font-weight: 600; background: rgba(255,255,255,0.22); padding: 4px 10px; border-radius: 20px; }
+
+.payphone-btn { width: 100%; padding: 15px 0; border: none; border-radius: 14px; background: var(--payphone); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 9px; cursor: pointer; }
+.payphone-mark { width: 19px; height: 19px; border-radius: 6px; background: #fff; color: var(--payphone); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; }
+.defer-note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.5; }
+
+.confirm-badge { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: var(--mint-soft); }
+.confirm-badge.pending { background: var(--sun-soft); }
+.confirm-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 23px; text-align: center; margin-bottom: 8px; letter-spacing: -0.01em; }
+.confirm-desc { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 22px; }
+
+.hidden { display: none; }
+
+.terms-row { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 16px; }
+.terms-row input { margin-top: 3px; flex-shrink: 0; }
+.terms-row label { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.terms-row a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.privacy-note { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 4px 0 10px; }
+.privacy-note a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; border: none; background: transparent; cursor: pointer; font-size: 17px; padding: 0 10px; line-height: 1; }
+.password-toggle span { pointer-events: none; }
+
+.pw-meter { height: 5px; background: var(--border); border-radius: 4px; margin: 6px 0 2px; overflow: hidden; }
+.pw-meter-fill { height: 100%; width: 0%; background: var(--border); transition: width .2s, background .2s; }
+.pw-meter-label { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; min-height: 14px; }
+
+.top-nav-link { display: inline-block; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 16px; }
+.bottom-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 14px; }
+.bottom-note a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+</style>
+
+<div class="coolki-reg">
+  <div class="reg-screen">
+    <a class="top-nav-link" id="volver-inicio-link" href="index">&larr; Volver al inicio</a>
+    <a class="reg-brand" id="logo-link" href="index" style="text-decoration:none;">
+      <svg width="36" height="36" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="reg-word">coolki</div>
+    </a>
+
+    <div class="stepper"><div class="step-dot done" id="dot1"></div><div class="step-dot" id="dot2"></div></div>
+
+    <div class="card" id="screen-datos">
+      <span class="card-eyebrow">Paso 1 de 2</span>
+      <div class="card-title">Bienvenido a COOLKI</div>
+      <div class="card-desc">Crea tu cuenta en un minuto y empieza a ahorrar a tu ritmo.</div>
+      <div class="field"><label>Nombre completo</label><input id="reg-nombre" type="text" autocomplete="name" placeholder="¿Cómo te llamas?"></div>
+      <div class="field"><label>Cédula</label><input id="reg-cedula" type="text" autocomplete="off" inputmode="numeric" maxlength="10" placeholder="1712345678"></div>
+      <div id="err-cedula" class="hidden" style="font-size:11.5px;color:#E5484D;margin:-8px 0 12px;"></div>
+      <div class="field"><label>Correo electrónico</label><input id="reg-email" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
+      <div class="field"><label>Celular</label><input id="reg-celular" type="text" autocomplete="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx"></div>
+      <div id="err-celular" class="hidden" style="font-size:11.5px;color:#E5484D;margin:-8px 0 12px;"></div>
+
+      <div class="field">
+        <label>Contraseña</label>
+        <div class="password-wrap">
+          <input id="reg-password" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" oninput="actualizarMedidor('reg-password','pwMeterFill','pwMeterLabel')">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('reg-password', this)"><span aria-hidden="true">👁</span></button>
+        </div>
+        <div class="pw-meter"><div class="pw-meter-fill" id="pwMeterFill"></div></div>
+        <div class="pw-meter-label" id="pwMeterLabel"></div>
+      </div>
+
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <div class="password-wrap">
+          <input id="reg-password-confirmar" type="password" autocomplete="new-password" placeholder="Repite tu contraseña">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('reg-password-confirmar', this)"><span aria-hidden="true">👁</span></button>
+        </div>
+      </div>
+
+      <div class="privacy-note">Tus datos serán utilizados para crear y administrar tu cuenta, verificar tu identidad y brindarte soporte. Consulta nuestra <a href="privacidad" id="privacidad-link" target="_blank">Política de Privacidad</a> para conocer cómo protegemos y tratamos tu información.</div>
+
+      <div class="terms-row">
+        <input type="checkbox" id="reg-terminos">
+        <label for="reg-terminos">He leído y acepto los <a href="terminos" id="terminos-link" target="_blank">Términos y Condiciones</a> de COOLKI.</label>
+      </div>
+      <div id="err-datos" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:2px 0 14px;"></div>
+      <button class="btn-primary" id="btn-datos" onclick="submitDatos()">Continuar</button>
+      <div class="bottom-note">¿Ya tienes una cuenta? <a href="sistema" id="login-link">Inicia sesión</a></div>
+    </div>
+
+    <div class="card hidden" id="screen-aporte">
+      <span class="card-eyebrow">Paso 2 de 2</span>
+      <div class="card-title">Activa tu cuenta</div>
+      <div class="card-desc">Con un aporte inicial de <span id="desc-amount">$5.00</span> dejas tu cuenta lista. Ese monto queda guardado como costo operativo, no como tu primer ahorro.</div>
+      <div class="deposit-hero">
+        <div class="deposit-hero-label">Aporte inicial</div>
+        <div class="deposit-hero-amount" id="hero-amount">$5.00</div>
+        <span class="deposit-hero-tag">Se congela al activar tu cuenta</span>
+      </div>
+      <div id="fee-breakdown" class="defer-note" style="margin:10px 0 0;"></div>
+      <div id="pp-status" class="defer-note" style="margin:0 0 14px;">Cargando el pago seguro de PayPhone…</div>
+      <div id="pp-button"></div>
+      <div id="err-aporte" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:12px 0 0;text-align:center;"></div>
+      <button class="btn-link" onclick="deferPayment()">Prefiero configurarlo más tarde</button>
+      <div class="defer-note">Tu cuenta se crea igual — solo te avisaremos cuando puedas completar tu aporte y activarla del todo.</div>
+    </div>
+
+    <div class="card hidden" id="screen-verifying">
+      <div class="confirm-badge pending">⏳</div>
+      <div class="confirm-title">Verificando tu pago…</div>
+      <div class="confirm-desc">Un momento, estamos confirmando tu aporte con PayPhone.</div>
+    </div>
+
+    <div class="card hidden" id="screen-confirm-paid">
+      <div class="confirm-badge">🎉</div>
+      <div class="confirm-title">Bienvenido a COOLKI</div>
+      <div class="confirm-desc">Tu aporte inicial de <span id="paid-amount">$5.00</span> ya fue acreditado. Tu cuenta está activa — hora de empezar a ahorrar.</div>
+      <button class="btn-primary" onclick="irACuenta()">Ir a mi cuenta</button>
+    </div>
+
+    <div class="card hidden" id="screen-confirm-pending">
+      <div class="confirm-badge pending">⏳</div>
+      <div class="confirm-title">Ya casi</div>
+      <div class="confirm-desc">Creamos tu cuenta en COOLKI. Te escribimos apenas puedas completar tu aporte inicial de $5.00 y dejar todo activo.</div>
+      <button class="btn-primary" onclick="irACuenta()">Entendido</button>
+    </div>
+
+    <div class="card hidden" id="screen-confirm-failed">
+      <div class="confirm-badge pending">⚠️</div>
+      <div class="confirm-title">No pudimos confirmar tu pago</div>
+      <div class="confirm-desc" id="failed-desc">El pago no se completó o fue rechazado. Tu cuenta quedó creada; puedes intentar tu aporte inicial cuando quieras.</div>
+      <button class="btn-primary" onclick="volverAIntentarPago()">Volver a intentar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ------------------------------------------------------------------
+     COOLKI · registro.html conectado al backend real.
+     Este registro.html se reutiliza para distintos clientes, así que el
+     slug de la organización NO se hardcodea: se toma de la URL (?org=coolki)
+     o de window.COOLKI_CONFIG. Igual con la base de la API.
+  ------------------------------------------------------------------ */
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+
+  let aporteInicial = 5.00; // se sobrescribe con el valor real que devuelve el backend
+
+  if (ORG_SLUG) {
+    const qs = '?org=' + encodeURIComponent(ORG_SLUG);
+    document.getElementById('terminos-link').href = 'terminos' + qs;
+    document.getElementById('privacidad-link').href = 'privacidad' + qs;
+    document.getElementById('login-link').href = 'sistema' + qs;
+    document.getElementById('volver-inicio-link').href = 'index' + qs;
+    document.getElementById('logo-link').href = 'index' + qs;
+  }
+
+  // -------- utilidades de UI --------
+  const $ = (id) => document.getElementById(id);
+  function show(id) { $(id).classList.remove('hidden'); }
+  function hide(id) { $(id).classList.add('hidden'); }
+  function showOnly(id) {
+    ['screen-datos','screen-aporte','screen-verifying','screen-confirm-paid','screen-confirm-pending','screen-confirm-failed']
+      .forEach(hide);
+    show(id);
+  }
+  function money(n) { return '$' + Number(n).toFixed(2); }
+  function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+
+  // -------- mostrar/ocultar contraseña + medidor de fuerza --------
+  function togglePassword(inputId, btn) {
+    const input = $(inputId);
+    const mostrando = input.type === 'text';
+    input.type = mostrando ? 'password' : 'text';
+    btn.setAttribute('aria-pressed', String(!mostrando));
+    btn.setAttribute('aria-label', mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    btn.querySelector('span').textContent = mostrando ? '👁' : '🙈';
+  }
+
+  function calcularFuerzaPassword(pw) {
+    if (!pw || pw.length < 8) return { pct: pw ? 25 : 0, color: '#E5484D', texto: pw ? 'Muy débil (mínimo 8 caracteres)' : '' };
+    let puntos = 1;
+    if (pw.length >= 12) puntos++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) puntos++;
+    if (/\d/.test(pw)) puntos++;
+    if (/[^A-Za-z0-9]/.test(pw)) puntos++;
+    if (puntos <= 2) return { pct: 45, color: '#E5484D', texto: 'Débil' };
+    if (puntos === 3) return { pct: 70, color: '#F5A623', texto: 'Media' };
+    return { pct: 100, color: '#1FAE7A', texto: 'Fuerte' };
+  }
+
+  function actualizarMedidor(pwId, fillId, labelId) {
+    const pw = $(pwId).value;
+    const r = calcularFuerzaPassword(pw);
+    $(fillId).style.width = r.pct + '%';
+    $(fillId).style.background = r.color;
+    $(labelId).textContent = r.texto;
+  }
+
+  // -------- validación de cédula y celular ecuatorianos --------
+  function validarCedulaEcuador(cedula) {
+    if (!/^\d{10}$/.test(cedula)) return false;
+    const d = cedula.split('').map(Number);
+    const provincia = d[0] * 10 + d[1];
+    if (provincia < 1 || provincia > 24) return false;
+    if (d[2] > 6) return false;
+    const coef = [2,1,2,1,2,1,2,1,2];
+    let suma = 0;
+    for (let i = 0; i < 9; i++) {
+      let v = d[i] * coef[i];
+      if (v >= 10) v -= 9;
+      suma += v;
+    }
+    let dv = (Math.ceil(suma / 10) * 10) - suma;
+    if (dv === 10) dv = 0;
+    return dv === d[9];
+  }
+  function validarCelularEcuador(celular) { return /^09\d{8}$/.test(celular); }
+
+  // Mensaje amigable y uniforme cuando el backend no responde / falla la red.
+  const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+
+  // Hace un fetch JSON y normaliza errores de red y de servidor en algo manejable.
+  async function apiFetch(path, options) {
+    let res;
+    try {
+      res = await fetch(API_BASE + path, options);
+    } catch (e) {
+      throw { network: true, message: NET_MSG };
+    }
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      throw { network: false, message: data.error || ('Ocurrió un error (código ' + res.status + '). Intenta de nuevo.') };
+    }
+    return data;
+  }
+
+  // ============ PASO 1 · crear el socio ============
+  async function submitDatos() {
+    clearError('err-datos');
+    clearError('err-cedula');
+    clearError('err-celular');
+
+    const nombre     = $('reg-nombre').value.trim();
+    const cedula     = $('reg-cedula').value.trim();
+    const email      = $('reg-email').value.trim();
+    const celular    = $('reg-celular').value.trim();
+    const password   = $('reg-password').value;
+    const confirmar  = $('reg-password-confirmar').value;
+
+    if (!ORG_SLUG) {
+      setError('err-datos', 'No se pudo determinar la organización. Abre el enlace con ?org=tu-organizacion.');
+      return;
+    }
+    if (!nombre || !cedula || !email || !celular) {
+      setError('err-datos', 'Completa todos los campos para continuar.');
+      return;
+    }
+    if (!validarCedulaEcuador(cedula)) {
+      setError('err-cedula', 'Ingresa una cédula ecuatoriana válida.');
+      return;
+    }
+    if (!validarCelularEcuador(celular)) {
+      setError('err-celular', 'Ingresa un número celular ecuatoriano válido, por ejemplo: 0991234567.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('err-datos', 'La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    if (password !== confirmar) {
+      setError('err-datos', 'Las contraseñas no coinciden.');
+      return;
+    }
+    if (!$('reg-terminos').checked) {
+      setError('err-datos', 'Debes aceptar los Términos y Condiciones para crear tu cuenta.');
+      return;
+    }
+
+    const btn = $('btn-datos');
+    btn.disabled = true;
+    const label = btn.textContent;
+    btn.textContent = 'Creando tu cuenta…';
+
+    try {
+      const data = await apiFetch('/registro.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ organizacion: ORG_SLUG, nombre, cedula, email, celular, password, terminos_aceptados: true })
+      });
+
+      aporteInicial = parseFloat(data.aporte_inicial) || 5.00;
+      $('hero-amount').textContent = money(aporteInicial);
+      $('desc-amount').textContent = money(aporteInicial);
+
+      // avanzar al Paso 2
+      hide('screen-datos');
+      show('screen-aporte');
+      $('dot2').classList.add('done');
+
+      preparePago();
+    } catch (err) {
+      setError('err-datos', err.message || NET_MSG);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
+
+  // ============ PASO 2 · preparar la transacción e iniciar la Cajita ============
+  async function preparePago() {
+    clearError('err-aporte');
+    $('pp-status').textContent = 'Cargando el pago seguro de PayPhone…';
+    $('pp-status').classList.remove('hidden');
+    $('pp-button').innerHTML = '';
+    $('fee-breakdown').textContent = '';
+
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ monto: aporteInicial, tipo: 'aporte_inicial' })
+      });
+      renderCajita(data);
+    } catch (err) {
+      $('pp-status').classList.add('hidden');
+      setError('err-aporte', err.message || NET_MSG);
+    }
+  }
+
+  // Inicializa el widget "Cajita de Pagos" con los datos de prepare.php.
+  // Nombres de parámetros según la doc oficial vigente (docs.payphone.app/cajita-de-pagos).
+  function renderCajita(data) {
+    if (!data.token) {
+      $('pp-status').classList.add('hidden');
+      setError('err-aporte', 'Esta caja aún no tiene configurado su pago con PayPhone.');
+      return;
+    }
+    if (typeof PPaymentButtonBox === 'undefined') {
+      $('pp-status').classList.add('hidden');
+      setError('err-aporte', 'No se pudo cargar el componente de pago de PayPhone. Recarga la página.');
+      return;
+    }
+
+    const comision = parseFloat(data.comision || 0);
+    const iva = parseFloat(data.iva || 0);
+    if (comision > 0 || iva > 0) {
+      $('fee-breakdown').textContent =
+        'Tu cuenta se activa con ' + money(data.montoNeto) + ' + comisión ' + money(comision) + ' + IVA ' + money(iva) +
+        ' = pagas ' + money(data.montoCobrado) + ' en PayPhone.';
+    }
+
+    // A dónde vuelve el navegador tras pagar. Volvemos a ESTA misma página (no a
+    // payphone_confirm.php), para poder confirmar server-to-server y mostrar la
+    // pantalla correcta. PayPhone añadirá ?id=...&clientTransactionId=... al volver.
+    const responseUrl = location.origin + location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+
+    $('pp-status').classList.add('hidden');
+    $('pp-button').innerHTML = '';
+    try {
+      const ppConfig = {
+        token: data.token,
+        clientTransactionId: data.clientTransactionId,
+        amount: data.amount,                                   // en centavos
+        amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0,
+        tax: 0,
+        service: 0,
+        tip: 0,
+        currency: data.currency || 'USD',
+        reference: data.reference || 'Aporte inicial',
+        lang: 'es',
+        responseUrl: responseUrl
+      };
+      // storeId solo aplica si la organización maneja varias tiendas en PayPhone; si no,
+      // se omite por completo (enviarlo vacío o incorrecto causa "La tienda asociada no existe").
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button');
+    } catch (e) {
+      setError('err-aporte', 'No se pudo iniciar el pago de PayPhone. Intenta de nuevo.');
+    }
+  }
+
+  // ============ Regreso desde PayPhone · confirmación server-to-server ============
+  // Nunca marcamos como pagado por asumirlo en el frontend: se lo preguntamos a
+  // payphone_confirm.php, que confirma contra PayPhone del lado del servidor.
+  async function confirmarRetorno(id, clientTransactionId) {
+    showOnly('screen-verifying');
+    try {
+      const data = await apiFetch(
+        '/payphone_confirm.php?id=' + encodeURIComponent(id) +
+        '&clientTransactionId=' + encodeURIComponent(clientTransactionId),
+        { method: 'GET', credentials: 'include' }
+      );
+
+      // La "Url de respuesta" de PayPhone se configura a nivel de la aplicación (esta
+      // página), sin importar desde dónde se haya iniciado el pago. Si la transacción
+      // NO es el aporte inicial (ej. un aporte hecho desde sistema.html), reenviamos al
+      // socio a su cuenta en vez de mostrar las pantallas de registro.
+      if (data.tipo && data.tipo !== 'aporte_inicial') {
+        const url = new URL('sistema', location.href);
+        if (ORG_SLUG) url.searchParams.set('org', ORG_SLUG);
+        url.searchParams.set('pp_aprobado', data.aprobado ? '1' : '0');
+        url.searchParams.set('pp_tipo', data.tipo);
+        location.href = url.toString();
+        return;
+      }
+
+      if (data.aprobado === true) {
+        // Usamos el monto real que confirmó el servidor, no la variable local (que
+        // puede quedar desactualizada si esta página se cargó directo desde el
+        // redirect de PayPhone, sin pasar por el Paso 1 en esta misma sesión).
+        $('paid-amount').textContent = money(data.monto != null ? data.monto : aporteInicial);
+        showOnly('screen-confirm-paid');
+      } else {
+        $('failed-desc').textContent = 'El pago no se completó o fue rechazado. Tu cuenta quedó creada; puedes intentar tu aporte inicial cuando quieras.';
+        showOnly('screen-confirm-failed');
+      }
+    } catch (err) {
+      // No sabemos con certeza si el cobro pasó: pedimos revisar, sin afirmar que se pagó.
+      $('failed-desc').textContent = err.network
+        ? 'No pudimos verificar tu pago por un problema de conexión. Si el cobro se realizó, escríbenos y lo revisamos.'
+        : (err.message || 'No pudimos verificar tu pago. Intenta de nuevo.');
+      showOnly('screen-confirm-failed');
+    } finally {
+      // Limpiamos los parámetros de PayPhone para que un refresh no re-dispare la confirmación.
+      const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      history.replaceState({}, '', clean);
+    }
+  }
+
+  // ============ Botones que NO requieren backend todavía ============
+  function deferPayment() {
+    // El socio ya quedó creado en estado 'pendiente_pago' (default de la BD) en el Paso 1.
+    showOnly('screen-confirm-pending');
+  }
+
+  // El registro ya terminó (la cuenta existe): estos botones llevan al socio a su
+  // cuenta real, nunca de vuelta al formulario de registro.
+  function irACuenta() {
+    location.href = 'sistema' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+  }
+
+  // El aporte inicial falló: reintentamos el pago (Paso 2), no reiniciamos el registro
+  // completo — la cuenta del socio ya existe.
+  function volverAIntentarPago() {
+    showOnly('screen-aporte');
+    preparePago();
+  }
+
+  // ============ Arranque ============
+  (async function init() {
+    const returnId = PARAMS.get('id');
+    const returnTxId = PARAMS.get('clientTransactionId');
+    if (returnId && returnTxId) {
+      // Volvimos desde PayPhone: confirmar y mostrar el resultado real.
+      await confirmarRetorno(returnId, returnTxId);
+      return;
+    }
+
+    // ¿Ya existe una sesión de un socio que se registró antes pero nunca completó
+    // (o abandonó) el pago del aporte inicial? Lo llevamos directo al Paso 2 en vez
+    // de mostrarle el formulario de registro de nuevo (su cuenta ya existe).
+    try {
+      const data = await apiFetch('/me.php', { credentials: 'include' });
+      if (data.socio && data.socio.estado === 'pendiente_pago') {
+        aporteInicial = parseFloat(data.socio.aporte_inicial) || aporteInicial;
+        $('hero-amount').textContent = money(aporteInicial);
+        $('desc-amount').textContent = money(aporteInicial);
+        hide('screen-datos');
+        show('screen-aporte');
+        $('dot2').classList.add('done');
+        preparePago();
+      } else if (data.socio && data.socio.estado === 'activo') {
+        // Ya está activo: no tiene nada que hacer aquí, lo mandamos a su cuenta.
+        location.href = 'sistema' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      }
+    } catch (e) { /* no hay sesión: se queda en el Paso 1 normal */ }
+  })();
+</script>
+<script src="analytics-consent.js"></script>
+
+</body>
+</html>

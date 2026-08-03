@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Identidad de marca</title>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+.coolki-board, .coolki-board * { box-sizing: border-box; }
+
+.coolki-board {
+  --bg: #F6F4FF;
+  --card: #FFFFFF;
+  --ink: #17162B;
+  --muted: #6E6B85;
+  --border: #ECE9FB;
+  --brand: #2454FF;
+  --grad-start: #2454FF;
+  --grad-end: #2454FF;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 40px 20px 60px;
+}
+
+.wrap { max-width: 920px; margin: 0 auto; }
+.board-head { margin-bottom: 34px; }
+.board-eyebrow {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 11.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand);
+  background: #E8EEFF; display: inline-block; padding: 4px 10px; border-radius: 20px; margin-bottom: 12px;
+}
+.board-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 30px; letter-spacing: -0.01em; }
+
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 18px; }
+.tile {
+  background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+  padding: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; text-align: center;
+}
+.tile-dark { background: var(--ink); }
+.tile-label {
+  font-family: 'Space Grotesk', sans-serif; font-size: 11.5px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+}
+.tile-dark .tile-label { color: #A9A6BE; }
+
+/* icon sizes */
+.icon-lg { width: 96px; height: 96px; }
+.icon-md { width: 56px; height: 56px; }
+.icon-sm { width: 34px; height: 34px; }
+
+.wordmark {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 32px;
+  letter-spacing: -0.02em; color: var(--ink);
+}
+.tile-dark .wordmark { color: #fff; }
+
+.lockup { display: flex; align-items: center; gap: 12px; }
+
+.full-tile { grid-column: span 2; padding: 40px 28px; }
+</style>
+
+<div class="coolki-board">
+  <div class="wrap">
+    <div class="board-head">
+      <span class="board-eyebrow">Exploración de marca</span>
+      <div class="board-title">Identidad de COOLKI</div>
+    </div>
+
+    <div class="tile-label" style="text-align:left; margin-bottom: 4px;">Opción 1 — carita moneda</div>
+    <div class="grid">
+      <div class="tile full-tile">
+        <div class="tile-label">Lockup principal</div>
+        <div class="lockup">
+          <svg class="icon-lg" viewBox="0 0 100 100">
+            <rect width="100" height="100" rx="26" fill="#2454FF"/>
+            <circle cx="36" cy="40" r="5" fill="white"/>
+            <circle cx="64" cy="40" r="5" fill="white"/>
+            <path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/>
+          </svg>
+          <div class="wordmark">coolki</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">Ícono — tamaño app</div>
+        <svg class="icon-md" viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="26" fill="#2454FF"/>
+          <circle cx="36" cy="40" r="5" fill="white"/>
+          <circle cx="64" cy="40" r="5" fill="white"/>
+          <path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">Ícono — favicon / tab</div>
+        <svg class="icon-sm" viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="26" fill="#2454FF"/>
+          <circle cx="36" cy="40" r="5" fill="white"/>
+          <circle cx="64" cy="40" r="5" fill="white"/>
+          <path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">Wordmark solo</div>
+        <div class="wordmark">coolki</div>
+      </div>
+    </div>
+    <div class="tile-label" style="text-align:left; margin: 26px 0 4px;">Opción 2 — moneda-monograma "C"</div>
+    <div class="grid">
+      <div class="tile full-tile">
+        <div class="tile-label">Lockup principal</div>
+        <div class="lockup">
+          <svg class="icon-lg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#2454FF" stroke-width="14"
+              stroke-dasharray="220 264" stroke-linecap="round" transform="rotate(18 50 50)"/>
+            <circle cx="50" cy="50" r="6" fill="#2454FF"/>
+          </svg>
+          <div class="wordmark">coolki</div>
+        </div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">Ícono — tamaño app</div>
+        <svg class="icon-md" viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="26" fill="#2454FF"/>
+          <circle cx="50" cy="50" r="24" fill="none" stroke="white" stroke-width="9"
+            stroke-dasharray="126 151" stroke-linecap="round" transform="rotate(18 50 50)"/>
+          <circle cx="50" cy="50" r="4" fill="white"/>
+        </svg>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">Ícono — favicon / tab</div>
+        <svg class="icon-sm" viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="26" fill="#2454FF"/>
+          <circle cx="50" cy="50" r="24" fill="none" stroke="white" stroke-width="9"
+            stroke-dasharray="126 151" stroke-linecap="round" transform="rotate(18 50 50)"/>
+          <circle cx="50" cy="50" r="4" fill="white"/>
+        </svg>
+      </div>
+
+      <div class="tile tile-dark">
+        <div class="tile-label">Sobre fondo oscuro</div>
+        <div class="lockup">
+          <svg class="icon-md" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="white" stroke-width="14"
+              stroke-dasharray="220 264" stroke-linecap="round" transform="rotate(18 50 50)"/>
+            <circle cx="50" cy="50" r="6" fill="white"/>
+          </svg>
+          <div class="wordmark">coolki</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 18px; padding: 20px 24px;">
+      <div class="tile-label" style="text-align:left; margin-bottom: 8px;">¿Qué representa?</div>
+      <div style="font-size: 14px; color: var(--muted); line-height: 1.6;">
+        Es una moneda vista de perfil con un corte — a la vez lee como una "C" de Coolki y como una moneda en movimiento (girando, creciendo).
+        El punto central funciona como acento de marca: un favicon, un indicador de "cargando" o el punto que marca notificaciones nuevas.
+        Es más abstracto y minimalista que la carita — se apoya menos en el humor y más en la idea de dinero en movimiento / crecimiento.
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

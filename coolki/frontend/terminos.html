@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Términos y Condiciones</title>
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-reg, .coolki-reg * { box-sizing: border-box; }
+
+.coolki-reg {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 34px 16px 60px;
+}
+
+.reg-screen { width: 100%; max-width: 620px; }
+.reg-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.reg-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 30px 28px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+.card-desc { font-size: 13.5px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; }
+
+.clause { margin-bottom: 20px; }
+.clause h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15.5px; margin: 0 0 8px; }
+.clause p { font-size: 13.5px; line-height: 1.65; color: var(--ink); margin: 0 0 8px; }
+.clause b { color: var(--brand); }
+
+.back-link { display: inline-block; margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--brand); text-decoration: none; }
+.loading-note { font-size: 12.5px; color: var(--muted); }
+</style>
+
+<div class="coolki-reg">
+  <div class="reg-screen">
+    <div class="reg-brand">
+      <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="reg-word">coolki</div>
+    </div>
+
+    <div class="card">
+      <span class="loading-note" id="loadingNote">Cargando los términos…</span>
+      <div id="terminosBody" class="hidden"></div>
+      <a class="back-link" id="volverLink" href="registro">&larr; Volver al registro</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+  const $ = (id) => document.getElementById(id);
+
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
+
+  if (ORG_SLUG) {
+    $('volverLink').href = 'registro?org=' + encodeURIComponent(ORG_SLUG);
+  }
+
+  async function cargarTerminos() {
+    let org = { nombre: 'COOLKI', aporte_inicial: 5, membresia_premium_costo: 20 };
+    if (ORG_SLUG) {
+      try {
+        const res = await fetch(API_BASE + '/obtener_config_publica.php?org=' + encodeURIComponent(ORG_SLUG));
+        const data = await res.json();
+        if (data && data.ok) org = Object.assign(org, data.organizacion);
+      } catch (e) { /* seguimos con los valores por defecto */ }
+    }
+
+    document.title = 'Términos y Condiciones — ' + org.nombre;
+    $('terminosBody').innerHTML =
+      '<div class="card-title">Términos y Condiciones</div>' +
+      '<div class="card-desc">Caja de ahorro digital ' + org.nombre + ', operada sobre la plataforma COOLKI.</div>' +
+
+      '<div class="clause"><h2>1. Costo administrativo de apertura de cuenta</h2>' +
+      '<p>Para activar tu cuenta debes realizar un aporte inicial de <b>' + money(org.aporte_inicial) + '</b>. ' +
+      'Este monto queda congelado como costo administrativo de apertura de cuenta — no es tu primer ahorro y no ' +
+      'se libera ni se retira de forma independiente. Al aceptar estos términos confirmas que entiendes esta condición.</p></div>' +
+
+      '<div class="clause"><h2>2. Membresía Cliente Premium (opcional, requisito para solicitar créditos)</h2>' +
+      '<p>Toda cuenta nueva inicia como "Cliente Normal". Si deseas solicitar un microcrédito, debes actualizar tu cuenta ' +
+      'a "Cliente Premium" mediante un pago único de <b>' + money(org.membresia_premium_costo) + '</b>, destinado a los ' +
+      'fondos de reserva y gastos administrativos de la organización. Este pago no se acredita a tu saldo de ahorro ni es ' +
+      'reembolsable, y puede realizarse con PayPhone o descontado de tu saldo disponible.</p></div>' +
+
+      '<div class="clause"><h2>3. Comunidad Digital COOLKI</h2>' +
+      '<p>Al crear tu cuenta aceptas ser parte de la <b>Comunidad Digital COOLKI</b>, un espacio que promueve el ahorro ' +
+      'saludable y la cultura del ahorro y las finanzas personales. Aceptas recibir comunicados por correo electrónico con ' +
+      'contenido educativo sobre estos temas, con el fin de ayudarte a mejorar tus finanzas personales.</p></div>' +
+
+      '<div class="clause"><h2>4. Administración de tu caja de ahorro</h2>' +
+      '<p>Tu dinero llega directo a la cuenta de PayPhone de ' + org.nombre + ' — COOLKI es únicamente la plataforma ' +
+      'tecnológica que usa la organización para administrar su propia caja de ahorro, bajo su propia responsabilidad legal.</p></div>';
+
+    $('loadingNote').classList.add('hidden');
+    $('terminosBody').classList.remove('hidden');
+  }
+
+  cargarTerminos();
+</script>
+<style>.hidden{display:none;}</style>
+
+</body>
+</html>

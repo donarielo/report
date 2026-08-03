@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Panel del administrador</title>
+<!-- Config del frontend para esta caja. Si este archivo se reutiliza para otro cliente,
+     cambia 'org' aquí (o bórralo y siempre pasa ?org=slug en la URL). -->
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-admin, .coolki-admin * { box-sizing: border-box; }
+
+.coolki-admin {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --coral: #E14B4B;
+  --sun-soft: #FFF3D6;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; background: #fff; }
+.brand-lockup { display: flex; align-items: center; gap: 10px; }
+.brand-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.logout-link { border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+.app-body { display: none; padding: 30px 20px; }
+.app-body.active { display: block; }
+.hidden { display: none; }
+
+/* ---------- LOGIN GATE ---------- */
+.auth-wrap { min-height: 100vh; display: flex; justify-content: center; padding: 40px 16px; }
+.auth-screen { width: 100%; max-width: 380px; }
+.auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.auth-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; margin-bottom: 6px; }
+.auth-desc { font-size: 13.5px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.auth-field input { width: 100%; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); }
+.auth-field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.auth-btn { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.auth-error { font-size: 12.5px; color: var(--coral); line-height: 1.5; margin: 2px 0 14px; }
+
+/* ---------- ADMIN ---------- */
+.admin-wrap { max-width: 980px; margin: 0 auto; }
+.admin-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+.admin-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; }
+.admin-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.export-btn { padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: not-allowed; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 26px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
+.stat-label { font-size: 11.5px; color: var(--muted); }
+.stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; color: var(--ink); margin-top: 6px; }
+
+.admin-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+.admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; }
+.admin-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin: 0 0 14px; }
+
+table.socios { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.socios th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
+table.socios td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+table.socios tbody tr { cursor: pointer; }
+table.socios tbody tr:hover { background: var(--bg); }
+.status-pill { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; background: var(--mint-soft); color: var(--mint); font-weight: 600; }
+.status-pill.alert { background: var(--sun-soft); color: #B98424; }
+
+.admin-grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; margin-top: 20px; }
+.tx-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.tx-row:last-child { border-bottom: none; }
+.tx-desc { font-size: 13px; font-weight: 600; }
+.tx-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.tx-amt { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+.tx-amt.pos { color: var(--mint); }
+.tx-amt.neg { color: var(--coral); }
+.tx-list { max-height: 420px; overflow-y: auto; }
+
+.mant-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+
+.credito-request { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.credito-request-context { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin: 6px 0 10px; }
+.credito-msg-input { width: 100%; min-height: 60px; border-radius: 10px; border: 1px solid var(--border); padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; margin-bottom: 10px; resize: vertical; }
+.credito-hist-row { border-bottom: 1px solid var(--border); padding: 10px 0; font-size: 13px; }
+.credito-hist-row:last-child { border-bottom: none; }
+
+/* ---------- Modal detalle de socio ---------- */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(22,24,43,0.5); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 18px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 26px; position: relative; }
+.modal-close { position: absolute; top: 16px; right: 18px; border: none; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); }
+.modal-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; font-size: 13px; }
+.modal-info-label { color: var(--muted); font-size: 11px; }
+.modal-section-title { font-weight: 700; font-size: 13px; margin: 16px 0 8px; }
+
+.request-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.request-row:last-child { border-bottom: none; }
+.request-info { font-size: 13px; }
+.request-info b { font-family: 'Space Grotesk', sans-serif; }
+.request-name { font-size: 11.5px; color: var(--muted); }
+.request-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.req-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+.req-btn.approve { background: var(--brand); color: #fff; }
+.req-btn.reject { background: transparent; color: var(--coral); border: 1px solid var(--coral); }
+.req-result { font-size: 11.5px; font-weight: 700; }
+.req-result.approved { color: var(--mint); }
+.req-result.rejected { color: var(--coral); }
+.empty-note { font-size: 12.5px; color: var(--muted); padding: 10px 0; }
+
+.settings-row { margin-bottom: 16px; }
+.settings-label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; display: block; }
+.settings-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); }
+.settings-input:disabled { color: var(--muted); }
+.settings-group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; margin: 18px 0 10px; }
+.settings-group-title:first-of-type { margin-top: 0; }
+.save-btn { margin-top: 4px; padding: 10px 16px; border-radius: 10px; border: none; background: var(--brand); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
+.admin-note { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.settings-msg { font-size: 12px; margin-top: 8px; }
+.settings-msg.ok { color: var(--mint); }
+.settings-msg.err { color: var(--coral); }
+
+.tabs { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 18px; width: fit-content; }
+.tab-btn { border: none; background: transparent; padding: 8px 16px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.tab-btn.active { background: var(--brand); color: #fff; }
+
+.builder-color-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.builder-color-row input[type="color"] { width: 46px; height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 2px; background: none; cursor: pointer; }
+
+.builder-grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; align-items: start; }
+.builder-section-list { list-style: none; margin: 0 0 18px; padding: 0; }
+.builder-section-item { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: grab; }
+.builder-section-item.dragging { opacity: 0.4; }
+.builder-drag-handle { color: var(--muted); font-size: 14px; }
+.builder-section-name { flex: 1; font-size: 13.5px; font-weight: 600; }
+.builder-iframe-wrap { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; height: 660px; }
+.builder-iframe-wrap iframe { width: 100%; height: 100%; border: none; }
+
+@media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } .builder-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) and (min-width: 801px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
+
+<!-- ============ LOGIN GATE ============ -->
+<div class="coolki-admin" id="gate">
+  <div class="auth-wrap">
+    <div class="auth-screen">
+      <div class="brand-lockup" style="margin-bottom: 22px;">
+        <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+        <div class="brand-word">coolki</div>
+      </div>
+
+      <div class="auth-card" id="authAdmin">
+        <div class="auth-title">Panel del administrador</div>
+        <div class="auth-desc">Acceso exclusivo para administradores de esta caja de ahorro. Si eres socio, entra desde <code>sistema</code>.</div>
+        <div class="auth-field"><label>Correo electrónico</label><input id="adminEmail" type="email" placeholder="admin@tuorganizacion.com"></div>
+        <div class="auth-field"><label>Contraseña</label><input id="adminPassword" type="password" placeholder="Tu contraseña"></div>
+        <div id="errAdminLogin" class="auth-error hidden"></div>
+        <button class="auth-btn" id="btnAdminLogin" onclick="loginAdmin()">Entrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP (admin) ============ -->
+<div class="coolki-admin hidden" id="app">
+  <div class="topbar">
+    <div class="brand-lockup">
+      <svg width="32" height="32" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="brand-word">coolki</div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-label">Panel del administrador</span>
+      <button class="logout-link" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="app-body active">
+    <div class="admin-wrap">
+      <div class="admin-head">
+        <div><div class="admin-title">Panel del administrador</div><div class="admin-sub" id="adminOrgName">—</div></div>
+        <button class="export-btn" title="Próximamente" disabled>Exportar reporte SEPS</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Socios activos</div><div class="stat-value" id="statActivos">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total ahorrado</div><div class="stat-value" id="statTotal">$0</div></div>
+        <div class="stat-card"><div class="stat-label">En plazo fijo</div><div class="stat-value" id="statPlazo">$0</div></div>
+        <div class="stat-card"><div class="stat-label">En CoolCoin</div><div class="stat-value" id="statCoolcoin">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Retiros pendientes</div><div class="stat-value" id="statRetiros">0</div></div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3>Socios</h3>
+          <table class="socios">
+            <thead><tr><th>Nombre</th><th>Saldo</th><th>Último aporte</th><th>Estado</th></tr></thead>
+            <tbody id="sociosTableBody"></tbody>
+          </table>
+
+          <h3 style="margin-top: 24px;">Solicitudes de retiro pendientes</h3>
+          <div id="requests"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Configuración</h3>
+
+          <div class="settings-group-title">Reglas de ahorro</div>
+          <div class="settings-row"><label class="settings-label">Tasa de plazo fijo anual (%)</label><input class="settings-input" id="cfgTasa" /></div>
+          <div class="settings-row"><label class="settings-label">Tasa de CoolCoin anual (%)</label><input class="settings-input" id="cfgCoolcoinTasa" /></div>
+          <div class="settings-row"><label class="settings-label">Aporte inicial (congelado)</label><input class="settings-input" id="cfgAporte" /></div>
+          <div class="settings-row"><label class="settings-label">Retiro mínimo</label><input class="settings-input" id="cfgRetiro" /></div>
+
+          <div class="settings-group-title">Costo de transacción en depósitos</div>
+          <div class="settings-row"><label class="settings-label">Comisión (%)</label><input class="settings-input" id="cfgComision" /></div>
+          <div class="settings-row"><label class="settings-label">IVA sobre la comisión (%)</label><input class="settings-input" id="cfgIva" /></div>
+
+          <div class="settings-group-title">Reglas de crédito</div>
+          <div class="settings-row"><label class="settings-label">Costo de membresía Premium (requisito para pedir crédito)</label><input class="settings-input" id="cfgMembresiaCosto" /></div>
+          <div class="settings-row"><label class="settings-label">Tasa efectiva anual (%)</label><input class="settings-input" id="cfgCreditoTasa" /></div>
+          <div class="settings-row"><label class="settings-label">Cupo sugerido inicial</label><input class="settings-input" id="cfgCreditoBase" /></div>
+          <div class="settings-row"><label class="settings-label">Incremento por crédito pagado a tiempo</label><input class="settings-input" id="cfgCreditoIncremento" /></div>
+          <div class="settings-row"><label class="settings-label">Cupo sugerido máximo</label><input class="settings-input" id="cfgCreditoMax" /></div>
+          <div class="settings-row"><label class="settings-label">Plazo mínimo (meses)</label><input class="settings-input" id="cfgCreditoPlazoMin" /></div>
+          <div class="settings-row"><label class="settings-label">Plazo máximo (meses)</label><input class="settings-input" id="cfgCreditoPlazoMax" /></div>
+
+          <div class="settings-group-title">Pagos</div>
+          <div class="settings-row"><label class="settings-label">Cuenta PayPhone conectada</label><input class="settings-input" id="cfgPayphone" disabled /></div>
+
+          <div class="settings-group-title">Soporte a socios (visible en la pantalla de inicio de sesión)</div>
+          <div class="settings-row"><label class="settings-label">Correo de soporte</label><input class="settings-input" id="cfgSoporteEmail" placeholder="soporte@tudominio.com" /></div>
+          <div class="settings-row"><label class="settings-label">Link de WhatsApp de soporte</label><input class="settings-input" id="cfgSoporteWhatsapp" placeholder="https://wa.me/593999999999" /></div>
+
+          <div class="settings-group-title">Redes sociales (footer del sitio público)</div>
+          <div class="settings-row"><label class="settings-label">Instagram</label><input class="settings-input" id="cfgInstagram" placeholder="https://instagram.com/tu_organizacion" /></div>
+          <div class="settings-row"><label class="settings-label">TikTok</label><input class="settings-input" id="cfgTiktok" placeholder="https://tiktok.com/@tu_organizacion" /></div>
+          <div class="settings-row"><label class="settings-label">Facebook</label><input class="settings-input" id="cfgFacebook" placeholder="https://facebook.com/tu_organizacion" /></div>
+
+          <div class="settings-group-title">Analítica (solo se carga si el visitante acepta cookies)</div>
+          <div class="settings-row"><label class="settings-label">Google Analytics — Measurement ID</label><input class="settings-input" id="cfgGaId" placeholder="G-XXXXXXX" /></div>
+          <div class="settings-row"><label class="settings-label">Meta Pixel ID</label><input class="settings-input" id="cfgPixelId" placeholder="123456789012345" /></div>
+
+          <button class="save-btn" onclick="guardarConfiguracion()">Guardar cambios</button>
+          <div id="settingsMsg" class="settings-msg hidden"></div>
+          <div class="admin-note">El dinero de los socios llega directo a esta cuenta PayPhone, no a una cuenta central del proveedor del software. La comisión y el IVA se le cobran al socio por encima de su ahorro — nunca se descuentan de lo que acumula. La tasa máxima legal vigente para microcrédito minorista en Ecuador (Banco Central) es 28.23% anual — verifícala periódicamente, el BCE la actualiza.</div>
+        </div>
+      </div>
+
+      <div class="admin-grid-2">
+        <div class="admin-card">
+          <h3>Solicitudes de crédito</h3>
+          <div id="creditosPendientesWrap"></div>
+
+          <h3 style="margin-top: 24px;">Historial de créditos</h3>
+          <div id="creditosHistorialWrap"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Sobre los créditos</h3>
+          <div class="mant-desc">Cada solicitud muestra el saldo, la antigüedad y el cupo sugerido del socio. Tú decides el monto, el plazo y escribes el mensaje que el socio va a ver explicando tu decisión — aprobado o no.</div>
+        </div>
+      </div>
+
+      <div class="admin-grid-2">
+        <div class="admin-card">
+          <h3>Historial de transacciones</h3>
+          <div class="tx-list" id="txWrap"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Cobro a todas las cuentas</h3>
+          <div class="mant-desc">Cobra un monto fijo (ej. comisión de mantenimiento) a todos los socios, descontado de su saldo disponible. Si un socio no tiene saldo suficiente, se le cobra solo lo que tiene — nunca queda en negativo. Queda registrado en el historial de cada socio.</div>
+          <div class="settings-row"><label class="settings-label">Monto a cobrar por socio</label><input class="settings-input" id="mantMonto" type="number" step="0.01" placeholder="0.25"></div>
+          <button class="save-btn" style="background: var(--coral);" onclick="cobrarMantenimiento()">Cobrar a todas las cuentas</button>
+          <div id="mantMsg" class="settings-msg hidden"></div>
+        </div>
+      </div>
+
+      <div class="admin-card" style="margin-top: 20px;">
+        <h3>Diseño del sitio</h3>
+        <div class="mant-desc">Elige el color de marca, y para cada página pública reordena o
+          esconde secciones y configura un pop-up. Los cambios se ven al instante en la vista
+          previa de la derecha — no se guardan hasta que presiones "Guardar cambios".</div>
+
+        <div class="builder-color-row">
+          <input type="color" id="cfgColorMarca" oninput="onBuilderChange()">
+          <label class="settings-label" style="margin:0;">Color de marca (aplica también a este panel y a la cuenta del socio)</label>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" id="tabBtnIndex" onclick="switchBuilderTab('index')">Inicio</button>
+          <button class="tab-btn" id="tabBtnLandingSocios" onclick="switchBuilderTab('landing-socios')">Landing socios</button>
+          <button class="tab-btn" id="tabBtnLandingEmpresas" onclick="switchBuilderTab('landing-empresas')">Landing empresas</button>
+        </div>
+
+        <div class="builder-grid">
+          <div>
+            <div class="settings-group-title" style="margin-top:0;">Secciones (arrastra para reordenar)</div>
+            <ul class="builder-section-list" id="builderSectionList"></ul>
+
+            <div class="settings-group-title">Pop-up de esta página</div>
+            <div class="settings-row">
+              <label class="settings-label"><input type="checkbox" id="cfgPopupActivo" onchange="onBuilderChange()"> Activo</label>
+            </div>
+            <div class="settings-row"><label class="settings-label">Título</label><input class="settings-input" id="cfgPopupTitulo" oninput="onBuilderChange()"></div>
+            <div class="settings-row"><label class="settings-label">Texto</label><textarea class="settings-input" id="cfgPopupTexto" rows="3" oninput="onBuilderChange()"></textarea></div>
+            <div class="settings-row"><label class="settings-label">URL de imagen (opcional)</label><input class="settings-input" id="cfgPopupImagen" oninput="onBuilderChange()"></div>
+            <div class="settings-row"><label class="settings-label">Texto del botón</label><input class="settings-input" id="cfgPopupBotonTexto" oninput="onBuilderChange()"></div>
+            <div class="settings-row"><label class="settings-label">URL del botón</label><input class="settings-input" id="cfgPopupBotonUrl" oninput="onBuilderChange()"></div>
+            <div class="settings-row" style="display:flex; gap:10px;">
+              <div style="flex:1;"><label class="settings-label">Desde</label><input class="settings-input" type="date" id="cfgPopupFechaInicio" onchange="onBuilderChange()"></div>
+              <div style="flex:1;"><label class="settings-label">Hasta</label><input class="settings-input" type="date" id="cfgPopupFechaFin" onchange="onBuilderChange()"></div>
+            </div>
+
+            <div class="settings-group-title">SEO de esta página</div>
+            <div class="settings-row"><label class="settings-label">Título (máx. 70 caracteres)</label><input class="settings-input" id="cfgSeoTitulo" maxlength="70"></div>
+            <div class="settings-row"><label class="settings-label">Descripción (máx. 170 caracteres)</label><textarea class="settings-input" id="cfgSeoDescripcion" rows="2" maxlength="170"></textarea></div>
+            <div class="settings-row"><label class="settings-label">Imagen para compartir (URL, 1200×630px recomendado)</label><input class="settings-input" id="cfgSeoImagen"></div>
+            <div class="settings-row"><label class="settings-label">Título al compartir en redes (opcional)</label><input class="settings-input" id="cfgSeoShareTitulo" maxlength="70"></div>
+            <div class="settings-row"><label class="settings-label">Descripción al compartir en redes (opcional)</label><textarea class="settings-input" id="cfgSeoShareDescripcion" rows="2" maxlength="200"></textarea></div>
+
+            <div id="builderPasosWrap" class="hidden">
+              <div class="settings-group-title">Pasos de "Cómo funciona"</div>
+              <div id="pasosList"></div>
+              <button type="button" class="save-btn" style="background: var(--muted);" onclick="agregarPaso()">+ Añadir paso</button>
+            </div>
+
+            <button class="save-btn" onclick="guardarPaginaConfig()" style="margin-top:16px;">Guardar cambios</button>
+            <div id="builderMsg" class="settings-msg hidden"></div>
+          </div>
+
+          <div class="builder-iframe-wrap">
+            <iframe id="builderPreviewFrame"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card" style="margin-top: 20px;">
+        <h3>Testimonios</h3>
+        <div class="mant-desc">Testimonios reales de socios, publicados en la portada. Un testimonio solo puede
+          marcarse como publicado si confirmas que el socio autorizó usar su nombre y foto.</div>
+        <div id="testimoniosList"></div>
+        <button type="button" class="save-btn" style="background: var(--muted); margin-top:12px;" onclick="abrirFormTestimonio(null)">+ Añadir testimonio</button>
+
+        <div id="testimonioForm" class="hidden" style="margin-top:18px; border-top:1px solid var(--border); padding-top:18px;">
+          <input type="hidden" id="testId">
+          <div class="settings-row"><label class="settings-label">Nombre</label><input class="settings-input" id="testNombre" maxlength="100"></div>
+          <div class="settings-row"><label class="settings-label">Ciudad (opcional)</label><input class="settings-input" id="testCiudad" maxlength="100"></div>
+          <div class="settings-row"><label class="settings-label">Testimonio</label><textarea class="settings-input" id="testTexto" rows="3"></textarea></div>
+          <div class="settings-row"><label class="settings-label">Fecha (opcional)</label><input class="settings-input" type="date" id="testFecha"></div>
+          <div class="settings-row">
+            <label class="settings-label">Foto (opcional, JPG/PNG/WEBP, máx. 3 MB)</label>
+            <input class="settings-input" type="file" id="testFoto" accept="image/jpeg,image/png,image/webp" onchange="subirFotoTestimonio()">
+            <div id="testFotoPreview"></div>
+          </div>
+          <div class="settings-row"><label class="settings-label"><input type="checkbox" id="testAutorizado"> El socio autorizó usar su nombre y foto</label></div>
+          <div class="settings-row"><label class="settings-label"><input type="checkbox" id="testPublicado"> Publicado en la portada</label></div>
+          <button class="save-btn" onclick="guardarTestimonio()">Guardar testimonio</button>
+          <button type="button" class="save-btn" style="background: var(--muted);" onclick="cerrarFormTestimonio()">Cancelar</button>
+          <div id="testimonioMsg" class="settings-msg hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Modal: detalle de socio ============ -->
+<div class="modal-overlay" id="modalOverlay" onclick="if (event.target === this) cerrarModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()">&times;</button>
+    <div id="modalBody"><div class="empty-note">Cargando…</div></div>
+  </div>
+</div>
+
+<script>
+  /* ------------------------------------------------------------------
+     COOLKI · admin.html — acceso separado del de los socios (sistema.html).
+     El slug de la organización se toma de ?org= o de window.COOLKI_CONFIG.
+  ------------------------------------------------------------------ */
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+
+  const $ = (id) => document.getElementById(id);
+  const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
+  function formatDate(str) {
+    if (!str) return '—';
+    const d = new Date(str.replace(' ', 'T'));
+    if (isNaN(d)) return '—';
+    return d.getDate() + ' ' + MESES[d.getMonth()];
+  }
+  function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  async function apiFetch(path, options) {
+    let res;
+    try {
+      res = await fetch(API_BASE + path, options);
+    } catch (e) {
+      throw { network: true, message: NET_MSG };
+    }
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      throw { network: false, status: res.status, message: data.error || ('Ocurrió un error (código ' + res.status + ').') };
+    }
+    return data;
+  }
+
+  // ============ Login gate ============
+  async function loginAdmin() {
+    clearError('errAdminLogin');
+    if (!ORG_SLUG) { setError('errAdminLogin', 'Falta indicar la organización (?org=...) en el enlace.'); return; }
+    const email = $('adminEmail').value.trim();
+    const password = $('adminPassword').value;
+    if (!email || !password) { setError('errAdminLogin', 'Ingresa tu correo y contraseña.'); return; }
+
+    const btn = $('btnAdminLogin'); btn.disabled = true;
+    try {
+      const data = await apiFetch('/admin_login.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ organizacion: ORG_SLUG, email, password })
+      });
+      await enterAdminMode(data.organizacion);
+    } catch (err) {
+      setError('errAdminLogin', err.message || NET_MSG);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function logout() {
+    try { await apiFetch('/logout.php', { method: 'POST', credentials: 'include' }); } catch (e) { /* seguimos igual */ }
+    location.href = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+  }
+
+  // ============ Modo administrador ============
+  let adminOrgSettings = {};
+
+  async function enterAdminMode(organizacion) {
+    adminOrgSettings = organizacion || {};
+    $('gate').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('adminOrgName').textContent = (adminOrgSettings.nombre || ORG_SLUG) + ' · resumen general';
+    fillSettingsForm();
+    await loadAdminDashboard();
+    await loadTransacciones();
+    await loadCreditos();
+    await loadBuilderConfig();
+    await loadTestimonios();
+  }
+
+  function fillSettingsForm() {
+    $('cfgColorMarca').value = adminOrgSettings.color_marca || '#2454FF';
+    $('cfgTasa').value = adminOrgSettings.tasa_plazo_fijo != null ? adminOrgSettings.tasa_plazo_fijo : '';
+    $('cfgCoolcoinTasa').value = adminOrgSettings.coolcoin_tasa_anual != null ? adminOrgSettings.coolcoin_tasa_anual : '';
+    $('cfgAporte').value = adminOrgSettings.aporte_inicial != null ? adminOrgSettings.aporte_inicial : '';
+    $('cfgRetiro').value = adminOrgSettings.retiro_minimo != null ? adminOrgSettings.retiro_minimo : '';
+    $('cfgComision').value = adminOrgSettings.comision_deposito_pct != null ? adminOrgSettings.comision_deposito_pct : '';
+    $('cfgIva').value = adminOrgSettings.iva_pct != null ? adminOrgSettings.iva_pct : '';
+    $('cfgMembresiaCosto').value = adminOrgSettings.membresia_premium_costo != null ? adminOrgSettings.membresia_premium_costo : '';
+    $('cfgCreditoTasa').value = adminOrgSettings.credito_tasa_anual != null ? adminOrgSettings.credito_tasa_anual : '';
+    $('cfgCreditoBase').value = adminOrgSettings.credito_limite_base != null ? adminOrgSettings.credito_limite_base : '';
+    $('cfgCreditoIncremento').value = adminOrgSettings.credito_incremento_por_pago != null ? adminOrgSettings.credito_incremento_por_pago : '';
+    $('cfgCreditoMax').value = adminOrgSettings.credito_limite_maximo != null ? adminOrgSettings.credito_limite_maximo : '';
+    $('cfgCreditoPlazoMin').value = adminOrgSettings.credito_plazo_min_meses != null ? adminOrgSettings.credito_plazo_min_meses : '';
+    $('cfgCreditoPlazoMax').value = adminOrgSettings.credito_plazo_max_meses != null ? adminOrgSettings.credito_plazo_max_meses : '';
+    if (adminOrgSettings.payphone_conectado) {
+      const storeId = adminOrgSettings.payphone_store_id || '';
+      $('cfgPayphone').value = storeId ? ('Conectada (tienda •••• ' + storeId.slice(-4) + ')') : 'Conectada';
+    } else {
+      $('cfgPayphone').value = 'No conectada';
+    }
+    $('cfgSoporteEmail').value = adminOrgSettings.soporte_email || '';
+    $('cfgSoporteWhatsapp').value = adminOrgSettings.soporte_whatsapp || '';
+    $('cfgInstagram').value = adminOrgSettings.instagram_url || '';
+    $('cfgTiktok').value = adminOrgSettings.tiktok_url || '';
+    $('cfgFacebook').value = adminOrgSettings.facebook_url || '';
+    $('cfgGaId').value = adminOrgSettings.ga_measurement_id || '';
+    $('cfgPixelId').value = adminOrgSettings.meta_pixel_id || '';
+  }
+
+  async function loadAdminDashboard() {
+    let socios = [], retiros = [];
+    try {
+      const [dSocios, dRetiros] = await Promise.all([
+        apiFetch('/admin_listar_socios.php', { credentials: 'include' }),
+        apiFetch('/admin_listar_retiros.php', { credentials: 'include' }),
+      ]);
+      socios = dSocios.socios || [];
+      retiros = dRetiros.retiros || [];
+    } catch (err) {
+      $('sociosTableBody').innerHTML = '<tr><td colspan="4" class="empty-note">' + (err.message || NET_MSG) + '</td></tr>';
+      return;
+    }
+
+    const activos = socios.filter(s => s.estado === 'activo').length;
+    const enPlazo = socios.reduce((sum, s) => sum + parseFloat(s.plazo_fijo_total), 0);
+    const enCoolcoin = socios.reduce((sum, s) => sum + parseFloat(s.coolcoin_total), 0);
+    const totalAhorrado = socios.reduce((sum, s) => sum + parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado), 0) + enPlazo + enCoolcoin;
+    $('statActivos').textContent = activos;
+    $('statTotal').textContent = money(totalAhorrado);
+    $('statPlazo').textContent = money(enPlazo);
+    $('statCoolcoin').textContent = money(enCoolcoin);
+    $('statRetiros').textContent = retiros.length;
+
+    $('sociosTableBody').innerHTML = socios.length ? socios.map(s => {
+      const saldo = parseFloat(s.saldo_disponible) + parseFloat(s.saldo_congelado);
+      const pill = s.estado === 'activo'
+        ? '<span class="status-pill">Activo</span>'
+        : '<span class="status-pill alert">Pago pendiente</span>';
+      return '<tr onclick="verDetalleSocio(' + s.id + ')"><td>' + escapeHtml(s.nombre) + '</td><td>' + money(saldo) + '</td><td>' + formatDate(s.ultimo_aporte) + '</td><td>' + pill + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty-note">Todavía no hay socios registrados.</td></tr>';
+
+    $('requests').innerHTML = retiros.length ? retiros.map(r =>
+      '<div class="request-row" id="req-' + r.id + '">' +
+        '<div class="request-info"><b>' + money(r.monto) + '</b> <div class="request-name">' + escapeHtml(r.socio_nombre) + ' · solicitado ' + formatDate(r.created_at) + '</div></div>' +
+        '<div class="request-actions">' +
+          '<button class="req-btn approve" onclick="resolveRequest(' + r.id + ', \'aprobar\')">Aprobar</button>' +
+          '<button class="req-btn reject" onclick="resolveRequest(' + r.id + ', \'rechazar\')">Rechazar</button>' +
+        '</div>' +
+      '</div>'
+    ).join('') : '<div class="empty-note">No hay solicitudes de retiro pendientes.</div>';
+  }
+
+  async function resolveRequest(id, accion) {
+    const row = $('req-' + id);
+    try {
+      await apiFetch('/admin_resolver_retiro.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ solicitud_id: id, accion })
+      });
+      if (row) {
+        row.querySelector('.request-actions').innerHTML =
+          '<span class="req-result ' + (accion === 'aprobar' ? 'approved' : 'rejected') + '">' + (accion === 'aprobar' ? 'Aprobado ✓' : 'Rechazado') + '</span>';
+      }
+      await loadAdminDashboard();
+    } catch (err) {
+      alert(err.message || NET_MSG);
+    }
+  }
+
+  async function guardarConfiguracion() {
+    const msg = $('settingsMsg');
+    msg.classList.add('hidden');
+    const tasa = parseFloat($('cfgTasa').value);
+    const coolcoinTasa = parseFloat($('cfgCoolcoinTasa').value);
+    const aporte = parseFloat($('cfgAporte').value);
+    const retiro = parseFloat($('cfgRetiro').value);
+    const comision = parseFloat($('cfgComision').value);
+    const iva = parseFloat($('cfgIva').value);
+    const creditoTasa = parseFloat($('cfgCreditoTasa').value);
+    const creditoBase = parseFloat($('cfgCreditoBase').value);
+    const creditoIncremento = parseFloat($('cfgCreditoIncremento').value);
+    const creditoMax = parseFloat($('cfgCreditoMax').value);
+    const creditoPlazoMin = parseInt($('cfgCreditoPlazoMin').value);
+    const creditoPlazoMax = parseInt($('cfgCreditoPlazoMax').value);
+    const membresiaCosto = parseFloat($('cfgMembresiaCosto').value);
+    const soporteEmail = $('cfgSoporteEmail').value.trim();
+    const soporteWhatsapp = $('cfgSoporteWhatsapp').value.trim();
+    const instagram = $('cfgInstagram').value.trim();
+    const tiktok = $('cfgTiktok').value.trim();
+    const facebook = $('cfgFacebook').value.trim();
+    const gaId = $('cfgGaId').value.trim();
+    const pixelId = $('cfgPixelId').value.trim();
+    const valores = [tasa, coolcoinTasa, aporte, retiro, comision, iva, creditoTasa, creditoBase, creditoIncremento, creditoMax, creditoPlazoMin, creditoPlazoMax, membresiaCosto];
+    if (valores.some(v => isNaN(v) || v < 0)) {
+      msg.textContent = 'Revisa que todos los valores sean números válidos.';
+      msg.className = 'settings-msg err';
+      return;
+    }
+    if (creditoPlazoMax < creditoPlazoMin) {
+      msg.textContent = 'El plazo máximo de crédito no puede ser menor que el mínimo.';
+      msg.className = 'settings-msg err';
+      return;
+    }
+    try {
+      await apiFetch('/admin_actualizar_organizacion.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          tasa_plazo_fijo: tasa, coolcoin_tasa_anual: coolcoinTasa, aporte_inicial: aporte, retiro_minimo: retiro,
+          comision_deposito_pct: comision, iva_pct: iva,
+          credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
+          credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
+          credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
+          membresia_premium_costo: membresiaCosto,
+        })
+      });
+      await apiFetch('/admin_actualizar_soporte.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ soporte_email: soporteEmail, soporte_whatsapp: soporteWhatsapp })
+      });
+      await apiFetch('/admin_actualizar_redes.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          instagram_url: instagram, tiktok_url: tiktok, facebook_url: facebook,
+          ga_measurement_id: gaId, meta_pixel_id: pixelId,
+        })
+      });
+      Object.assign(adminOrgSettings, {
+        tasa_plazo_fijo: tasa, coolcoin_tasa_anual: coolcoinTasa, aporte_inicial: aporte, retiro_minimo: retiro,
+        comision_deposito_pct: comision, iva_pct: iva,
+        credito_tasa_anual: creditoTasa, credito_limite_base: creditoBase,
+        credito_incremento_por_pago: creditoIncremento, credito_limite_maximo: creditoMax,
+        credito_plazo_min_meses: creditoPlazoMin, credito_plazo_max_meses: creditoPlazoMax,
+        membresia_premium_costo: membresiaCosto,
+        soporte_email: soporteEmail, soporte_whatsapp: soporteWhatsapp,
+        instagram_url: instagram, tiktok_url: tiktok, facebook_url: facebook,
+        ga_measurement_id: gaId, meta_pixel_id: pixelId,
+      });
+      msg.textContent = 'Cambios guardados.';
+      msg.className = 'settings-msg ok';
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+    }
+  }
+
+  // ============ Diseño del sitio (page builder) ============
+  const SECTION_LABELS = {
+    hero: 'Hero (encabezado principal)', preview: 'Vista previa de cuenta', benefits: 'Beneficios',
+    trust: 'Cifras de confianza', faq: 'Preguntas frecuentes', steps: 'Cómo funciona',
+    orgs: 'Para organizaciones', 'final-cta': 'Llamado final a la acción',
+    'como-funciona': 'Cómo funciona (pasos)', testimonios: 'Testimonios', seguridad: 'Seguridad y protección de datos',
+  };
+  const BUILDER_PAGINAS = ['index', 'landing-socios', 'landing-empresas'];
+  const TAB_BTN_IDS = { 'index': 'tabBtnIndex', 'landing-socios': 'tabBtnLandingSocios', 'landing-empresas': 'tabBtnLandingEmpresas' };
+
+  let paginasConfigCache = {};
+  let builderPaginaActual = 'index';
+  let builderDebounce = null;
+
+  const PASO_ICONOS = ['🪙', '📱', '✅', '💰', '📈', '🔒', '⏱️', '🤝'];
+  let pasosCache = [];
+
+  async function loadPasos() {
+    try {
+      const data = await apiFetch('/admin_listar_pasos.php', { credentials: 'include' });
+      pasosCache = data.pasos || [];
+    } catch (err) {
+      pasosCache = [];
+    }
+    renderPasosList();
+  }
+
+  function renderPasosList() {
+    const wrap = $('pasosList');
+    wrap.innerHTML = pasosCache.map((p, i) => (
+      '<div class="builder-section-item" style="cursor:default; flex-direction:column; align-items:stretch; gap:8px;">' +
+        '<div style="display:flex; gap:8px; align-items:center;">' +
+          '<select onchange="actualizarPaso(' + i + ", 'icono', this.value)\">" +
+            PASO_ICONOS.map(ic => '<option value="' + ic + '" ' + (ic === p.icono ? 'selected' : '') + '>' + ic + '</option>').join('') +
+          '</select>' +
+          '<input class="settings-input" style="flex:1;" placeholder="Título" value="' + escapeHtml(p.titulo || '') + '" oninput="actualizarPaso(' + i + ", 'titulo', this.value)\">" +
+          '<label style="font-size:12px; display:flex; align-items:center; gap:4px; white-space:nowrap;"><input type="checkbox" ' + (p.visible !== false ? 'checked' : '') + ' onchange="actualizarPaso(' + i + ", 'visible', this.checked)\"> Visible</label>" +
+        '</div>' +
+        '<textarea class="settings-input" rows="2" placeholder="Descripción" oninput="actualizarPaso(' + i + ", 'descripcion', this.value)\">" + escapeHtml(p.descripcion || '') + '</textarea>' +
+        '<div style="display:flex; gap:6px;">' +
+          '<button type="button" class="req-btn approve" onclick="moverPaso(' + i + ', -1)">↑</button>' +
+          '<button type="button" class="req-btn approve" onclick="moverPaso(' + i + ', 1)">↓</button>' +
+          '<button type="button" class="req-btn reject" onclick="quitarPaso(' + i + ')">Quitar</button>' +
+        '</div>' +
+      '</div>'
+    )).join('') || '<div class="empty-note">No hay pasos todavía.</div>';
+  }
+
+  function actualizarPaso(i, campo, valor) {
+    pasosCache[i][campo] = valor;
+  }
+
+  function moverPaso(i, delta) {
+    const j = i + delta;
+    if (j < 0 || j >= pasosCache.length) return;
+    const tmp = pasosCache[i];
+    pasosCache[i] = pasosCache[j];
+    pasosCache[j] = tmp;
+    renderPasosList();
+  }
+
+  function quitarPaso(i) {
+    pasosCache.splice(i, 1);
+    renderPasosList();
+  }
+
+  function agregarPaso() {
+    if (pasosCache.length >= 8) { alert('No puedes tener más de 8 pasos.'); return; }
+    pasosCache.push({ icono: PASO_ICONOS[0], titulo: '', descripcion: '', visible: true });
+    renderPasosList();
+  }
+
+  function mezclarConBlanco(hex, factor) {
+    factor = factor == null ? 0.90 : factor;
+    hex = String(hex || '').replace('#', '');
+    if (!/^[0-9A-Fa-f]{6}$/.test(hex)) hex = '2454FF';
+    const canal = (i) => parseInt(hex.substr(i, 2), 16);
+    const mezclar = (c) => Math.round(c + (255 - c) * factor).toString(16).padStart(2, '0').toUpperCase();
+    return '#' + mezclar(canal(0)) + mezclar(canal(2)) + mezclar(canal(4));
+  }
+
+  async function loadBuilderConfig() {
+    try {
+      const data = await apiFetch('/admin_obtener_paginas_config.php', { credentials: 'include' });
+      paginasConfigCache = data.paginas || {};
+    } catch (err) {
+      paginasConfigCache = {};
+    }
+    await loadPasos();
+    switchBuilderTab('index');
+  }
+
+  function switchBuilderTab(pagina) {
+    builderPaginaActual = pagina;
+    BUILDER_PAGINAS.forEach(p => $(TAB_BTN_IDS[p]).classList.toggle('active', p === pagina));
+    renderBuilderSectionList(pagina);
+    renderBuilderPopupForm(pagina);
+    loadBuilderIframe(pagina);
+    $('builderPasosWrap').classList.toggle('hidden', pagina !== 'index');
+    $('builderMsg').classList.add('hidden');
+  }
+
+  function getDragAfterElement(container, y) {
+    const items = [...container.querySelectorAll('.builder-section-item:not(.dragging)')];
+    return items.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: -Infinity, element: null }).element;
+  }
+
+  function renderBuilderSectionList(pagina) {
+    const wrap = $('builderSectionList');
+    wrap.innerHTML = '';
+    const cfg = paginasConfigCache[pagina] || { secciones: [] };
+    (cfg.secciones || []).forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'builder-section-item';
+      li.draggable = true;
+      li.dataset.key = item.key;
+      li.innerHTML =
+        '<span class="builder-drag-handle">⠿</span>' +
+        '<span class="builder-section-name">' + escapeHtml(SECTION_LABELS[item.key] || item.key) + '</span>' +
+        '<label style="font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:5px;">' +
+        '<input type="checkbox" ' + (item.visible !== false ? 'checked' : '') + ' onchange="onBuilderChange()"> Visible</label>';
+      li.addEventListener('dragstart', () => li.classList.add('dragging'));
+      li.addEventListener('dragend', () => { li.classList.remove('dragging'); onBuilderChange(); });
+      wrap.appendChild(li);
+    });
+    wrap.ondragover = (e) => {
+      e.preventDefault();
+      const dragging = wrap.querySelector('.dragging');
+      if (!dragging) return;
+      const after = getDragAfterElement(wrap, e.clientY);
+      if (after == null) wrap.appendChild(dragging); else wrap.insertBefore(dragging, after);
+    };
+  }
+
+  function renderBuilderPopupForm(pagina) {
+    const cfg = paginasConfigCache[pagina] || {};
+    $('cfgPopupActivo').checked = !!cfg.popup_activo;
+    $('cfgPopupTitulo').value = cfg.popup_titulo || '';
+    $('cfgPopupTexto').value = cfg.popup_texto || '';
+    $('cfgPopupImagen').value = cfg.popup_imagen_url || '';
+    $('cfgPopupBotonTexto').value = cfg.popup_boton_texto || '';
+    $('cfgPopupBotonUrl').value = cfg.popup_boton_url || '';
+    $('cfgPopupFechaInicio').value = cfg.popup_fecha_inicio || '';
+    $('cfgPopupFechaFin').value = cfg.popup_fecha_fin || '';
+    $('cfgSeoTitulo').value = cfg.seo_titulo || '';
+    $('cfgSeoDescripcion').value = cfg.seo_descripcion || '';
+    $('cfgSeoImagen').value = cfg.seo_imagen_url || '';
+    $('cfgSeoShareTitulo').value = cfg.seo_share_titulo || '';
+    $('cfgSeoShareDescripcion').value = cfg.seo_share_descripcion || '';
+  }
+
+  function collectSeoFields() {
+    return {
+      seo_titulo: $('cfgSeoTitulo').value.trim() || null,
+      seo_descripcion: $('cfgSeoDescripcion').value.trim() || null,
+      seo_imagen_url: $('cfgSeoImagen').value.trim() || null,
+      seo_share_titulo: $('cfgSeoShareTitulo').value.trim() || null,
+      seo_share_descripcion: $('cfgSeoShareDescripcion').value.trim() || null,
+    };
+  }
+
+  function loadBuilderIframe(pagina) {
+    $('builderPreviewFrame').src = '/' + pagina + '?org=' + encodeURIComponent(ORG_SLUG) + '&preview=1';
+  }
+
+  function collectBuilderSecciones() {
+    return [...$('builderSectionList').querySelectorAll('.builder-section-item')].map(li => ({
+      key: li.dataset.key,
+      visible: li.querySelector('input[type="checkbox"]').checked,
+    }));
+  }
+
+  function collectBuilderPopup() {
+    return {
+      activo: $('cfgPopupActivo').checked,
+      titulo: $('cfgPopupTitulo').value.trim() || null,
+      texto: $('cfgPopupTexto').value.trim() || null,
+      imagen_url: $('cfgPopupImagen').value.trim() || null,
+      boton_texto: $('cfgPopupBotonTexto').value.trim() || null,
+      boton_url: $('cfgPopupBotonUrl').value.trim() || null,
+    };
+  }
+
+  function onBuilderChange() {
+    clearTimeout(builderDebounce);
+    builderDebounce = setTimeout(postPreviewUpdate, 150);
+  }
+
+  function postPreviewUpdate() {
+    const frame = $('builderPreviewFrame');
+    if (!frame.contentWindow) return;
+    const color = $('cfgColorMarca').value;
+    const payload = {
+      organizacion: { color_marca: color, brand_soft: mezclarConBlanco(color) },
+      secciones: collectBuilderSecciones(),
+      popup: collectBuilderPopup(),
+    };
+    frame.contentWindow.postMessage({ source: 'coolki-builder', type: 'preview-update', payload }, location.origin);
+  }
+
+  async function guardarPaginaConfig() {
+    const msg = $('builderMsg');
+    msg.classList.add('hidden');
+    const color = $('cfgColorMarca').value;
+    try {
+      if (color !== (adminOrgSettings.color_marca || '#2454FF')) {
+        await apiFetch('/admin_actualizar_color_marca.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ color_marca: color })
+        });
+        adminOrgSettings.color_marca = color;
+      }
+      const popup = collectBuilderPopup();
+      const fechaInicio = $('cfgPopupFechaInicio').value || null;
+      const fechaFin = $('cfgPopupFechaFin').value || null;
+      const secciones = collectBuilderSecciones();
+      const seo = collectSeoFields();
+      await apiFetch('/admin_guardar_pagina_config.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          pagina: builderPaginaActual, secciones,
+          popup_activo: popup.activo, popup_titulo: popup.titulo, popup_texto: popup.texto,
+          popup_imagen_url: popup.imagen_url, popup_boton_texto: popup.boton_texto, popup_boton_url: popup.boton_url,
+          popup_fecha_inicio: fechaInicio, popup_fecha_fin: fechaFin,
+          ...seo,
+        })
+      });
+      if (builderPaginaActual === 'index') {
+        await apiFetch('/admin_guardar_pasos.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ pasos: pasosCache })
+        });
+      }
+      paginasConfigCache[builderPaginaActual] = {
+        secciones,
+        popup_activo: popup.activo, popup_titulo: popup.titulo, popup_texto: popup.texto,
+        popup_imagen_url: popup.imagen_url, popup_boton_texto: popup.boton_texto, popup_boton_url: popup.boton_url,
+        popup_fecha_inicio: fechaInicio, popup_fecha_fin: fechaFin,
+        ...seo,
+      };
+      msg.textContent = 'Cambios guardados.';
+      msg.className = 'settings-msg ok';
+      loadBuilderIframe(builderPaginaActual);
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+    }
+  }
+
+  // ============ Testimonios ============
+  let testimoniosCache = [];
+  let testFotoUrlActual = null;
+
+  async function loadTestimonios() {
+    try {
+      const data = await apiFetch('/admin_listar_testimonios.php', { credentials: 'include' });
+      testimoniosCache = data.testimonios || [];
+    } catch (err) {
+      testimoniosCache = [];
+    }
+    renderTestimoniosList();
+  }
+
+  function renderTestimoniosList() {
+    const wrap = $('testimoniosList');
+    wrap.innerHTML = testimoniosCache.length ? testimoniosCache.map((t, i) => {
+      const extracto = escapeHtml((t.testimonio || '').slice(0, 80)) + ((t.testimonio || '').length > 80 ? '…' : '');
+      return '<div class="request-row">' +
+        '<div class="request-info"><b>' + escapeHtml(t.nombre) + '</b> ' +
+        (t.publicado ? '<span class="status-pill">Publicado</span>' : '<span class="status-pill alert">Borrador</span>') +
+        '<div class="request-name">' + extracto + '</div></div>' +
+        '<div class="request-actions">' +
+          '<button class="req-btn approve" onclick="moverTestimonio(' + i + ', -1)">↑</button>' +
+          '<button class="req-btn approve" onclick="moverTestimonio(' + i + ', 1)">↓</button>' +
+          '<button class="req-btn approve" onclick="abrirFormTestimonio(' + t.id + ')">Editar</button>' +
+          '<button class="req-btn reject" onclick="eliminarTestimonio(' + t.id + ')">Borrar</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') : '<div class="empty-note">Todavía no hay testimonios.</div>';
+  }
+
+  function abrirFormTestimonio(id) {
+    const t = id ? testimoniosCache.find(x => x.id === id) : null;
+    $('testId').value = t ? t.id : '';
+    $('testNombre').value = t ? t.nombre : '';
+    $('testCiudad').value = t ? (t.ciudad || '') : '';
+    $('testTexto').value = t ? t.testimonio : '';
+    $('testFecha').value = t ? (t.fecha_registro || '') : '';
+    $('testAutorizado').checked = t ? !!t.autorizacion_confirmada : false;
+    $('testPublicado').checked = t ? !!t.publicado : false;
+    testFotoUrlActual = t ? (t.foto_url || null) : null;
+    $('testFotoPreview').innerHTML = testFotoUrlActual ? '<img src="' + testFotoUrlActual + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:8px;">' : '';
+    $('testFoto').value = '';
+    $('testimonioMsg').classList.add('hidden');
+    $('testimonioForm').classList.remove('hidden');
+  }
+
+  function cerrarFormTestimonio() {
+    $('testimonioForm').classList.add('hidden');
+  }
+
+  async function subirFotoTestimonio() {
+    const input = $('testFoto');
+    if (!input.files || !input.files[0]) return;
+    const msg = $('testimonioMsg');
+    msg.classList.add('hidden');
+    const fd = new FormData();
+    fd.append('foto', input.files[0]);
+    try {
+      const res = await fetch(API_BASE + '/admin_subir_foto_testimonio.php', { method: 'POST', credentials: 'include', body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || NET_MSG);
+      testFotoUrlActual = data.foto_url;
+      $('testFotoPreview').innerHTML = '<img src="' + testFotoUrlActual + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:8px;">';
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+      msg.classList.remove('hidden');
+    }
+  }
+
+  async function guardarTestimonio() {
+    const msg = $('testimonioMsg');
+    msg.classList.add('hidden');
+    const nombre = $('testNombre').value.trim();
+    const testimonio = $('testTexto').value.trim();
+    if (!nombre || !testimonio) {
+      msg.textContent = 'El nombre y el testimonio son obligatorios.';
+      msg.className = 'settings-msg err';
+      msg.classList.remove('hidden');
+      return;
+    }
+    try {
+      await apiFetch('/admin_guardar_testimonio.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          id: $('testId').value ? parseInt($('testId').value) : null,
+          nombre, ciudad: $('testCiudad').value.trim(), testimonio,
+          fecha_registro: $('testFecha').value || null,
+          foto_url: testFotoUrlActual,
+          autorizacion_confirmada: $('testAutorizado').checked,
+          publicado: $('testPublicado').checked,
+        })
+      });
+      cerrarFormTestimonio();
+      await loadTestimonios();
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+      msg.classList.remove('hidden');
+    }
+  }
+
+  async function eliminarTestimonio(id) {
+    if (!confirm('¿Borrar este testimonio? Esta acción no se puede deshacer.')) return;
+    try {
+      await apiFetch('/admin_eliminar_testimonio.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ id })
+      });
+      await loadTestimonios();
+    } catch (err) {
+      alert(err.message || NET_MSG);
+    }
+  }
+
+  async function moverTestimonio(i, delta) {
+    const j = i + delta;
+    if (j < 0 || j >= testimoniosCache.length) return;
+    const tmp = testimoniosCache[i];
+    testimoniosCache[i] = testimoniosCache[j];
+    testimoniosCache[j] = tmp;
+    renderTestimoniosList();
+    try {
+      await apiFetch('/admin_reordenar_testimonios.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ ids: testimoniosCache.map(t => t.id) })
+      });
+    } catch (err) { /* si falla, se reordena de nuevo en el próximo loadTestimonios() */ }
+  }
+
+  // ============ Historial global de transacciones ============
+  const TX_LABELS = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento', credito_desembolso: 'Desembolso de crédito', pago_credito: 'Pago de cuota de crédito' };
+
+  async function loadTransacciones() {
+    const wrap = $('txWrap');
+    try {
+      const data = await apiFetch('/admin_listar_transacciones.php', { credentials: 'include' });
+      const txs = data.transacciones || [];
+      wrap.innerHTML = txs.length ? txs.map(t => renderTxRow(t, true)).join('') : '<div class="empty-note">Todavía no hay transacciones.</div>';
+    } catch (err) {
+      wrap.innerHTML = '<div class="empty-note">' + (err.message || NET_MSG) + '</div>';
+    }
+  }
+
+  function renderTxRow(t, conSocio) {
+    const isOut = (t.tipo === 'retiro' || t.tipo === 'comision_admin' || t.tipo === 'pago_credito');
+    const sub = (conSocio ? escapeHtml(t.socio_nombre) + ' · ' : '') + formatDate(t.created_at);
+    return '<div class="tx-row">' +
+      '<div><div class="tx-desc">' + (TX_LABELS[t.tipo] || t.tipo) + '</div><div class="tx-sub">' + sub + '</div></div>' +
+      '<div class="tx-amt ' + (isOut ? 'neg' : 'pos') + '">' + (isOut ? '-' : '+') + money(t.monto) + '</div>' +
+    '</div>';
+  }
+
+  // ============ Créditos ============
+  const CREDITO_ESTADO_LABELS = { pendiente: 'En revisión', rechazado: 'Rechazado', activo: 'Activo', pagado: 'Pagado' };
+
+  async function loadCreditos() {
+    const wrapPend = $('creditosPendientesWrap');
+    const wrapHist = $('creditosHistorialWrap');
+    let creditos = [];
+    try {
+      const data = await apiFetch('/admin_listar_creditos.php', { credentials: 'include' });
+      creditos = data.creditos || [];
+    } catch (err) {
+      wrapPend.innerHTML = '<div class="empty-note">' + (err.message || NET_MSG) + '</div>';
+      wrapHist.innerHTML = '';
+      return;
+    }
+
+    const pendientes = creditos.filter(c => c.estado === 'pendiente');
+    const resto = creditos.filter(c => c.estado !== 'pendiente');
+
+    wrapPend.innerHTML = pendientes.length ? pendientes.map(renderCreditoPendiente).join('')
+      : '<div class="empty-note">No hay solicitudes de crédito pendientes.</div>';
+
+    wrapHist.innerHTML = resto.length ? resto.map(c => {
+      const mora = Number(c.en_mora) === 1 ? ' · tuvo atraso' : '';
+      return '<div class="credito-hist-row">' +
+        '<div style="display:flex; justify-content:space-between;"><span>' + escapeHtml(c.socio_nombre) + ' — ' + money(c.monto) + ' a ' + c.plazo_meses + ' meses</span><b>' + (CREDITO_ESTADO_LABELS[c.estado] || c.estado) + '</b></div>' +
+        '<div class="request-name">' + formatDate(c.resuelto_at || c.created_at) + mora + '</div>' +
+      '</div>';
+    }).join('') : '<div class="empty-note">Todavía no hay créditos resueltos.</div>';
+  }
+
+  function renderCreditoPendiente(c) {
+    const saldo = parseFloat(c.saldo_disponible) + parseFloat(c.saldo_congelado);
+    const desde = new Date(c.socio_desde.replace(' ', 'T'));
+    const diasAntiguedad = Math.max(0, Math.floor((Date.now() - desde.getTime()) / 86400000));
+    return '<div class="credito-request" id="credito-' + c.id + '">' +
+      '<div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">' +
+        '<div><b>' + money(c.monto) + '</b> a ' + c.plazo_meses + ' meses · cuota estimada ' + money(c.cuota_mensual) + '/mes</div>' +
+        '<div class="request-name">' + escapeHtml(c.socio_nombre) + '</div>' +
+      '</div>' +
+      '<div class="credito-request-context">' +
+        'Saldo actual: ' + money(saldo) + ' · Socio desde ' + formatDate(c.socio_desde) + ' (' + diasAntiguedad + ' días) · Cupo sugerido: ' + money(c.cupo_sugerido) +
+      '</div>' +
+      '<textarea class="credito-msg-input" id="msgCredito' + c.id + '" placeholder="Mensaje para el socio (obligatorio): explica por qué se aprueba o rechaza"></textarea>' +
+      '<div id="errCredito' + c.id + '" class="settings-msg err hidden"></div>' +
+      '<div class="request-actions">' +
+        '<button class="req-btn approve" onclick="resolverCredito(' + c.id + ', \'aprobar\')">Aprobar</button>' +
+        '<button class="req-btn reject" onclick="resolverCredito(' + c.id + ', \'rechazar\')">Rechazar</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function resolverCredito(id, accion) {
+    const errId = 'errCredito' + id;
+    $(errId).classList.add('hidden');
+    const mensaje = $('msgCredito' + id).value.trim();
+    if (!mensaje) {
+      $(errId).textContent = 'Escribe un mensaje explicando la decisión.';
+      $(errId).classList.remove('hidden');
+      return;
+    }
+    try {
+      await apiFetch('/admin_resolver_credito.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ credito_id: id, accion, mensaje })
+      });
+      await loadCreditos();
+      await loadAdminDashboard();
+    } catch (err) {
+      $(errId).textContent = err.message || NET_MSG;
+      $(errId).classList.remove('hidden');
+    }
+  }
+
+  // ============ Detalle de un socio (modal) ============
+  async function verDetalleSocio(id) {
+    $('modalOverlay').classList.add('show');
+    $('modalBody').innerHTML = '<div class="empty-note">Cargando…</div>';
+    try {
+      const data = await apiFetch('/admin_detalle_socio.php?socio_id=' + encodeURIComponent(id), { credentials: 'include' });
+      renderSocioModal(data);
+    } catch (err) {
+      $('modalBody').innerHTML = '<div class="empty-note">' + (err.message || NET_MSG) + '</div>';
+    }
+  }
+
+  function cerrarModal() {
+    $('modalOverlay').classList.remove('show');
+  }
+
+  const ESTADO_CIVIL_LABELS = { soltero: 'Soltero/a', casado: 'Casado/a', divorciado: 'Divorciado/a', viudo: 'Viudo/a', union_libre: 'Unión libre' };
+  const TIPO_EMPLEO_LABELS = { dependiente: 'Dependiente', independiente: 'Independiente' };
+
+  function renderSocioModal(data) {
+    const s = data.socio;
+    const pill = s.estado === 'activo'
+      ? '<span class="status-pill">Activo</span>'
+      : '<span class="status-pill alert">Pago pendiente</span>';
+    const nivelPill = s.nivel === 'premium'
+      ? '<span class="status-pill">Cliente Premium</span>'
+      : '<span class="status-pill alert">Cliente Normal</span>';
+
+    let html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;padding-right:24px;">' +
+      '<div><div style="font-family:\'Space Grotesk\',sans-serif;font-weight:700;font-size:19px;">' + escapeHtml(s.nombre) + '</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">Socio desde ' + formatDate(s.created_at) + '</div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' + pill + nivelPill + '</div>' +
+    '</div>';
+
+    html += '<div class="modal-info-grid">' +
+      '<div><div class="modal-info-label">Cédula</div><div>' + escapeHtml(s.cedula) + '</div></div>' +
+      '<div><div class="modal-info-label">Correo</div><div>' + escapeHtml(s.email) + '</div></div>' +
+      '<div><div class="modal-info-label">Celular</div><div>' + escapeHtml(s.celular || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Saldo disponible</div><div>' + money(s.saldo_disponible) + '</div></div>' +
+      '<div><div class="modal-info-label">Congelado (aporte inicial)</div><div>' + money(s.saldo_congelado) + '</div></div>' +
+      '<div><div class="modal-info-label">Ciudad</div><div>' + escapeHtml(s.ciudad || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Provincia</div><div>' + escapeHtml(s.provincia || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Dirección</div><div>' + escapeHtml(s.direccion || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Tipo de empleo</div><div>' + (TIPO_EMPLEO_LABELS[s.tipo_empleo] || '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Ingresos mensuales</div><div>' + (s.ingresos_mensuales ? money(s.ingresos_mensuales) : '—') + '</div></div>' +
+      '<div><div class="modal-info-label">Estado civil</div><div>' + (ESTADO_CIVIL_LABELS[s.estado_civil] || '—') + '</div></div>' +
+    '</div>';
+
+    const plazosFijos = (data.plazos_fijos || []).filter(p => p.producto !== 'coolcoin');
+    const coolcoinInversiones = (data.plazos_fijos || []).filter(p => p.producto === 'coolcoin');
+
+    if (plazosFijos.length) {
+      html += '<div class="modal-section-title">Plazos fijos</div>';
+      html += plazosFijos.map(p =>
+        '<div class="tx-row"><div><div class="tx-desc">' + money(p.capital) + ' al ' + p.tasa_anual + '% anual</div>' +
+        '<div class="tx-sub">Vence ' + formatDate(p.fecha_vencimiento) + '</div></div>' +
+        '<div class="tx-amt pos">+' + money(p.generado) + '</div></div>'
+      ).join('');
+    }
+
+    if (coolcoinInversiones.length) {
+      html += '<div class="modal-section-title">CoolCoin</div>';
+      html += coolcoinInversiones.map(p =>
+        '<div class="tx-row"><div><div class="tx-desc">' + money(p.capital) + ' al ' + p.tasa_anual + '% anual</div>' +
+        '<div class="tx-sub">Vence ' + formatDate(p.fecha_vencimiento) + '</div></div>' +
+        '<div class="tx-amt pos">+' + money(p.generado) + '</div></div>'
+      ).join('');
+    }
+
+    html += '<div class="modal-section-title">Historial de transacciones</div>';
+    html += (data.transacciones && data.transacciones.length)
+      ? data.transacciones.map(t => renderTxRow(t, false)).join('')
+      : '<div class="empty-note">Sin transacciones.</div>';
+
+    if (data.solicitudes_retiro && data.solicitudes_retiro.length) {
+      html += '<div class="modal-section-title">Solicitudes de retiro</div>';
+      html += data.solicitudes_retiro.map(r =>
+        '<div class="tx-row"><div><div class="tx-desc">' + money(r.monto) + '</div>' +
+        '<div class="tx-sub">' + formatDate(r.created_at) + '</div></div>' +
+        '<div class="tx-amt">' + r.estado + '</div></div>'
+      ).join('');
+    }
+
+    if (data.creditos && data.creditos.length) {
+      html += '<div class="modal-section-title">Créditos</div>';
+      html += data.creditos.map(c => {
+        const mora = Number(c.en_mora) === 1 ? ' · tuvo atraso' : '';
+        const mensaje = c.mensaje_admin ? '<div class="credito-request-context">"' + escapeHtml(c.mensaje_admin) + '"</div>' : '';
+        return '<div class="tx-row"><div><div class="tx-desc">' + money(c.monto) + ' a ' + c.plazo_meses + ' meses</div>' +
+          '<div class="tx-sub">' + formatDate(c.created_at) + mora + '</div>' + mensaje + '</div>' +
+          '<div class="tx-amt">' + (CREDITO_ESTADO_LABELS[c.estado] || c.estado) + '</div></div>';
+      }).join('');
+    }
+
+    $('modalBody').innerHTML = html;
+  }
+
+  // ============ Cobro a todas las cuentas ============
+  async function cobrarMantenimiento() {
+    const msg = $('mantMsg');
+    msg.classList.add('hidden');
+    const monto = parseFloat($('mantMonto').value);
+    if (!monto || monto <= 0) {
+      msg.textContent = 'Ingresa un monto válido.';
+      msg.className = 'settings-msg err';
+      return;
+    }
+    const ok = confirm('¿Seguro que quieres cobrar ' + money(monto) + ' a TODAS las cuentas de socios? Esta acción no se puede deshacer.');
+    if (!ok) return;
+
+    try {
+      const data = await apiFetch('/admin_cobrar_mantenimiento.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto })
+      });
+      msg.textContent = 'Se cobró a ' + data.socios_cobrados + ' de ' + data.total_socios + ' socios' +
+        (data.cobros_parciales ? ' (' + data.cobros_parciales + ' con cobro parcial por saldo insuficiente)' : '') +
+        (data.socios_sin_saldo ? ', ' + data.socios_sin_saldo + ' sin saldo disponible' : '') + '.';
+      msg.className = 'settings-msg ok';
+      $('mantMonto').value = '';
+      await loadAdminDashboard();
+      await loadTransacciones();
+    } catch (err) {
+      msg.textContent = err.message || NET_MSG;
+      msg.className = 'settings-msg err';
+    }
+  }
+
+  // ============ Arranque: restaurar sesión si ya existe ============
+  (async function init() {
+    try {
+      const data = await apiFetch('/admin_me.php', { credentials: 'include' });
+      await enterAdminMode(data.organizacion);
+    } catch (e) { /* no hay sesión: se queda en el gate */ }
+  })();
+</script>
+<script src="builder-runtime.js"></script>
+
+</body>
+</html>

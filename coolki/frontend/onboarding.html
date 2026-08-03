@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Configura tu caja</title>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-onb, .coolki-onb * { box-sizing: border-box; }
+
+.coolki-onb {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --payphone: #5B2A8C;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 34px 16px 40px;
+}
+
+.onb-screen { width: 100%; max-width: 460px; }
+.onb-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.onb-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; }
+
+.stepper { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+.step-dot { flex: 1; height: 5px; border-radius: 4px; background: var(--border); }
+.step-dot.done { background: var(--brand); }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 30px 26px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.card-eyebrow { display: inline-block; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); background: var(--brand-soft); padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+.card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+.card-desc { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.field input, .field select { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); }
+.field input:focus, .field select:focus { outline: none; border-color: var(--brand); background: #fff; }
+
+.color-row { display: flex; gap: 10px; margin-bottom: 6px; }
+.color-swatch { width: 34px; height: 34px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
+.color-swatch.selected { border-color: var(--ink); }
+
+.logo-drop { border: 1.5px dashed var(--border); border-radius: 14px; padding: 20px; text-align: center; font-size: 12.5px; color: var(--muted); margin-bottom: 16px; }
+
+.btn-primary { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.btn-back { width: 100%; text-align: center; padding: 10px 0; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 8px; }
+
+/* payphone connect */
+.pp-card { border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 18px; background: var(--bg); }
+.pp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.pp-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--payphone); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; }
+.pp-title { font-weight: 700; font-size: 14.5px; }
+.pp-sub { font-size: 12px; color: var(--muted); }
+.connect-btn { width: 100%; padding: 13px 0; border: none; border-radius: 12px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+.connect-status { display: none; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--mint); margin-top: 12px; }
+.connect-status.show { display: flex; }
+.connect-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); }
+
+/* config sliders/rows */
+.config-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.config-row:last-child { border-bottom: none; }
+.config-label { font-size: 13.5px; font-weight: 600; }
+.config-sub { font-size: 11.5px; color: var(--muted); }
+.config-input { width: 90px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; text-align: right; }
+
+/* final confirmation */
+.confirm-badge { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; font-size: 32px; background: var(--mint-soft); }
+.confirm-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 23px; text-align: center; margin-bottom: 8px; }
+.confirm-desc { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 20px; }
+.link-box { display: flex; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 18px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.link-box span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Space Grotesk', sans-serif; color: var(--ink); }
+.copy-btn { border: none; background: var(--brand-soft); color: var(--brand); font-weight: 600; font-size: 11.5px; padding: 6px 10px; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
+
+.hidden { display: none; }
+.footer-credit { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
+</style>
+
+<div class="coolki-onb">
+  <div class="onb-screen">
+    <div class="onb-brand">
+      <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="onb-word">coolki</div>
+    </div>
+
+    <div class="stepper">
+      <div class="step-dot done" id="d1"></div><div class="step-dot" id="d2"></div><div class="step-dot" id="d3"></div>
+    </div>
+
+    <!-- STEP 1: DATOS ORG -->
+    <div class="card" id="s1">
+      <span class="card-eyebrow">Paso 1 de 3</span>
+      <div class="card-title">Configura tu caja</div>
+      <div class="card-desc">Estos datos se usarán en la app que verán tus socios.</div>
+
+      <div class="field"><label>Nombre de tu organización</label><input type="text" placeholder="Ej. Textiles Otavalo" value="Coolki"></div>
+      <div class="field"><label>Tipo de organización</label>
+        <select><option>Empresa</option><option>Cooperativa</option><option>Comunidad / gremio</option><option>Asociación</option></select>
+      </div>
+      <div class="field">
+        <label>Color de marca</label>
+        <div class="color-row">
+          <div class="color-swatch selected" style="background:#2454FF"></div>
+          <div class="color-swatch" style="background:#1FAE7A"></div>
+          <div class="color-swatch" style="background:#E14B4B"></div>
+          <div class="color-swatch" style="background:#B98424"></div>
+          <div class="color-swatch" style="background:#16182B"></div>
+        </div>
+      </div>
+      <div class="logo-drop">Arrastra tu logo aquí (opcional) — se mostrará en la app de tus socios</div>
+
+      <button class="btn-primary" onclick="go(1,2)">Continuar</button>
+    </div>
+
+    <!-- STEP 2: CONECTAR PAYPHONE -->
+    <div class="card hidden" id="s2">
+      <span class="card-eyebrow">Paso 2 de 3</span>
+      <div class="card-title">Conecta tu cuenta de cobro</div>
+      <div class="card-desc">El dinero de tus socios llegará directo a esta cuenta. CDH SOFT nunca tiene acceso a tus fondos.</div>
+
+      <div class="pp-card">
+        <div class="pp-head">
+          <div class="pp-mark">P</div>
+          <div><div class="pp-title">PayPhone Business</div><div class="pp-sub">Comercio afiliado</div></div>
+        </div>
+        <div class="field"><label>ID de comercio</label><input type="text" placeholder="PP-000000"></div>
+        <div class="field" style="margin-bottom: 4px;"><label>Token de API</label><input type="password" placeholder="••••••••••••"></div>
+        <button class="connect-btn" onclick="connectPP()">Conectar cuenta PayPhone</button>
+        <div class="connect-status" id="ppStatus"><span class="connect-dot"></span> Cuenta conectada correctamente</div>
+      </div>
+
+      <button class="btn-primary" onclick="go(2,3)">Continuar</button>
+      <button class="btn-back" onclick="go(2,1)">Atrás</button>
+    </div>
+
+    <!-- STEP 3: REGLAS DE LA CAJA -->
+    <div class="card hidden" id="s3">
+      <span class="card-eyebrow">Paso 3 de 3</span>
+      <div class="card-title">Reglas de tu caja</div>
+      <div class="card-desc">Puedes ajustar esto cuando quieras desde tu panel.</div>
+
+      <div class="config-row"><div><div class="config-label">Aporte inicial</div><div class="config-sub">Se congela como costo operativo</div></div><input class="config-input" value="$5.00"></div>
+      <div class="config-row"><div><div class="config-label">Retiro mínimo</div><div class="config-sub">Monto más bajo que puede pedirse</div></div><input class="config-input" value="$10.00"></div>
+      <div class="config-row"><div><div class="config-label">Tasa plazo fijo</div><div class="config-sub">Rendimiento anual para tus socios</div></div><input class="config-input" value="5.0%"></div>
+      <div class="config-row"><div><div class="config-label">Aprobación de retiros</div><div class="config-sub">Quién los autoriza</div></div><input class="config-input" value="Manual"></div>
+
+      <button class="btn-primary" style="margin-top: 20px;" onclick="finish()">Activar mi caja</button>
+      <button class="btn-back" onclick="go(3,2)">Atrás</button>
+    </div>
+
+    <!-- CONFIRMACIÓN -->
+    <div class="card hidden" id="sDone">
+      <div class="confirm-badge">🎉</div>
+      <div class="confirm-title">Tu caja está lista</div>
+      <div class="confirm-desc">Comparte este enlace con tus socios para que abran su cuenta.</div>
+      <div class="link-box"><span>app.coolki.ec/registro/coolki</span><button class="copy-btn" onclick="copyLink(this)">Copiar</button></div>
+      <button class="btn-primary" onclick="alert('Esto llevaría al panel del administrador.')">Ir a mi panel</button>
+    </div>
+
+    <div class="footer-credit">Software por CDH SOFT</div>
+  </div>
+</div>
+
+<script>
+  function go(from, to) {
+    document.getElementById('s' + from).classList.add('hidden');
+    document.getElementById('s' + to).classList.remove('hidden');
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('d' + i).classList.toggle('done', i <= to);
+    }
+  }
+  function connectPP() { document.getElementById('ppStatus').classList.add('show'); }
+  function finish() {
+    document.getElementById('s3').classList.add('hidden');
+    document.getElementById('sDone').classList.remove('hidden');
+  }
+  function copyLink(btn) { btn.textContent = 'Copiado ✓'; setTimeout(() => btn.textContent = 'Copiar', 1500); }
+
+  document.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+    });
+  });
+</script>
+
+</body>
+</html>

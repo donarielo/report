@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Mi cuenta</title>
+<!-- Config del frontend para esta caja. Si este archivo se reutiliza para otro cliente,
+     cambia 'org' aquí (o bórralo y siempre pasa ?org=slug en la URL). -->
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+<!-- PayPhone · Cajita de Pagos (SDK oficial v2.0), usada para los aportes recurrentes -->
+<script src="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.js" type="module"></script>
+<link href="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.css" rel="stylesheet">
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-app, .coolki-app * { box-sizing: border-box; }
+
+.coolki-app {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --coral: #E14B4B;
+  --coral-soft: #FBE6E6;
+  --sun-soft: #FFF3D6;
+  --payphone: #5B2A8C;
+  --gold: #C9971C;
+  --gold-soft: #FCF1D8;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; background: #fff; }
+.brand-lockup { display: flex; align-items: center; gap: 10px; }
+.brand-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.logout-link { border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.tabs { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+.tab-btn { border: none; background: transparent; padding: 8px 16px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.tab-btn.active { background: var(--brand); color: #fff; }
+
+.profile-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px; }
+.profile-field { margin-bottom: 14px; }
+.profile-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.profile-field input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); }
+.profile-field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.profile-save-btn { width: 100%; padding: 13px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14.5px; cursor: pointer; margin-top: 4px; }
+.profile-msg { font-size: 12.5px; margin-top: 10px; }
+.profile-msg.ok { color: var(--mint); }
+.profile-msg.err { color: var(--coral); }
+
+.credito-calc { font-size: 12.5px; color: var(--ink); background: var(--brand-soft); border-radius: 10px; padding: 10px 12px; margin: 10px 0 14px; line-height: 1.6; }
+.credito-calc b { font-family: 'Space Grotesk', sans-serif; }
+.credito-select { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); margin-bottom: 10px; }
+.cuota-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cuota-row:last-child { border-bottom: none; }
+.cuota-info { color: var(--muted); font-size: 12px; }
+.cuota-estado { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
+.cuota-estado.pendiente { background: var(--brand-soft); color: var(--brand); }
+.cuota-estado.pagada { background: var(--mint-soft); color: var(--mint); }
+.cuota-estado.vencida { background: var(--sun-soft); color: #B98424; }
+.cuota-pay-btn { padding: 6px 12px; border-radius: 8px; border: none; background: var(--payphone); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+.cuota-pay-btn.saldo { background: var(--mint); }
+.credito-mensaje { font-size: 12.5px; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+.mora-banner { background: var(--coral-soft); color: var(--coral); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; }
+
+.app-body { display: none; padding: 30px 20px; }
+.app-body.active { display: block; }
+
+/* ---------- LOGIN GATE ---------- */
+.auth-wrap { min-height: 100vh; display: flex; justify-content: center; padding: 40px 16px; }
+.auth-screen { width: 100%; max-width: 380px; }
+.auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.auth-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; margin-bottom: 6px; }
+.auth-desc { font-size: 13.5px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.auth-field input { width: 100%; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); }
+.auth-field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.auth-btn { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.auth-error { font-size: 12.5px; color: var(--coral); line-height: 1.5; margin: 2px 0 14px; }
+.auth-links { display: flex; justify-content: space-between; font-size: 12.5px; margin-top: -6px; margin-bottom: 16px; }
+.auth-links a { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.auth-bottom-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 16px; }
+.auth-bottom-note a { color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.auth-support { text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.auth-support a { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; margin: 0 4px; }
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; border: none; background: transparent; cursor: pointer; font-size: 17px; padding: 0 10px; line-height: 1; }
+.password-toggle span { pointer-events: none; }
+.hidden { display: none; }
+
+/* ---------- SOCIO ---------- */
+.screen { width: 100%; max-width: 420px; margin: 0 auto; }
+.top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.greeting-eyebrow { font-size: 12.5px; color: var(--muted); }
+.greeting-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; margin-top: 2px; }
+.avatar { width: 42px; height: 42px; border-radius: 14px; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; }
+
+.balance-card { background: var(--brand); color: #fff; border-radius: 22px; padding: 26px 22px; margin-bottom: 14px; }
+.balance-label { font-size: 13px; opacity: 0.85; }
+.balance-figure { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 8px 0 18px; }
+.actions-row { display: flex; gap: 10px; }
+.action-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: none; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 14.5px; cursor: pointer; }
+.action-btn.deposit { background: #fff; color: var(--brand); }
+.action-btn.withdraw { background: rgba(255,255,255,0.16); color: #fff; }
+
+.panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.25s ease, margin 0.3s ease; }
+.panel.open { max-height: 720px; opacity: 1; margin-top: 16px; }
+.panel-inner { background: rgba(255,255,255,0.12); border: 1px dashed rgba(255,255,255,0.35); border-radius: 14px; padding: 16px; }
+.panel-title { font-weight: 600; font-size: 13.5px; margin-bottom: 12px; }
+.amount-chips { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.chip { padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); font-family: 'Space Grotesk', sans-serif; font-size: 13px; cursor: pointer; color: #fff; }
+.chip.selected { background: #fff; color: var(--brand); border-color: #fff; }
+.payphone-btn { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.payphone-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.payphone-mark { width: 18px; height: 18px; border-radius: 5px; background: #fff; color: var(--payphone); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; }
+.withdraw-note { font-size: 12px; opacity: 0.9; margin-bottom: 12px; line-height: 1.5; }
+.fee-breakdown { font-size: 12px; opacity: 0.95; margin: 2px 0 12px; line-height: 1.6; background: rgba(255,255,255,0.14); border-radius: 10px; padding: 8px 10px; }
+.confirm-withdraw-btn { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: #fff; color: var(--coral); font-weight: 600; font-size: 14px; cursor: pointer; }
+.success-note { display: none; margin-top: 10px; font-size: 12.5px; font-weight: 600; align-items: center; gap: 6px; }
+.success-note.show { display: flex; }
+.success-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.panel-inner input[type=number] { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.15); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; margin-bottom: 10px; }
+.panel-inner input[type=number]::placeholder { color: rgba(255,255,255,0.7); }
+.panel-error { font-size: 12px; color: #FFD9D9; margin-top: 8px; line-height: 1.5; }
+.pending-note { font-size: 12px; opacity: 0.9; margin-bottom: 10px; background: rgba(255,255,255,0.14); border-radius: 10px; padding: 8px 10px; }
+
+.activation-banner { background: var(--sun-soft); border-radius: 16px; padding: 16px 18px; margin-bottom: 16px; font-size: 13px; color: #7A4E0C; line-height: 1.5; }
+.activation-btn { margin-top: 10px; padding: 10px 16px; border: none; border-radius: 10px; background: var(--payphone); color: #fff; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+
+/* ---------- Resumen de fondos (separado del saldo disponible) ---------- */
+.funds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
+.fund-tile { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px; }
+.fund-tile.highlight { background: var(--brand-soft); border-color: var(--brand-soft); }
+.fund-tile.gold { background: var(--gold-soft); border-color: var(--gold-soft); }
+.fund-tile.gold .fund-value { color: var(--gold); }
+.fund-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.fund-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; margin-top: 4px; }
+.fund-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+@media (max-width: 420px) { .funds-grid { grid-template-columns: 1fr 1fr; } .fund-tile.highlight { grid-column: 1 / -1; } }
+
+/* Sección CoolCoin: overrides las variables de color dentro de este contenedor a dorado,
+   así todo lo que ya usa var(--brand)/var(--mint) (term-form button, bar-fill) hereda el
+   color sin duplicar reglas CSS. */
+#coolcoinWrap { --brand: var(--gold); --mint: var(--gold); }
+
+.section { margin-top: 26px; }
+.section-head { margin-bottom: 4px; }
+.section-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; }
+.section-desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+.term-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 10px; }
+.term-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+.term-row b { color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+.bar-track { height: 6px; background: var(--bg); border-radius: 4px; margin: 12px 0 8px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--mint); border-radius: 4px; }
+.term-foot { font-size: 12px; color: var(--muted); }
+.term-form input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); font-size: 14px; margin-bottom: 10px; }
+.term-form button { width: 100%; padding: 12px 0; border: none; border-radius: 12px; background: var(--brand); color: #fff; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+
+.ledger-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.ledger-row:last-child { border-bottom: none; }
+.ledger-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.ledger-icon.in { background: var(--mint-soft); }
+.ledger-icon.out { background: var(--coral-soft); }
+.ledger-mid { flex: 1; min-width: 0; }
+.ledger-desc { font-size: 13.5px; font-weight: 600; }
+.ledger-date { font-size: 11.5px; color: var(--muted); }
+.ledger-fee { font-size: 11px; color: var(--muted); }
+.ledger-amt { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.ledger-amt.pos { color: var(--mint); }
+.ledger-amt.neg { color: var(--coral); }
+.empty-note { font-size: 12.5px; color: var(--muted); padding: 10px 0; }
+
+/* Overlay bloqueante del perfil obligatorio: a diferencia de un modal normal, no tiene
+   botón de cerrar ni se descarta con click afuera — el socio debe completarlo para seguir. */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(22,24,43,0.55); z-index: 60; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 18px; max-width: 440px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 28px; }
+</style>
+
+<!-- ============ LOGIN GATE ============ -->
+<div class="coolki-app" id="gate">
+  <div class="auth-wrap">
+    <div class="auth-screen">
+      <a class="brand-lockup" id="gateLogoLink" href="index" style="margin-bottom: 22px; text-decoration:none;">
+        <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+        <div class="brand-word">coolki</div>
+      </a>
+
+      <div class="auth-card" id="authSocio">
+        <div class="auth-title">Ingresa a tu cuenta</div>
+        <div class="auth-desc">Usa el correo y la contraseña con la que te registraste en COOLKI.</div>
+        <div class="auth-field"><label>Correo electrónico</label><input id="socioEmail" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com"></div>
+        <div class="auth-field">
+          <label>Contraseña</label>
+          <div class="password-wrap">
+            <input id="socioPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+            <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('socioPassword', this)"><span aria-hidden="true">👁</span></button>
+          </div>
+        </div>
+        <div class="auth-links"><a id="olvideLink" href="recuperar">¿Olvidaste tu contraseña?</a></div>
+        <div id="errSocioLogin" class="auth-error hidden"></div>
+        <button class="auth-btn" id="btnSocioLogin" onclick="loginSocio()">Entrar</button>
+        <div class="auth-bottom-note">¿Aún no tienes cuenta? <a id="crearCuentaLink" href="registro">Crear una cuenta</a></div>
+        <div class="auth-bottom-note"><a id="volverInicioLink" href="index">&larr; Volver al inicio</a></div>
+        <div class="auth-support" id="soporteLinks">
+          <a id="soporteEmailLink" href="#" class="hidden"></a>
+          <a id="soporteWhatsappLink" href="#" target="_blank" rel="noopener" class="hidden">WhatsApp de soporte</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP (socio) ============ -->
+<div class="coolki-app hidden" id="app">
+  <div class="topbar">
+    <div class="brand-lockup">
+      <svg width="32" height="32" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="brand-word">coolki</div>
+    </div>
+    <div class="topbar-right">
+      <div class="tabs">
+        <button class="tab-btn active" id="tabBtnCuenta" onclick="showSocioTab('cuenta')">Mi cuenta</button>
+        <button class="tab-btn" id="tabBtnCreditos" onclick="showSocioTab('creditos')">Créditos</button>
+        <button class="tab-btn" id="tabBtnPerfil" onclick="showSocioTab('perfil')">Mi perfil</button>
+      </div>
+      <button class="logout-link" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="app-body active" id="body-cuenta">
+    <div class="screen">
+      <div class="top-row">
+        <div><div class="greeting-eyebrow">Hola de nuevo</div><div class="greeting-name" id="greetingName">—</div></div>
+        <div class="avatar" id="avatarInitials">--</div>
+      </div>
+
+      <div id="activationBanner" class="activation-banner hidden">
+        <div style="font-weight:700;margin-bottom:4px;">Completa tu aporte inicial</div>
+        <div id="activationText">Te falta pagar tu aporte inicial para activar tu cuenta.</div>
+        <button class="activation-btn" id="btnAporteInicial" onclick="iniciarAporteInicial()">Pagar ahora</button>
+        <div id="pp-button-inicial" style="margin-top:10px;"></div>
+        <div id="errAporteInicial" class="profile-msg err hidden" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-label">Saldo disponible</div>
+        <div class="balance-figure" id="balanceFigure">$0.00</div>
+        <div class="actions-row">
+          <button class="action-btn deposit" onclick="togglePanel('deposit')">Aportar</button>
+          <button class="action-btn withdraw" onclick="togglePanel('withdraw')">Retirar</button>
+        </div>
+
+        <div class="panel" id="panel-deposit">
+          <div class="panel-inner">
+            <div class="panel-title">¿Cuánto quieres ahorrar hoy?</div>
+            <div class="amount-chips" id="chips">
+              <div class="chip selected" onclick="selectChip(this, 10)">$10</div>
+              <div class="chip" onclick="selectChip(this, 20)">$20</div>
+              <div class="chip" onclick="selectChip(this, 50)">$50</div>
+              <div class="chip" onclick="selectChip(this, 100)">$100</div>
+              <div class="chip" id="chipCustom" onclick="selectChip(this, 'custom')">Otro monto</div>
+            </div>
+            <input type="number" id="customAmount" class="hidden" placeholder="¿Cuánto quieres ahorrar?" step="0.01" min="1" oninput="onCustomAmountInput()">
+            <div id="feeBreakdown" class="fee-breakdown"></div>
+            <button class="payphone-btn" id="btnAportar" onclick="iniciarAporte()"><span class="payphone-mark">P</span> <span id="payBtnLabel">Pagar con PayPhone</span></button>
+            <div id="pp-button-aporte" style="margin-top:10px;"></div>
+            <div id="errAporte" class="panel-error hidden"></div>
+            <div class="success-note" id="depositSuccess"><span class="success-dot"></span> Aporte acreditado a tu cuenta</div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-withdraw">
+          <div class="panel-inner">
+            <div class="panel-title">Solicitar retiro</div>
+            <div id="pendingWithdrawNote" class="pending-note hidden"></div>
+            <div class="withdraw-note" id="withdrawNote">Retiros disponibles desde $10.00.</div>
+            <input type="number" id="withdrawAmount" placeholder="Monto a retirar" step="0.01">
+            <button class="confirm-withdraw-btn" onclick="solicitarRetiro()">Solicitar retiro</button>
+            <div id="errRetiro" class="panel-error hidden"></div>
+            <div class="success-note" id="withdrawSuccess"><span class="success-dot"></span> Solicitud enviada al administrador</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen: ahorros disponibles, congelado y plazo fijo, cada uno por separado -->
+      <div class="funds-grid">
+        <div class="fund-tile">
+          <div class="fund-label">Congelado</div>
+          <div class="fund-value" id="fundCongelado">$0.00</div>
+          <div class="fund-sub">Aporte inicial</div>
+        </div>
+        <div class="fund-tile">
+          <div class="fund-label">En plazo fijo</div>
+          <div class="fund-value" id="fundPlazoFijo">$0.00</div>
+          <div class="fund-sub">Ahorro a plazo</div>
+        </div>
+        <div class="fund-tile gold">
+          <div class="fund-label">🪙 En CoolCoin</div>
+          <div class="fund-value" id="fundCoolcoin">$0.00</div>
+          <div class="fund-sub" id="fundCoolcoinSub">Gana 5.5% anual. ¡Compra ya!</div>
+        </div>
+        <div class="fund-tile highlight">
+          <div class="fund-label">Total ahorrado</div>
+          <div class="fund-value" id="fundTotal">$0.00</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Ahorro a plazo fijo</div></div>
+        <div class="section-desc">Este dinero gana interés y se renueva automáticamente cada año.</div>
+        <div id="plazosFijosWrap"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">🪙 CoolCoin</div></div>
+        <div class="section-desc">Otra forma de hacer crecer tu dinero, aparte del plazo fijo — mismo mecanismo, tu propia tasa.</div>
+        <div id="coolcoinWrap"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Depósitos y movimientos</div></div>
+        <div class="section-desc">Historial de tus aportes, retiros e intereses acreditados.</div>
+        <div class="term-card" style="padding: 6px 20px;" id="ledgerWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body" id="body-creditos">
+    <div class="screen">
+      <div class="section-head"><div class="section-title">Créditos</div></div>
+      <div class="section-desc">Microcréditos a cuota fija mensual. El administrador revisa cada solicitud.</div>
+
+      <div id="premiumUpsellWrap" class="hidden">
+        <div class="term-card">
+          <div class="term-row"><span>Membresía requerida</span><b id="premiumCosto">$20.00</b></div>
+          <div class="term-foot" style="margin-bottom: 14px;">Para solicitar un microcrédito, primero debes actualizar tu cuenta a Cliente Premium (pago único, no reembolsable).</div>
+          <button class="profile-save-btn" onclick="pagarPremiumConSaldo()">Pagar con mi saldo disponible</button>
+          <button class="payphone-btn" style="margin-top:10px;" onclick="pagarPremiumConPayphone()"><span class="payphone-mark">P</span> Pagar con PayPhone</button>
+          <div id="premiumFeeBreakdown" class="term-foot" style="margin-top:8px;"></div>
+          <div id="pp-button-premium" style="margin-top:10px;"></div>
+          <div id="errPremium" class="profile-msg err hidden"></div>
+        </div>
+      </div>
+
+      <div id="creditoSolicitudWrap">
+        <div class="term-card">
+          <div class="term-row"><span>Cupo sugerido para ti</span><b id="creditoCupo">$0.00</b></div>
+          <div class="term-foot" style="margin-bottom: 14px;">Puedes pedir un monto distinto — es solo una guía, el administrador decide cada solicitud.</div>
+          <div class="profile-field"><label>Monto a solicitar</label><input id="creditoMonto" type="number" step="0.01" placeholder="100.00" oninput="actualizarCalculadoraCredito()"></div>
+          <div class="profile-field">
+            <label>Plazo</label>
+            <select id="creditoPlazo" class="credito-select" onchange="actualizarCalculadoraCredito()"></select>
+          </div>
+          <div id="creditoCalculadora" class="credito-calc">Ingresa un monto y elige un plazo para ver tu cuota mensual.</div>
+          <div id="errCredito" class="profile-msg err hidden"></div>
+          <button class="profile-save-btn" onclick="solicitarCredito()">Solicitar crédito</button>
+          <div id="creditoMsg" class="profile-msg hidden"></div>
+        </div>
+      </div>
+
+      <div id="creditoActivoWrap" class="hidden"></div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Historial de créditos</div></div>
+        <div id="creditoHistorialWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body" id="body-perfil">
+    <div class="screen">
+      <div class="section-head"><div class="section-title">Mi perfil</div></div>
+      <div class="section-desc">Revisa y actualiza tus datos personales.</div>
+      <div class="profile-card">
+        <div class="profile-field"><label>Nombre completo</label><input id="perfilNombre" type="text"></div>
+        <div class="profile-field"><label>Cédula</label><input id="perfilCedula" type="text"></div>
+        <div class="profile-field"><label>Correo electrónico</label><input id="perfilEmail" type="email"></div>
+        <div class="profile-field"><label>Celular</label><input id="perfilCelular" type="text"></div>
+        <div class="profile-field"><label>Ciudad</label><input id="perfilCiudad" type="text"></div>
+        <div class="profile-field"><label>Provincia</label><input id="perfilProvincia" type="text"></div>
+        <div class="profile-field"><label>Dirección domiciliaria</label><input id="perfilDireccion" type="text"></div>
+        <div class="profile-field">
+          <label>Tipo de empleo</label>
+          <select id="perfilTipoEmpleo" class="credito-select">
+            <option value="">Selecciona…</option>
+            <option value="dependiente">Dependiente</option>
+            <option value="independiente">Independiente</option>
+          </select>
+        </div>
+        <div class="profile-field"><label>Ingresos mensuales</label><input id="perfilIngresos" type="number" step="0.01"></div>
+        <div class="profile-field">
+          <label>Estado civil</label>
+          <select id="perfilEstadoCivil" class="credito-select">
+            <option value="">Selecciona…</option>
+            <option value="soltero">Soltero/a</option>
+            <option value="casado">Casado/a</option>
+            <option value="divorciado">Divorciado/a</option>
+            <option value="viudo">Viudo/a</option>
+            <option value="union_libre">Unión libre</option>
+          </select>
+        </div>
+
+        <div class="section-desc" style="margin-top: 18px;">Cambiar contraseña (opcional — déjalo en blanco si no quieres cambiarla)</div>
+        <div class="profile-field"><label>Contraseña actual</label><input id="perfilPasswordActual" type="password" placeholder="Solo si vas a cambiarla"></div>
+        <div class="profile-field"><label>Nueva contraseña</label><input id="perfilPasswordNueva" type="password" placeholder="Mínimo 8 caracteres"></div>
+
+        <div id="errPerfil" class="profile-msg err hidden"></div>
+        <button class="profile-save-btn" onclick="guardarPerfil()">Guardar cambios</button>
+        <div id="perfilMsg" class="profile-msg hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="perfilGateOverlay">
+    <div class="modal-box">
+      <div class="auth-title" style="font-size:20px;">Completa tu perfil</div>
+      <div class="auth-desc">Antes de continuar, necesitamos algunos datos adicionales sobre ti.</div>
+      <div class="profile-field"><label>Ciudad</label><input id="gateCiudad" type="text"></div>
+      <div class="profile-field"><label>Provincia</label><input id="gateProvincia" type="text"></div>
+      <div class="profile-field"><label>Dirección domiciliaria</label><input id="gateDireccion" type="text"></div>
+      <div class="profile-field">
+        <label>Tipo de empleo</label>
+        <select id="gateTipoEmpleo" class="credito-select">
+          <option value="">Selecciona…</option>
+          <option value="dependiente">Dependiente</option>
+          <option value="independiente">Independiente</option>
+        </select>
+      </div>
+      <div class="profile-field"><label>Ingresos mensuales</label><input id="gateIngresos" type="number" step="0.01"></div>
+      <div class="profile-field">
+        <label>Estado civil</label>
+        <select id="gateEstadoCivil" class="credito-select">
+          <option value="">Selecciona…</option>
+          <option value="soltero">Soltero/a</option>
+          <option value="casado">Casado/a</option>
+          <option value="divorciado">Divorciado/a</option>
+          <option value="viudo">Viudo/a</option>
+          <option value="union_libre">Unión libre</option>
+        </select>
+      </div>
+      <div id="errPerfilGate" class="profile-msg err hidden"></div>
+      <button class="profile-save-btn" onclick="completarPerfilGate()">Guardar y continuar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ------------------------------------------------------------------
+     COOLKI · sistema.html (cuenta del socio) conectado al backend real.
+     El slug de la organización NO se hardcodea en la lógica: se toma de
+     la URL (?org=coolki) o de window.COOLKI_CONFIG (definido arriba).
+  ------------------------------------------------------------------ */
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+
+  const $ = (id) => document.getElementById(id);
+  const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  if (ORG_SLUG) {
+    const qs = '?org=' + encodeURIComponent(ORG_SLUG);
+    ['gateLogoLink', 'volverInicioLink'].forEach(id => { $(id).href = 'index' + qs; });
+    $('olvideLink').href = 'recuperar' + qs;
+    $('crearCuentaLink').href = 'registro' + qs;
+  }
+
+  function togglePassword(inputId, btn) {
+    const input = $(inputId);
+    const mostrando = input.type === 'text';
+    input.type = mostrando ? 'password' : 'text';
+    btn.setAttribute('aria-pressed', String(!mostrando));
+    btn.setAttribute('aria-label', mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    btn.querySelector('span').textContent = mostrando ? '👁' : '🙈';
+  }
+
+  // Enlaces de soporte de la pantalla de login: solo aparecen si la organización los
+  // configuró (mismo patrón que los pop-ups del constructor de páginas).
+  async function cargarSoporteGate() {
+    if (!ORG_SLUG) return;
+    try {
+      const res = await fetch(API_BASE + '/obtener_config_publica.php?org=' + encodeURIComponent(ORG_SLUG));
+      const data = await res.json();
+      const org = (data && data.organizacion) || {};
+      if (org.soporte_email) {
+        $('soporteEmailLink').href = 'mailto:' + org.soporte_email;
+        $('soporteEmailLink').textContent = org.soporte_email;
+        $('soporteEmailLink').classList.remove('hidden');
+      }
+      if (org.soporte_whatsapp) {
+        $('soporteWhatsappLink').href = org.soporte_whatsapp;
+        $('soporteWhatsappLink').classList.remove('hidden');
+      }
+    } catch (e) { /* si falla, simplemente no mostramos los links de soporte */ }
+  }
+  cargarSoporteGate();
+
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
+  function formatDate(str) {
+    if (!str) return '—';
+    const d = new Date(str.replace(' ', 'T'));
+    if (isNaN(d)) return '—';
+    return d.getDate() + ' ' + MESES[d.getMonth()];
+  }
+  function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  async function apiFetch(path, options) {
+    let res;
+    try {
+      res = await fetch(API_BASE + path, options);
+    } catch (e) {
+      throw { network: true, message: NET_MSG };
+    }
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      throw { network: false, status: res.status, message: data.error || ('Ocurrió un error (código ' + res.status + ').') };
+    }
+    return data;
+  }
+
+  // ============ Login gate ============
+  async function loginSocio() {
+    clearError('errSocioLogin');
+    if (!ORG_SLUG) { setError('errSocioLogin', 'Falta indicar la organización (?org=...) en el enlace.'); return; }
+    const email = $('socioEmail').value.trim();
+    const password = $('socioPassword').value;
+    if (!email || !password) { setError('errSocioLogin', 'Ingresa tu correo y contraseña.'); return; }
+
+    const btn = $('btnSocioLogin'); btn.disabled = true;
+    try {
+      await apiFetch('/login.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ organizacion: ORG_SLUG, email, password })
+      });
+      await enterSocioMode();
+    } catch (err) {
+      setError('errSocioLogin', err.message || NET_MSG);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function logout() {
+    try { await apiFetch('/logout.php', { method: 'POST', credentials: 'include' }); } catch (e) { /* seguimos igual */ }
+    location.href = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+  }
+
+  // ============ Modo socio ============
+  let socioState = {
+    saldoDisponible: 0, retiroMinimo: 10, comisionPct: 0, ivaPct: 0, aporteInicial: 0,
+    creditoTasaAnual: 0, creditoPlazoMin: 1, creditoPlazoMax: 6, creditoLimiteMaximo: 0,
+  };
+
+  async function enterSocioMode() {
+    $('gate').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    await loadSocioDashboard();
+  }
+
+  function showSocioTab(tab) {
+    $('tabBtnCuenta').classList.toggle('active', tab === 'cuenta');
+    $('tabBtnCreditos').classList.toggle('active', tab === 'creditos');
+    $('tabBtnPerfil').classList.toggle('active', tab === 'perfil');
+    $('body-cuenta').classList.toggle('active', tab === 'cuenta');
+    $('body-creditos').classList.toggle('active', tab === 'creditos');
+    $('body-perfil').classList.toggle('active', tab === 'perfil');
+  }
+
+  async function loadSocioDashboard() {
+    let data;
+    try {
+      data = await apiFetch('/me.php', { credentials: 'include' });
+    } catch (err) {
+      return false;
+    }
+    const s = data.socio;
+    socioState.saldoDisponible = parseFloat(s.saldo_disponible) || 0;
+    socioState.retiroMinimo = parseFloat(s.retiro_minimo) || 0;
+    socioState.comisionPct = parseFloat(s.comision_deposito_pct) || 0;
+    socioState.ivaPct = parseFloat(s.iva_pct) || 0;
+    socioState.aporteInicial = parseFloat(s.aporte_inicial) || 0;
+    socioState.creditoTasaAnual = parseFloat(s.credito_tasa_anual) || 0;
+    socioState.creditoPlazoMin = parseInt(s.credito_plazo_min_meses) || 1;
+    socioState.creditoPlazoMax = parseInt(s.credito_plazo_max_meses) || 6;
+    socioState.creditoLimiteMaximo = parseFloat(s.credito_limite_maximo) || 0;
+    socioState.coolcoinTasaAnual = parseFloat(s.coolcoin_tasa_anual) || 0;
+    socioState.membresiaPremioCosto = parseFloat(s.membresia_premium_costo) || 0;
+
+    if (s.estado === 'pendiente_pago') {
+      $('activationText').textContent = 'Te falta pagar tu aporte inicial de ' + money(socioState.aporteInicial) + ' para activar tu cuenta.';
+      $('activationBanner').classList.remove('hidden');
+    } else {
+      $('activationBanner').classList.add('hidden');
+    }
+
+    if (s.estado === 'activo' && !Number(s.perfil_completo)) {
+      $('perfilGateOverlay').classList.add('show');
+    } else {
+      $('perfilGateOverlay').classList.remove('show');
+    }
+
+    $('greetingName').textContent = s.nombre;
+    $('avatarInitials').textContent = s.nombre.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+    $('balanceFigure').textContent = money(socioState.saldoDisponible);
+
+    const plazoTotal = (data.plazos_fijos || []).reduce((sum, p) => sum + parseFloat(p.capital), 0);
+    const coolcoinTotal = (data.coolcoin_inversiones || []).reduce((sum, p) => sum + parseFloat(p.capital), 0);
+    const saldoCongelado = parseFloat(s.saldo_congelado || 0);
+    $('fundCongelado').textContent = money(saldoCongelado);
+    $('fundPlazoFijo').textContent = money(plazoTotal);
+    $('fundCoolcoin').textContent = money(coolcoinTotal);
+    $('fundCoolcoinSub').textContent = 'Gana ' + socioState.coolcoinTasaAnual + '% anual. ¡Compra ya!';
+    $('fundTotal').textContent = money(socioState.saldoDisponible + saldoCongelado + plazoTotal + coolcoinTotal);
+
+    $('withdrawNote').textContent = 'Retiros disponibles desde ' + money(socioState.retiroMinimo) + '. Se procesan en 1–2 días hábiles. Máximo disponible: ' + money(socioState.saldoDisponible) + '.';
+    $('withdrawAmount').setAttribute('min', socioState.retiroMinimo);
+    $('withdrawAmount').setAttribute('max', socioState.saldoDisponible);
+    $('withdrawAmount').value = socioState.retiroMinimo.toFixed(2);
+
+    if (data.retiros_pendientes && data.retiros_pendientes.length) {
+      const total = data.retiros_pendientes.reduce((sum, r) => sum + parseFloat(r.monto), 0);
+      $('pendingWithdrawNote').textContent = 'Ya tienes ' + data.retiros_pendientes.length + ' solicitud(es) de retiro pendiente(s) por ' + money(total) + '.';
+      $('pendingWithdrawNote').classList.remove('hidden');
+    } else {
+      $('pendingWithdrawNote').classList.add('hidden');
+    }
+
+    renderPlazosFijos(data.plazos_fijos, s.tasa_plazo_fijo);
+    renderCoolcoin(data.coolcoin_inversiones, s.coolcoin_tasa_anual);
+    renderLedger(data.movimientos);
+    updateFeeBreakdown();
+    renderCreditos(data);
+
+    $('perfilNombre').value = s.nombre || '';
+    $('perfilCedula').value = s.cedula || '';
+    $('perfilEmail').value = s.email || '';
+    $('perfilCelular').value = s.celular || '';
+    $('perfilCiudad').value = s.ciudad || '';
+    $('perfilProvincia').value = s.provincia || '';
+    $('perfilDireccion').value = s.direccion || '';
+    $('perfilTipoEmpleo').value = s.tipo_empleo || '';
+    $('perfilIngresos').value = s.ingresos_mensuales || '';
+    $('perfilEstadoCivil').value = s.estado_civil || '';
+    return true;
+  }
+
+  function termCardHTML(p) {
+    const inicio = new Date(p.fecha_inicio + 'T00:00:00');
+    const fin = new Date(p.fecha_vencimiento + 'T00:00:00');
+    const hoy = new Date();
+    let pct = ((hoy - inicio) / (fin - inicio)) * 100;
+    pct = Math.max(0, Math.min(100, Math.round(pct)));
+    return '<div class="term-card">' +
+      '<div class="term-row"><span>Capital colocado</span><b>' + money(p.capital) + '</b></div>' +
+      '<div class="term-row"><span>Generado en este periodo</span><b>+' + money(p.generado) + '</b></div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="term-foot">' + p.tasa_anual + '% anual · vence el ' + fin.getDate() + ' de ' + MESES[fin.getMonth()] + ' de ' + fin.getFullYear() + ' · se renueva automáticamente</div>' +
+      '</div>';
+  }
+
+  function renderPlazosFijos(plazos, tasaOrg) {
+    const wrap = $('plazosFijosWrap');
+    wrap.innerHTML = (plazos || []).map(termCardHTML).join('');
+    const form = document.createElement('div');
+    form.className = 'term-card term-form';
+    form.innerHTML =
+      '<div class="term-row" style="margin-bottom:10px;"><span>Colocar más a plazo fijo</span><b>' + tasaOrg + '% anual</b></div>' +
+      '<input type="number" id="newPlazoAmount" placeholder="Monto a colocar" step="0.01">' +
+      '<div id="errPlazo" class="panel-error hidden" style="color:#E5484D;"></div>' +
+      '<button onclick="crearPlazoFijo()">Colocar a plazo fijo</button>';
+    wrap.appendChild(form);
+  }
+
+  function renderCoolcoin(plazos, tasaOrg) {
+    const wrap = $('coolcoinWrap');
+    wrap.innerHTML = (plazos || []).map(termCardHTML).join('');
+    const form = document.createElement('div');
+    form.className = 'term-card term-form';
+    form.innerHTML =
+      '<div class="term-row" style="margin-bottom:10px;"><span>Colocar más a CoolCoin</span><b>' + tasaOrg + '% anual</b></div>' +
+      '<input type="number" id="newCoolcoinAmount" placeholder="Monto a colocar" step="0.01">' +
+      '<div id="errCoolcoin" class="panel-error hidden" style="color:#E5484D;"></div>' +
+      '<button onclick="crearCoolcoin()">Colocar a CoolCoin</button>';
+    wrap.appendChild(form);
+  }
+
+  async function crearInversion(producto, inputId, errId) {
+    clearError(errId);
+    const monto = parseFloat($(inputId).value);
+    if (!monto || monto <= 0) { setError(errId, 'Ingresa un monto válido.'); return; }
+    if (monto > socioState.saldoDisponible) { setError(errId, 'No tienes saldo suficiente disponible.'); return; }
+    try {
+      await apiFetch('/crear_plazo_fijo.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto, producto })
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError(errId, err.message || NET_MSG);
+    }
+  }
+
+  function crearPlazoFijo() { return crearInversion('plazo_fijo', 'newPlazoAmount', 'errPlazo'); }
+  function crearCoolcoin() { return crearInversion('coolcoin', 'newCoolcoinAmount', 'errCoolcoin'); }
+
+  function renderLedger(movimientos) {
+    const wrap = $('ledgerWrap');
+    if (!movimientos || !movimientos.length) {
+      wrap.innerHTML = '<div class="empty-note">Aún no tienes movimientos.</div>';
+      return;
+    }
+    const labels = { aporte_inicial: 'Aporte inicial', aporte: 'Depósito', retiro: 'Retiro', interes: 'Interés acreditado', comision_admin: 'Comisión de mantenimiento', credito_desembolso: 'Desembolso de crédito', pago_credito: 'Pago de cuota de crédito', membresia_premium: 'Membresía Premium' };
+    wrap.innerHTML = movimientos.map(m => {
+      const isOut = (m.tipo === 'retiro' || m.tipo === 'comision_admin' || m.tipo === 'pago_credito');
+      const recargo = parseFloat(m.comision || 0) + parseFloat(m.iva || 0);
+      const feeNote = recargo > 0 ? '<div class="ledger-fee">+ ' + money(recargo) + ' comisión/IVA pagados aparte</div>' : '';
+      return '<div class="ledger-row">' +
+        '<div class="ledger-icon ' + (isOut ? 'out' : 'in') + '">' + (isOut ? '↓' : '↑') + '</div>' +
+        '<div class="ledger-mid"><div class="ledger-desc">' + (labels[m.tipo] || m.tipo) + '</div><div class="ledger-date">' + formatDate(m.created_at) + '</div>' + feeNote + '</div>' +
+        '<div class="ledger-amt ' + (isOut ? 'neg' : 'pos') + '">' + (isOut ? '-' : '+') + money(m.monto) + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ---- Créditos ----
+  const CUOTA_LABELS = { pendiente: 'Pendiente', pagada: 'Pagada', vencida: 'Vencida' };
+
+  function renderCreditos(data) {
+    const s = data.socio;
+    if (s.nivel !== 'premium') {
+      $('premiumUpsellWrap').classList.remove('hidden');
+      $('creditoSolicitudWrap').classList.add('hidden');
+      $('creditoActivoWrap').classList.add('hidden');
+      $('premiumCosto').textContent = money(socioState.membresiaPremioCosto);
+      renderCreditoHistorial(data.historial_creditos || [], null);
+      return;
+    }
+    $('premiumUpsellWrap').classList.add('hidden');
+
+    $('creditoCupo').textContent = money(data.cupo_sugerido || 0);
+    poblarPlazoCredito();
+
+    const activo = data.credito_actual;
+    if (activo) {
+      $('creditoSolicitudWrap').classList.add('hidden');
+      $('creditoActivoWrap').classList.remove('hidden');
+      renderCreditoActivo(activo, data.cuotas_credito || []);
+    } else {
+      $('creditoSolicitudWrap').classList.remove('hidden');
+      $('creditoActivoWrap').classList.add('hidden');
+    }
+
+    renderCreditoHistorial(data.historial_creditos || [], activo ? activo.id : null);
+  }
+
+  function poblarPlazoCredito() {
+    const sel = $('creditoPlazo');
+    if (sel.options.length) return;
+    for (let m = socioState.creditoPlazoMin; m <= socioState.creditoPlazoMax; m++) {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m + (m === 1 ? ' mes' : ' meses');
+      sel.appendChild(opt);
+    }
+  }
+
+  function actualizarCalculadoraCredito() {
+    const monto = parseFloat($('creditoMonto').value) || 0;
+    const plazo = parseInt($('creditoPlazo').value) || socioState.creditoPlazoMin;
+    const calc = $('creditoCalculadora');
+    if (monto <= 0) {
+      calc.textContent = 'Ingresa un monto y elige un plazo para ver tu cuota mensual.';
+      return;
+    }
+    const tasaMensual = Math.pow(1 + socioState.creditoTasaAnual / 100, 1 / 12) - 1;
+    let cuota;
+    if (tasaMensual <= 0) {
+      cuota = monto / plazo;
+    } else {
+      const factor = Math.pow(1 + tasaMensual, plazo);
+      cuota = monto * (tasaMensual * factor) / (factor - 1);
+    }
+    cuota = Math.round(cuota * 100) / 100;
+    calc.innerHTML = 'Cuota mensual estimada: <b>' + money(cuota) + '</b> durante ' + plazo + (plazo === 1 ? ' mes' : ' meses') +
+      ' · Total a pagar: <b>' + money(cuota * plazo) + '</b> (tasa ' + socioState.creditoTasaAnual + '% anual)';
+  }
+
+  async function solicitarCredito() {
+    clearError('errCredito');
+    $('creditoMsg').classList.add('hidden');
+    const monto = parseFloat($('creditoMonto').value);
+    const plazo = parseInt($('creditoPlazo').value);
+    if (!monto || monto <= 0) { setError('errCredito', 'Ingresa un monto válido.'); return; }
+    try {
+      await apiFetch('/solicitar_credito.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto, plazo_meses: plazo })
+      });
+      $('creditoMonto').value = '';
+      await loadSocioDashboard();
+      const msg = $('creditoMsg');
+      msg.textContent = 'Tu solicitud fue enviada. Te avisaremos cuando el administrador la revise.';
+      msg.className = 'profile-msg ok';
+      msg.classList.remove('hidden');
+    } catch (err) {
+      setError('errCredito', err.message || NET_MSG);
+    }
+  }
+
+  function renderCreditoActivo(credito, cuotas) {
+    const wrap = $('creditoActivoWrap');
+    let html = '<div class="term-card">';
+    if (Number(credito.en_mora) === 1) {
+      html += '<div class="mora-banner">Tienes una cuota vencida. Ponte al día para no afectar tu cupo de crédito futuro.</div>';
+    }
+    if (credito.estado === 'pendiente') {
+      html += '<div class="term-row"><span>Solicitaste</span><b>' + money(credito.monto) + ' a ' + credito.plazo_meses + ' meses</b></div>' +
+        '<div class="term-row"><span>Cuota estimada</span><b>' + money(credito.cuota_mensual) + '/mes</b></div>' +
+        '<div class="term-foot">Tu solicitud está en revisión por el administrador.</div>';
+    } else {
+      html += '<div class="term-row"><span>Crédito activo</span><b>' + money(credito.monto) + ' a ' + credito.plazo_meses + ' meses</b></div>' +
+        '<div class="term-row"><span>Cuota mensual</span><b>' + money(credito.cuota_mensual) + '</b></div>' +
+        '<div class="term-row"><span>Tasa</span><b>' + credito.tasa_anual + '% anual</b></div>';
+      if (credito.mensaje_admin) {
+        html += '<div class="credito-mensaje">"' + escapeHtml(credito.mensaje_admin) + '"</div>';
+      }
+      html += '<div style="margin-top: 12px;">' + cuotas.map(renderCuotaRow).join('') + '</div>';
+    }
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function renderCuotaRow(c) {
+    const puedePagar = c.estado === 'pendiente' || c.estado === 'vencida';
+    return '<div class="cuota-row">' +
+      '<div><div>Cuota ' + c.numero_cuota + '</div><div class="cuota-info">Vence ' + formatDate(c.fecha_vencimiento) + '</div></div>' +
+      '<div style="display:flex; align-items:center; gap:8px;">' +
+        '<b>' + money(c.monto_cuota) + '</b>' +
+        '<span class="cuota-estado ' + c.estado + '">' + (CUOTA_LABELS[c.estado] || c.estado) + '</span>' +
+        (puedePagar ? '<button class="cuota-pay-btn saldo" id="pagoCuotaSaldo' + c.id + '" onclick="pagarCuotaConSaldo(' + c.id + ')">Pagar con saldo</button>' : '') +
+        (puedePagar ? '<button class="cuota-pay-btn" id="pagoCuota' + c.id + '" onclick="pagarCuota(' + c.id + ')">PayPhone</button>' : '') +
+      '</div>' +
+    '</div>' +
+    (puedePagar ? '<div id="ppCuota' + c.id + '"></div><div id="errCuota' + c.id + '" class="profile-msg err hidden"></div>' : '');
+  }
+
+  async function pagarCuotaConSaldo(cuotaId) {
+    const btn = $('pagoCuotaSaldo' + cuotaId);
+    const errId = 'errCuota' + cuotaId;
+    clearError(errId);
+    btn.disabled = true;
+    try {
+      await apiFetch('/pagar_cuota_con_saldo.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ cuota_id: cuotaId })
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError(errId, err.message || NET_MSG);
+      btn.disabled = false;
+    }
+  }
+
+  async function pagarCuota(cuotaId) {
+    const btn = $('pagoCuota' + cuotaId);
+    const errId = 'errCuota' + cuotaId;
+    clearError(errId);
+    btn.disabled = true;
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tipo: 'pago_credito', cuota_id: cuotaId })
+      });
+      if (!data.token) { setError(errId, 'Esta caja aún no tiene configurado su pago con PayPhone.'); return; }
+      if (typeof PPaymentButtonBox === 'undefined') { setError(errId, 'No se pudo cargar el componente de pago. Recarga la página.'); return; }
+      const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      btn.classList.add('hidden');
+      const ppConfig = {
+        token: data.token, clientTransactionId: data.clientTransactionId,
+        amount: data.amount, amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD', reference: data.reference || 'Pago de cuota',
+        lang: 'es', responseUrl: responseUrl
+      };
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('ppCuota' + cuotaId);
+    } catch (err) {
+      setError(errId, err.message || NET_MSG);
+      btn.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ============ Membresía Cliente Premium ============
+  async function pagarPremiumConSaldo() {
+    clearError('errPremium');
+    if (!confirm('¿Pagar ' + money(socioState.membresiaPremioCosto) + ' desde tu saldo disponible para activar Cliente Premium?')) return;
+    try {
+      await apiFetch('/pagar_membresia_con_saldo.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: '{}'
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errPremium', err.message || NET_MSG);
+    }
+  }
+
+  async function pagarPremiumConPayphone() {
+    clearError('errPremium');
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tipo: 'membresia_premium' })
+      });
+      if (!data.token) { setError('errPremium', 'Esta caja aún no tiene configurado su pago con PayPhone.'); return; }
+      if (typeof PPaymentButtonBox === 'undefined') { setError('errPremium', 'No se pudo cargar el componente de pago. Recarga la página.'); return; }
+      const comision = parseFloat(data.comision || 0);
+      const iva = parseFloat(data.iva || 0);
+      $('premiumFeeBreakdown').textContent = (comision > 0 || iva > 0)
+        ? 'Membresía ' + money(data.montoNeto) + ' + comisión ' + money(comision) + ' + IVA ' + money(iva) + ' = pagas ' + money(data.montoCobrado) + ' en PayPhone.'
+        : '';
+      const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      const ppConfig = {
+        token: data.token, clientTransactionId: data.clientTransactionId,
+        amount: data.amount, amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD', reference: data.reference || 'Membresía Premium',
+        lang: 'es', responseUrl: responseUrl
+      };
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button-premium');
+    } catch (err) {
+      setError('errPremium', err.message || NET_MSG);
+    }
+  }
+
+  function renderCreditoHistorial(historial, idActivo) {
+    const wrap = $('creditoHistorialWrap');
+    const previos = historial.filter(c => c.id !== idActivo);
+    if (!previos.length) {
+      wrap.innerHTML = '<div class="empty-note">Aún no tienes créditos anteriores.</div>';
+      return;
+    }
+    const estadoLabels = { pendiente: 'En revisión', rechazado: 'Rechazado', activo: 'Activo', pagado: 'Pagado' };
+    wrap.innerHTML = previos.map(c => {
+      const mensaje = c.mensaje_admin ? '<div class="credito-mensaje">"' + escapeHtml(c.mensaje_admin) + '"</div>' : '';
+      return '<div class="term-card" style="margin-bottom:10px;">' +
+        '<div class="term-row"><span>' + money(c.monto) + ' a ' + c.plazo_meses + ' meses</span><b>' + (estadoLabels[c.estado] || c.estado) + '</b></div>' +
+        '<div class="term-foot">' + formatDate(c.created_at) + (Number(c.en_mora) === 1 ? ' · tuvo atraso' : '') + '</div>' +
+        mensaje +
+      '</div>';
+    }).join('');
+  }
+
+  // ---- Aportar (depósito recurrente vía PayPhone), con monto libre y desglose de costo ----
+  let currentChipAmount = 10;
+  function togglePanel(which) {
+    const dep = $('panel-deposit');
+    const wd = $('panel-withdraw');
+    const target = which === 'deposit' ? dep : wd;
+    const other = which === 'deposit' ? wd : dep;
+    other.classList.remove('open');
+    target.classList.toggle('open');
+  }
+  function selectChip(el, amount) {
+    document.querySelectorAll('#chips .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    $('depositSuccess').classList.remove('show');
+    $('pp-button-aporte').innerHTML = '';
+    clearError('errAporte');
+    $('btnAportar').classList.remove('hidden');
+
+    if (amount === 'custom') {
+      $('customAmount').classList.remove('hidden');
+      $('customAmount').focus();
+      currentChipAmount = parseFloat($('customAmount').value) || 0;
+    } else {
+      $('customAmount').classList.add('hidden');
+      currentChipAmount = amount;
+    }
+    updateFeeBreakdown();
+  }
+  function onCustomAmountInput() {
+    currentChipAmount = parseFloat($('customAmount').value) || 0;
+    updateFeeBreakdown();
+  }
+
+  // Muestra, ANTES de pagar, cuánto se cobra realmente en PayPhone: el monto que el socio
+  // quiere ahorrar + comisión + IVA — para que nunca se lleve una sorpresa en el cobro.
+  function updateFeeBreakdown() {
+    const monto = currentChipAmount || 0;
+    const comision = Math.round(monto * socioState.comisionPct / 100 * 100) / 100;
+    const iva = Math.round(comision * socioState.ivaPct / 100 * 100) / 100;
+    const total = monto + comision + iva;
+    const btn = $('btnAportar');
+    if (monto <= 0) {
+      $('feeBreakdown').innerHTML = 'Ingresa un monto para ver el total a pagar.';
+      $('payBtnLabel').textContent = 'Pagar con PayPhone';
+      btn.disabled = true;
+      return;
+    }
+    $('feeBreakdown').innerHTML =
+      'Ahorras <b>' + money(monto) + '</b> + comisión ' + money(comision) + ' + IVA ' + money(iva) +
+      ' = <b>pagas ' + money(total) + '</b> en PayPhone. Tu cuenta se acredita con los ' + money(monto) + ' completos.';
+    $('payBtnLabel').textContent = 'Pagar ' + money(total) + ' con PayPhone';
+    btn.disabled = false;
+  }
+
+  async function iniciarAporte() {
+    clearError('errAporte');
+    $('pp-button-aporte').innerHTML = '';
+    if (!currentChipAmount || currentChipAmount <= 0) {
+      setError('errAporte', 'Ingresa un monto válido.');
+      return;
+    }
+    const btn = $('btnAportar');
+    btn.disabled = true;
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto: currentChipAmount, tipo: 'aporte' })
+      });
+      if (!data.token) {
+        setError('errAporte', 'Esta caja aún no tiene configurado su pago con PayPhone.');
+        return;
+      }
+      if (typeof PPaymentButtonBox === 'undefined') {
+        setError('errAporte', 'No se pudo cargar el componente de pago de PayPhone. Recarga la página.');
+        return;
+      }
+      const responseUrl = location.origin + location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      btn.classList.add('hidden');
+      const ppConfig = {
+        token: data.token,
+        clientTransactionId: data.clientTransactionId,
+        amount: data.amount,
+        amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD',
+        reference: data.reference || 'Aporte',
+        lang: 'es',
+        responseUrl: responseUrl
+      };
+      // storeId solo aplica si la organización maneja varias tiendas en PayPhone; si no,
+      // se omite por completo (enviarlo vacío o incorrecto causa "La tienda asociada no existe").
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button-aporte');
+    } catch (err) {
+      setError('errAporte', err.message || NET_MSG);
+      btn.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Completar el aporte inicial desde aquí, para un socio que se registró pero nunca
+  // terminó (o abandonó) ese pago en registro.html. PayPhone de todos modos regresa a
+  // registro.html (así está configurada la Url de respuesta de la app), que mostrará su
+  // propia pantalla de bienvenida — desde ahí "Ir a mi cuenta" ya trae de vuelta aquí.
+  async function iniciarAporteInicial() {
+    clearError('errAporteInicial');
+    $('pp-button-inicial').innerHTML = '';
+    const btn = $('btnAporteInicial');
+    btn.disabled = true;
+    try {
+      const data = await apiFetch('/payphone_prepare.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto: socioState.aporteInicial, tipo: 'aporte_inicial' })
+      });
+      if (!data.token) {
+        setError('errAporteInicial', 'Esta caja aún no tiene configurado su pago con PayPhone.');
+        return;
+      }
+      if (typeof PPaymentButtonBox === 'undefined') {
+        setError('errAporteInicial', 'No se pudo cargar el componente de pago de PayPhone. Recarga la página.');
+        return;
+      }
+      const responseUrl = location.origin + '/registro' + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      btn.classList.add('hidden');
+      const ppConfig = {
+        token: data.token,
+        clientTransactionId: data.clientTransactionId,
+        amount: data.amount,
+        amountWithoutTax: data.amountWithoutTax != null ? data.amountWithoutTax : data.amount,
+        amountWithTax: 0, tax: 0, service: 0, tip: 0,
+        currency: data.currency || 'USD',
+        reference: data.reference || 'Aporte inicial',
+        lang: 'es',
+        responseUrl: responseUrl
+      };
+      if (data.storeId) ppConfig.storeId = data.storeId;
+      new PPaymentButtonBox(ppConfig).render('pp-button-inicial');
+    } catch (err) {
+      setError('errAporteInicial', err.message || NET_MSG);
+      btn.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function confirmarAporteRetorno(id, clientTransactionId) {
+    try {
+      const data = await apiFetch(
+        '/payphone_confirm.php?id=' + encodeURIComponent(id) + '&clientTransactionId=' + encodeURIComponent(clientTransactionId),
+        { method: 'GET', credentials: 'include' }
+      );
+      await mostrarResultadoPago(data.tipo, data.aprobado === true);
+    } catch (err) {
+      // Si no se pudo verificar, simplemente no mostramos el pago como acreditado.
+    } finally {
+      const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+      history.replaceState({}, '', clean);
+    }
+  }
+
+  // PayPhone regresa siempre a la "Url de respuesta" configurada a nivel de la aplicación
+  // (registro.html), sin importar desde dónde se inició el pago. registro.html reenvía aquí
+  // el resultado ya confirmado del lado del servidor (con el tipo de transacción) cuando no
+  // era el aporte inicial, para no volver a llamar a payphone_confirm.php dos veces.
+  async function mostrarResultadoPago(tipo, aprobado) {
+    if (tipo === 'pago_credito') {
+      showSocioTab('creditos');
+      if (aprobado) {
+        await loadSocioDashboard(); // refresca la tabla de cuotas con el pago ya acreditado
+      } else {
+        setError('errCredito', 'El pago no se completó o fue rechazado. Intenta de nuevo.');
+      }
+      return;
+    }
+    if (tipo === 'membresia_premium') {
+      showSocioTab('creditos');
+      if (aprobado) {
+        await loadSocioDashboard(); // refresca nivel del socio ya como Premium
+      } else {
+        setError('errPremium', 'El pago no se completó o fue rechazado. Intenta de nuevo.');
+      }
+      return;
+    }
+    // 'aporte' (depósito recurrente)
+    togglePanel('deposit');
+    if (aprobado) {
+      $('depositSuccess').classList.add('show');
+      await loadSocioDashboard(); // refresca el saldo con el aporte ya acreditado
+    } else {
+      setError('errAporte', 'El pago no se completó o fue rechazado. Intenta de nuevo.');
+    }
+  }
+
+  // ---- Retirar ----
+  async function solicitarRetiro() {
+    clearError('errRetiro');
+    $('withdrawSuccess').classList.remove('show');
+    const monto = parseFloat($('withdrawAmount').value);
+    if (!monto || monto <= 0) { setError('errRetiro', 'Ingresa un monto válido.'); return; }
+    try {
+      await apiFetch('/solicitar_retiro.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ monto })
+      });
+      $('withdrawSuccess').classList.add('show');
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errRetiro', err.message || NET_MSG);
+    }
+  }
+
+  // ---- Mi perfil ----
+  async function guardarPerfil() {
+    clearError('errPerfil');
+    $('perfilMsg').classList.add('hidden');
+
+    const nombre = $('perfilNombre').value.trim();
+    const cedula = $('perfilCedula').value.trim();
+    const email = $('perfilEmail').value.trim();
+    const celular = $('perfilCelular').value.trim();
+    const ciudad = $('perfilCiudad').value.trim();
+    const provincia = $('perfilProvincia').value.trim();
+    const direccion = $('perfilDireccion').value.trim();
+    const tipoEmpleo = $('perfilTipoEmpleo').value;
+    const ingresosMensuales = $('perfilIngresos').value;
+    const estadoCivil = $('perfilEstadoCivil').value;
+    const passwordActual = $('perfilPasswordActual').value;
+    const passwordNueva = $('perfilPasswordNueva').value;
+
+    if (!nombre || !cedula || !email) {
+      setError('errPerfil', 'Nombre, cédula y correo son obligatorios.');
+      return;
+    }
+    if (passwordNueva && passwordNueva.length < 8) {
+      setError('errPerfil', 'La nueva contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    try {
+      await apiFetch('/actualizar_perfil.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          nombre, cedula, email, celular,
+          ciudad, provincia, direccion, tipo_empleo: tipoEmpleo, ingresos_mensuales: ingresosMensuales, estado_civil: estadoCivil,
+          password_actual: passwordActual, password_nueva: passwordNueva,
+        })
+      });
+      $('perfilPasswordActual').value = '';
+      $('perfilPasswordNueva').value = '';
+      const msg = $('perfilMsg');
+      msg.textContent = 'Tus datos se guardaron correctamente.';
+      msg.className = 'profile-msg ok';
+      msg.classList.remove('hidden');
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errPerfil', err.message || NET_MSG);
+    }
+  }
+
+  // ============ Perfil obligatorio (una sola vez, al activarse la cuenta) ============
+  async function completarPerfilGate() {
+    clearError('errPerfilGate');
+    const ciudad = $('gateCiudad').value.trim();
+    const provincia = $('gateProvincia').value.trim();
+    const direccion = $('gateDireccion').value.trim();
+    const tipoEmpleo = $('gateTipoEmpleo').value;
+    const ingresosMensuales = $('gateIngresos').value;
+    const estadoCivil = $('gateEstadoCivil').value;
+
+    if (!ciudad || !provincia || !direccion) {
+      setError('errPerfilGate', 'Ciudad, provincia y dirección son obligatorios.');
+      return;
+    }
+    if (!tipoEmpleo) { setError('errPerfilGate', 'Selecciona tu tipo de empleo.'); return; }
+    if (!estadoCivil) { setError('errPerfilGate', 'Selecciona tu estado civil.'); return; }
+    if (!ingresosMensuales || parseFloat(ingresosMensuales) <= 0) { setError('errPerfilGate', 'Ingresa un ingreso mensual válido.'); return; }
+
+    try {
+      await apiFetch('/completar_perfil.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({
+          ciudad, provincia, direccion, tipo_empleo: tipoEmpleo,
+          ingresos_mensuales: ingresosMensuales, estado_civil: estadoCivil,
+        })
+      });
+      await loadSocioDashboard();
+    } catch (err) {
+      setError('errPerfilGate', err.message || NET_MSG);
+    }
+  }
+
+  // ============ Arranque: restaurar sesión si ya existe ============
+  (async function init() {
+    const returnId = PARAMS.get('id');
+    const returnTxId = PARAMS.get('clientTransactionId');
+    const ppAprobado = PARAMS.get('pp_aprobado');
+    const ppTipo = PARAMS.get('pp_tipo');
+
+    try {
+      await apiFetch('/me.php', { credentials: 'include' });
+      await enterSocioMode();
+      if (returnId && returnTxId) {
+        await confirmarAporteRetorno(returnId, returnTxId);
+      } else if (ppAprobado !== null) {
+        await mostrarResultadoPago(ppTipo, ppAprobado === '1');
+        const clean = location.pathname + (ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '');
+        history.replaceState({}, '', clean);
+      }
+    } catch (e) { /* no hay sesión: se queda en el gate */ }
+  })();
+</script>
+<script src="builder-runtime.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Política de Privacidad</title>
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-reg, .coolki-reg * { box-sizing: border-box; }
+
+.coolki-reg {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 34px 16px 60px;
+}
+
+.reg-screen { width: 100%; max-width: 620px; }
+.reg-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.reg-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 30px 28px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+.card-desc { font-size: 13.5px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; }
+
+.clause { margin-bottom: 20px; }
+.clause h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15.5px; margin: 0 0 8px; }
+.clause p { font-size: 13.5px; line-height: 1.65; color: var(--ink); margin: 0 0 8px; }
+.clause b { color: var(--brand); }
+
+.back-link { display: inline-block; margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--brand); text-decoration: none; }
+.loading-note { font-size: 12.5px; color: var(--muted); }
+</style>
+
+<div class="coolki-reg">
+  <div class="reg-screen">
+    <div class="reg-brand">
+      <svg width="34" height="34" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="reg-word">coolki</div>
+    </div>
+
+    <div class="card">
+      <span class="loading-note" id="loadingNote">Cargando la política de privacidad…</span>
+      <div id="privacidadBody" class="hidden"></div>
+      <a class="back-link" id="volverLink" href="registro">&larr; Volver al registro</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+  const $ = (id) => document.getElementById(id);
+
+  if (ORG_SLUG) {
+    $('volverLink').href = 'registro?org=' + encodeURIComponent(ORG_SLUG);
+  }
+
+  async function cargarPrivacidad() {
+    let org = { nombre: 'COOLKI', soporte_email: '' };
+    if (ORG_SLUG) {
+      try {
+        const res = await fetch(API_BASE + '/obtener_config_publica.php?org=' + encodeURIComponent(ORG_SLUG));
+        const data = await res.json();
+        if (data && data.ok) org = Object.assign(org, data.organizacion);
+      } catch (e) { /* seguimos con los valores por defecto */ }
+    }
+
+    const contacto = org.soporte_email
+      ? 'escribiendo a <b>' + org.soporte_email + '</b>'
+      : 'contactando al administrador de tu caja de ahorro';
+
+    document.title = 'Política de Privacidad — ' + org.nombre;
+    $('privacidadBody').innerHTML =
+      '<div class="card-title">Política de Privacidad</div>' +
+      '<div class="card-desc">Caja de ahorro digital ' + org.nombre + ', operada sobre la plataforma COOLKI.</div>' +
+
+      '<div class="clause"><h2>1. Qué datos recogemos y para qué</h2>' +
+      '<p>Al registrarte pedimos tu nombre, cédula, correo electrónico y celular, para crear y administrar tu cuenta, ' +
+      'verificar tu identidad y brindarte soporte. Una vez tu cuenta está activa, también te pedimos ciudad, provincia, ' +
+      'dirección domiciliaria, tipo de empleo, ingresos mensuales y estado civil — esta información se usa para evaluar ' +
+      'tus solicitudes de microcrédito, no se comparte con terceros ajenos a ese fin.</p></div>' +
+
+      '<div class="clause"><h2>2. Tus pagos los procesa PayPhone directamente</h2>' +
+      '<p>Cuando pagas tu aporte inicial, un depósito, una cuota de crédito o la membresía Premium, la información de tu ' +
+      'tarjeta o cuenta de pago la recibe y procesa PayPhone directamente — ' + org.nombre + ' y COOLKI nunca ven ni ' +
+      'almacenan los datos completos de tu tarjeta.</p></div>' +
+
+      '<div class="clause"><h2>3. Cómo protegemos tu información</h2>' +
+      '<p>Tu contraseña nunca se guarda en texto plano — se almacena con un algoritmo de cifrado de un solo sentido. ' +
+      'Toda la comunicación con la app viaja cifrada por HTTPS, y el acceso administrativo a tus datos está restringido ' +
+      'al administrador de tu propia caja de ahorro.</p></div>' +
+
+      '<div class="clause"><h2>4. No vendemos ni compartimos tus datos</h2>' +
+      '<p>No compartimos ni vendemos tu información a terceros, salvo lo estrictamente necesario para procesar tus pagos ' +
+      '(PayPhone) o cuando la ley lo exija.</p></div>' +
+
+      '<div class="clause"><h2>5. Cómo ejercer tus derechos</h2>' +
+      '<p>Puedes solicitar acceder, corregir o eliminar tus datos personales ' + contacto + '.</p></div>';
+
+    $('loadingNote').classList.add('hidden');
+    $('privacidadBody').classList.remove('hidden');
+  }
+
+  cargarPrivacidad();
+</script>
+<style>.hidden{display:none;}</style>
+
+</body>
+</html>

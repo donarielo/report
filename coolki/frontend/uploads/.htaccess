@@ -1,0 +1,10 @@
+# Defensa en profundidad: esta carpeta solo debe servir archivos estáticos (imágenes
+# subidas), nunca ejecutar código. Aunque admin_subir_foto_testimonio.php ya valida el
+# tipo real del archivo antes de guardarlo, esto asegura que ni siquiera un .php que
+# lograra colarse aquí pudiera ejecutarse.
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<FilesMatch "\.(php|phtml|php\d)$">
+  Require all denied
+</FilesMatch>

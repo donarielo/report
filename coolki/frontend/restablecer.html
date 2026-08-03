@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOLKI — Restablecer contraseña</title>
+<script>window.COOLKI_CONFIG = { org: 'coolki' };</script>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.coolki-reg, .coolki-reg * { box-sizing: border-box; }
+
+.coolki-reg {
+  --bg: #F7F8FC;
+  --card: #FFFFFF;
+  --ink: #16182B;
+  --muted: #6B6F85;
+  --border: #E7E9F5;
+  --brand: #2454FF;
+  --brand-soft: #E8EEFF;
+  --mint: #1FAE7A;
+  --mint-soft: #DFF6EA;
+  --coral: #E5484D;
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 34px 16px 60px;
+}
+
+.reg-screen { width: 100%; max-width: 400px; }
+.reg-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.reg-word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 44px -28px rgba(22,24,43,0.14); }
+.card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+.card-desc { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.field input { width: 100%; padding: 13px 14px; border-radius: 13px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); }
+.field input:focus { outline: none; border-color: var(--brand); background: #fff; }
+
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; border: none; background: transparent; cursor: pointer; font-size: 17px; padding: 0 10px; line-height: 1; }
+.password-toggle span { pointer-events: none; }
+
+.pw-meter { height: 5px; background: var(--border); border-radius: 4px; margin: 6px 0 2px; overflow: hidden; }
+.pw-meter-fill { height: 100%; width: 0%; background: var(--border); transition: width .2s, background .2s; }
+.pw-meter-label { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; min-height: 14px; }
+
+.btn-primary { width: 100%; padding: 15px 0; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+.btn-link { width: 100%; text-align: center; padding: 12px 0; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13.5px; cursor: pointer; margin-top: 4px; text-decoration: underline; text-underline-offset: 3px; display: block; }
+
+.success-note { font-size: 13.5px; color: var(--ink); background: var(--mint-soft); border-radius: 12px; padding: 14px; line-height: 1.55; margin-bottom: 14px; }
+.hidden { display: none; }
+</style>
+
+<div class="coolki-reg">
+  <div class="reg-screen">
+    <div class="reg-brand">
+      <svg width="36" height="36" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#2454FF"/><circle cx="36" cy="40" r="5" fill="white"/><circle cx="64" cy="40" r="5" fill="white"/><path d="M28 58 Q50 78 72 58" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+      <div class="reg-word">coolki</div>
+    </div>
+
+    <div class="card hidden" id="screen-sin-token">
+      <div class="card-title">Enlace inválido</div>
+      <div class="card-desc">Este enlace no trae la información necesaria para restablecer tu contraseña. Solicita uno nuevo.</div>
+      <a class="btn-link" id="recuperar-link" href="recuperar" style="text-decoration:none;">Pedir un nuevo enlace</a>
+    </div>
+
+    <div class="card hidden" id="screen-form">
+      <div class="card-title">Crea una nueva contraseña</div>
+      <div class="card-desc">Elige una contraseña nueva para tu cuenta.</div>
+
+      <div class="field">
+        <label>Nueva contraseña</label>
+        <div class="password-wrap">
+          <input id="pw-nueva" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" oninput="actualizarMedidor('pw-nueva','pwMeterFill','pwMeterLabel')">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('pw-nueva', this)"><span aria-hidden="true">👁</span></button>
+        </div>
+        <div class="pw-meter"><div class="pw-meter-fill" id="pwMeterFill"></div></div>
+        <div class="pw-meter-label" id="pwMeterLabel"></div>
+      </div>
+
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <div class="password-wrap">
+          <input id="pw-confirmar" type="password" autocomplete="new-password" placeholder="Repite tu contraseña">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" onclick="togglePassword('pw-confirmar', this)"><span aria-hidden="true">👁</span></button>
+        </div>
+      </div>
+
+      <div id="err-restablecer" class="hidden" style="font-size:12.5px;color:#E5484D;line-height:1.5;margin:2px 0 14px;"></div>
+      <button class="btn-primary" id="btn-restablecer" onclick="restablecerPassword()">Guardar nueva contraseña</button>
+    </div>
+
+    <div class="card hidden" id="screen-exito">
+      <div class="card-title">Contraseña actualizada</div>
+      <div class="success-note">Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión con ella.</div>
+      <a class="btn-link" id="login-link" href="sistema" style="text-decoration:none;">Ir a iniciar sesión</a>
+    </div>
+
+    <div class="card hidden" id="screen-expirado">
+      <div class="card-title">Este enlace ya no sirve</div>
+      <div class="card-desc" id="expirado-desc">El enlace no es válido o ya expiró.</div>
+      <a class="btn-link" id="recuperar-link-2" href="recuperar" style="text-decoration:none;">Pedir un nuevo enlace</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CONFIG = window.COOLKI_CONFIG || {};
+  const API_BASE = String(CONFIG.apiBase || '/backend/api').replace(/\/+$/, '');
+  const PARAMS = new URLSearchParams(location.search);
+  const ORG_SLUG = (PARAMS.get('org') || CONFIG.org || '').trim();
+  const TOKEN = (PARAMS.get('token') || '').trim();
+  const $ = (id) => document.getElementById(id);
+  const NET_MSG = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+
+  function showOnly(id) {
+    ['screen-sin-token', 'screen-form', 'screen-exito', 'screen-expirado'].forEach(s => $(s).classList.add('hidden'));
+    $(id).classList.remove('hidden');
+  }
+  function setError(id, msg) { const el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function clearError(id) { const el = $(id); el.textContent = ''; el.classList.add('hidden'); }
+
+  const qs = ORG_SLUG ? ('?org=' + encodeURIComponent(ORG_SLUG)) : '';
+  ['recuperar-link', 'recuperar-link-2'].forEach(id => { $(id).href = 'recuperar' + qs; });
+  $('login-link').href = 'sistema' + qs;
+
+  async function apiFetch(path, options) {
+    let res;
+    try {
+      res = await fetch(API_BASE + path, options);
+    } catch (e) {
+      throw { network: true, message: NET_MSG };
+    }
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      throw { network: false, message: data.error || ('Ocurrió un error (código ' + res.status + '). Intenta de nuevo.') };
+    }
+    return data;
+  }
+
+  // -------- mostrar/ocultar contraseña + medidor de fuerza --------
+  function togglePassword(inputId, btn) {
+    const input = $(inputId);
+    const mostrando = input.type === 'text';
+    input.type = mostrando ? 'password' : 'text';
+    btn.setAttribute('aria-pressed', String(!mostrando));
+    btn.setAttribute('aria-label', mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    btn.querySelector('span').textContent = mostrando ? '👁' : '🙈';
+  }
+
+  function calcularFuerzaPassword(pw) {
+    if (!pw || pw.length < 8) return { pct: pw ? 25 : 0, color: '#E5484D', texto: pw ? 'Muy débil (mínimo 8 caracteres)' : '' };
+    let puntos = 1;
+    if (pw.length >= 12) puntos++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) puntos++;
+    if (/\d/.test(pw)) puntos++;
+    if (/[^A-Za-z0-9]/.test(pw)) puntos++;
+    if (puntos <= 2) return { pct: 45, color: '#E5484D', texto: 'Débil' };
+    if (puntos === 3) return { pct: 70, color: '#F5A623', texto: 'Media' };
+    return { pct: 100, color: '#1FAE7A', texto: 'Fuerte' };
+  }
+
+  function actualizarMedidor(pwId, fillId, labelId) {
+    const pw = $(pwId).value;
+    const r = calcularFuerzaPassword(pw);
+    $(fillId).style.width = r.pct + '%';
+    $(fillId).style.background = r.color;
+    $(labelId).textContent = r.texto;
+  }
+
+  // -------- restablecer --------
+  async function restablecerPassword() {
+    clearError('err-restablecer');
+    const password = $('pw-nueva').value;
+    const confirmar = $('pw-confirmar').value;
+
+    if (password.length < 8) { setError('err-restablecer', 'La contraseña debe tener al menos 8 caracteres.'); return; }
+    if (password !== confirmar) { setError('err-restablecer', 'Las contraseñas no coinciden.'); return; }
+
+    const btn = $('btn-restablecer');
+    btn.disabled = true;
+    try {
+      await apiFetch('/restablecer_password.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: TOKEN, password })
+      });
+      showOnly('screen-exito');
+    } catch (err) {
+      if (err.message && err.message.indexOf('válido') !== -1) {
+        $('expirado-desc').textContent = err.message;
+        showOnly('screen-expirado');
+      } else {
+        setError('err-restablecer', err.message || NET_MSG);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // -------- arranque --------
+  (function init() {
+    if (!TOKEN) {
+      showOnly('screen-sin-token');
+      return;
+    }
+    showOnly('screen-form');
+  })();
+</script>
+
+</body>
+</html>
