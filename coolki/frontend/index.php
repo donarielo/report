@@ -70,6 +70,7 @@ $e = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 .nav-menu a:hover { color: var(--brand); }
 .nav-login { font-size: 13.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
 .nav-login:hover { color: var(--brand); }
+.nav-login-mobile { display: none; }
 .nav-cta { padding: 10px 18px; border-radius: 10px; background: var(--brand); color: #fff; font-weight: 600; font-size: 13.5px; border: none; cursor: pointer; text-decoration: none; display: inline-block; }
 .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 6px; }
 .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--ink); margin: 5px 0; border-radius: 2px; }
@@ -171,6 +172,7 @@ $e = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
         <a href="#como-funciona">Cómo funciona</a>
         <?php if ($testimonios): ?><a href="#testimonios">Testimonios</a><?php endif; ?>
         <a href="#faq">Preguntas frecuentes</a>
+        <a href="sistema" class="nav-login-mobile" id="navLoginMobile">Ya tengo cuenta</a>
       </nav>
       <div class="nav-right">
         <a class="nav-login" id="navLogin" href="sistema">Ya tengo cuenta</a>
@@ -308,6 +310,7 @@ $e = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
       document.getElementById(id).href = 'registro' + qs;
     });
     document.getElementById('navLogin').href = 'sistema' + qs;
+    document.getElementById('navLoginMobile').href = 'sistema' + qs;
   }
 
   const navToggle = document.getElementById('navToggle');
